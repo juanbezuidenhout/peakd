@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -22,6 +23,7 @@ export default function QuizGlowScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   function handleCardPress(id: string) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedGlow(id);
     if (DISCLAIMER_IDS.has(id)) {
       setModalVisible(true);

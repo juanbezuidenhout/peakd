@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   ViewToken,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
@@ -74,6 +75,7 @@ export default function QuizAestheticScreen() {
         const centered = viewableItems[0];
         setActiveIndex(centered.index ?? 0);
         setSelectedAesthetic((centered.item as Aesthetic).name);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     },
     [],

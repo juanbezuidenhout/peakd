@@ -8,6 +8,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -114,7 +115,7 @@ export default function QuizWeightScreen() {
       <View style={styles.toggleRow}>
         <Pressable
           style={[styles.pill, unit === 'lbs' ? styles.pillActive : styles.pillInactive]}
-          onPress={() => setUnit('lbs')}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setUnit('lbs'); }}
         >
           <Text style={[styles.pillText, unit === 'lbs' ? styles.pillTextActive : styles.pillTextInactive]}>
             lbs
@@ -122,7 +123,7 @@ export default function QuizWeightScreen() {
         </Pressable>
         <Pressable
           style={[styles.pill, unit === 'kg' ? styles.pillActive : styles.pillInactive]}
-          onPress={() => setUnit('kg')}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setUnit('kg'); }}
         >
           <Text style={[styles.pillText, unit === 'kg' ? styles.pillTextActive : styles.pillTextInactive]}>
             kg

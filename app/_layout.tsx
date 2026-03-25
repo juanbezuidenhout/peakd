@@ -27,7 +27,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(onboarding)" options={{ animation: "none" }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="scan-processing"

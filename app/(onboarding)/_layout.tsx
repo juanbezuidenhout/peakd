@@ -8,6 +8,8 @@ export default function OnboardingLayout() {
         animation: "slide_from_right",
         gestureEnabled: true,
       }}
-    />
+    >
+      <Stack.Screen name="cinematic" options={{ animation: "fade" }} />
+    </Stack>
   );
 }

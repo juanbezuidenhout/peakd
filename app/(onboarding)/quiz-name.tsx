@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -13,53 +13,58 @@ export default function QuizNameScreen() {
 
   return (
     <SafeScreen>
-      <View style={styles.backRow}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backChevron}>‹</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.progressWrap}>
-        <ProgressBar current={1} total={8} />
-      </View>
-
-      <Text style={styles.stepLabel}>STEP 1 OF 8</Text>
-      <Text style={styles.headline}>{"What's your\nname?"}</Text>
-      <Text style={styles.subtext}>
-        This will be used to personalise your experience.
-      </Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Your first name"
-        placeholderTextColor={Colors.textMuted}
-        autoFocus
-        returnKeyType="done"
-        onChangeText={setName}
-        value={name}
-        selectionColor={Colors.primary}
-      />
-
-      <Pressable
-        style={styles.skipWrap}
-        onPress={() => router.push('/(onboarding)/quiz-age')}
-        hitSlop={8}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Text style={styles.skipText}>Skip this step</Text>
-      </Pressable>
+        <View style={styles.backRow}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Text style={styles.backChevron}>‹</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.spacer} />
+        <View style={styles.progressWrap}>
+          <ProgressBar current={1} total={8} />
+        </View>
 
-      <View style={styles.bottom}>
-        <PrimaryButton
-          label="Next →"
-          disabled={name.trim().length === 0}
-          onPress={async () => {
-            await setUserName(name.trim());
-            router.push('/(onboarding)/quiz-age');
-          }}
+        <Text style={styles.stepLabel}>STEP 1 OF 8</Text>
+        <Text style={styles.headline}>{"What's your\nname?"}</Text>
+        <Text style={styles.subtext}>
+          This will be used to personalise your experience.
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Your first name"
+          placeholderTextColor={Colors.textMuted}
+          autoFocus
+          returnKeyType="done"
+          onChangeText={setName}
+          value={name}
+          selectionColor={Colors.primary}
         />
-      </View>
+
+        <Pressable
+          style={styles.skipWrap}
+          onPress={() => router.push('/(onboarding)/quiz-age')}
+          hitSlop={8}
+        >
+          <Text style={styles.skipText}>Skip this step</Text>
+        </Pressable>
+
+        <View style={styles.spacer} />
+
+        <View style={styles.bottom}>
+          <PrimaryButton
+            label="Next →"
+            disabled={name.trim().length === 0}
+            onPress={async () => {
+              await setUserName(name.trim());
+              router.push('/(onboarding)/quiz-age');
+            }}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </SafeScreen>
   );
 }

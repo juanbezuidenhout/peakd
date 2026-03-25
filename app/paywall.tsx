@@ -1,490 +1,225 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   Pressable,
   ScrollView,
   StyleSheet,
-  Dimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   Linking,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
-import { SafeScreen } from '@/components/layout/SafeScreen';
+import Animated, {
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { Colors } from '@/constants/colors';
-import { getItem, KEYS } from '@/lib/storage';
-import { AnalysisResult } from '@/lib/openai';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SLIDE_WIDTH = SCREEN_WIDTH - 40;
-
-const PLANS = [
+const TESTIMONIALS = [
   {
-    id: 'weekly',
-    label: 'Weekly',
-    price: '$4.99/week',
-    badge: null,
+    initial: 'M',
+    name: 'Mia K.',
+    handle: '@miakristine',
+    title: 'Insane glow-up in 3 months',
+    body: 'Easily the best investment I\u2019ve made in myself. My skin is glowing, my features look more defined, and I get compliments every single day. Peakd actually knows what they\u2019re doing.',
   },
   {
-    id: 'yearly',
-    label: 'Yearly',
-    price: '$29.99/year',
-    badge: 'Save 88%',
+    initial: 'S',
+    name: 'Sofia R.',
+    handle: '@sofiarose',
+    title: 'Worth every penny',
+    body: 'I was skeptical at first but the personalised plan changed everything. My confidence is through the roof and my friends keep asking what I\u2019ve been doing differently.',
   },
-] as const;
+  {
+    initial: 'J',
+    name: 'Jasmine T.',
+    handle: '@jasminet_',
+    title: 'Finally found what works',
+    body: 'I\u2019ve tried so many beauty apps but Peakd is the only one that actually gave me a plan I could stick to. The AI coach is like having a personal beauty consultant.',
+  },
+];
 
-function ScoreGrid({ result }: { result: AnalysisResult | null }) {
-  const items = [
-    { label: 'Face Shape', value: result?.face_shape ?? '—' },
-    { label: 'Eye Type', value: result?.eye_type ?? '—' },
-    { label: 'Color Season', value: result?.color_season ?? '—' },
-    { label: 'Skin Tone', value: result?.skin_tone ?? '—' },
-    {
-      label: 'Top Feature',
-      value: result?.top_features?.[0] ?? '—',
-    },
-    { label: 'Archetype', value: result?.archetype ?? '—' },
-  ];
-
-  return (
-    <View style={slideStyles.grid}>
-      {items.map((item) => (
-        <View key={item.label} style={slideStyles.gridCard}>
-          <Text style={slideStyles.gridLabel}>{item.label}</Text>
-          <Text style={slideStyles.gridValue} numberOfLines={2}>
-            {item.value}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function DailyPlanSlide({ result }: { result: AnalysisResult | null }) {
-  const tasks = result?.daily_tasks?.slice(0, 3) ?? [
-    { id: '1', title: 'Morning skincare routine', category: 'skincare' },
-    { id: '2', title: 'Brow shaping guide', category: 'makeup' },
-    { id: '3', title: 'Hydration tracking', category: 'lifestyle' },
-  ];
-
-  const categoryColors: Record<string, string> = {
-    skincare: Colors.accent,
-    makeup: Colors.primaryLight,
-    hair: Colors.gold,
-    lifestyle: Colors.success,
-  };
-
-  return (
-    <View style={slideStyles.slideContent}>
-      {tasks.map((task) => (
-        <View key={task.id} style={slideStyles.taskCard}>
-          <Text style={slideStyles.taskTitle}>{task.title}</Text>
-          <View
-            style={[
-              slideStyles.categoryBadge,
-              {
-                backgroundColor:
-                  (categoryColors[task.category] ?? Colors.accent) + '22',
-              },
-            ]}
-          >
-            <Text
-              style={[
-                slideStyles.categoryText,
-                {
-                  color: categoryColors[task.category] ?? Colors.accent,
-                },
-              ]}
-            >
-              {task.category}
-            </Text>
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function SkinGuideSlide() {
-  const tips = [
-    { icon: '🧴', text: 'Personalized skincare routine' },
-    { icon: '💄', text: 'Color-matched makeup palette' },
-    { icon: '💡', text: 'Archetype-specific style tips' },
-  ];
-
-  return (
-    <View style={slideStyles.slideContent}>
-      {tips.map((tip) => (
-        <View key={tip.text} style={slideStyles.tipRow}>
-          <Text style={slideStyles.tipIcon}>{tip.icon}</Text>
-          <Text style={slideStyles.tipText}>{tip.text}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function GlowUpTrackerSlide() {
-  return (
-    <View style={slideStyles.slideContent}>
-      <View style={slideStyles.trackerMockup}>
-        <View style={slideStyles.trackerSide}>
-          <Text style={slideStyles.trackerLabel}>Before</Text>
-          <View style={slideStyles.trackerBox}>
-            <Text style={slideStyles.trackerIcon}>📸</Text>
-          </View>
-        </View>
-        <View style={slideStyles.trackerDivider} />
-        <View style={slideStyles.trackerSide}>
-          <Text style={slideStyles.trackerLabel}>After</Text>
-          <View style={[slideStyles.trackerBox, slideStyles.trackerBoxGlow]}>
-            <Text style={slideStyles.trackerIcon}>✨</Text>
-          </View>
-        </View>
-      </View>
-      <Text style={slideStyles.trackerCaption}>
-        Track your glow-up journey over time
-      </Text>
-    </View>
-  );
-}
-
-function DotIndicator({ count, active }: { count: number; active: number }) {
-  return (
-    <View style={dotStyles.row}>
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={[dotStyles.dot, i === active && dotStyles.dotActive]}
-        />
-      ))}
-    </View>
-  );
-}
+const FEATURES = [
+  'Full Facial Analysis & Glow Score',
+  'Your Personal Beauty Archetype',
+  'Personalised 30-Day Glow-Up Plan',
+  'AI Beauty Coach (Unlimited)',
+  'Weekly Progress Tracking',
+];
 
 export default function PaywallScreen() {
-  const router = useRouter();
-  const scrollRef = useRef<ScrollView>(null);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [selectedPlan, setSelectedPlan] = useState<string>('weekly');
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'weekly'>('yearly');
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  useEffect(() => {
-    (async () => {
-      const scanResult = await getItem<AnalysisResult>(KEYS.SCAN_RESULT);
-      if (scanResult) setResult(scanResult);
-      setLoading(false);
-    })();
-  }, []);
+  const yearlyBorderColor = useSharedValue(1);
+  const weeklyBorderColor = useSharedValue(0);
 
-  if (loading) {
-    return (
-      <View style={styles.root}>
-        <ScreenLoader />
-      </View>
-    );
-  }
-
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const page = Math.round(e.nativeEvent.contentOffset.x / SLIDE_WIDTH);
-    setActiveSlide(page);
+  const selectPlan = (plan: 'yearly' | 'weekly') => {
+    setSelectedPlan(plan);
+    yearlyBorderColor.value = withTiming(plan === 'yearly' ? 1 : 0, { duration: 250 });
+    weeklyBorderColor.value = withTiming(plan === 'weekly' ? 1 : 0, { duration: 250 });
   };
 
-  const handlePurchase = () => {
-    // TODO: RevenueCat integration
-    router.back();
-  };
+  const yearlyBorderStyle = useAnimatedStyle(() => ({
+    borderColor:
+      yearlyBorderColor.value === 1
+        ? Colors.primary
+        : Colors.border,
+  }));
 
-  const SLIDES = [
-    { title: 'Your Scores', key: 'scores' },
-    { title: 'Your 30-Day Plan', key: 'plan' },
-    { title: 'Skin & Makeup Guide', key: 'guide' },
-    { title: 'Glow-Up Tracker', key: 'tracker' },
-  ];
+  const weeklyBorderStyle = useAnimatedStyle(() => ({
+    borderColor:
+      weeklyBorderColor.value === 1
+        ? Colors.primary
+        : Colors.border,
+  }));
+
+  const testimonial = TESTIMONIALS[activeTestimonial];
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#0A0A0F', Colors.background]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <SafeScreen>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 1 — Top section */}
+        <Animated.View
+          entering={FadeInUp.duration(500)}
+          style={styles.topSection}
         >
-          {/* Close button */}
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.closeButton}
-            hitSlop={16}
-          >
-            <Text style={styles.closeIcon}>✕</Text>
-          </Pressable>
+          <View style={styles.logoMark}>
+            <Text style={styles.logoLetter}>P</Text>
+          </View>
+          <View style={styles.brandRow}>
+            <Text style={styles.brandName}>peakd</Text>
+            <Text style={styles.brandPro}> Pro</Text>
+          </View>
+          <Text style={styles.stat}>50,000+ beauty analyses completed</Text>
+          <Text style={styles.stat}>Ascend into the top 20% in 90 days</Text>
+        </Animated.View>
 
-          {/* Header */}
-          <Animated.View
-            entering={FadeInUp.duration(500)}
-            style={styles.header}
-          >
-            <Text style={styles.title}>GLOW UP</Text>
-            <Text style={styles.subtitle}>
-              Your personalized beauty blueprint, unlocked.
-            </Text>
-          </Animated.View>
-
-          {/* Carousel */}
-          <Animated.View
-            entering={FadeInUp.delay(200).duration(500)}
-            style={styles.carouselSection}
-          >
-            <ScrollView
-              ref={scrollRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={handleScroll}
-              decelerationRate="fast"
-              snapToInterval={SLIDE_WIDTH}
-              contentContainerStyle={styles.carouselContent}
-            >
-              {SLIDES.map((slide) => (
-                <View
-                  key={slide.key}
-                  style={[styles.slide, { width: SLIDE_WIDTH }]}
-                >
-                  <Text style={styles.slideTitle}>{slide.title}</Text>
-                  {slide.key === 'scores' && <ScoreGrid result={result} />}
-                  {slide.key === 'plan' && <DailyPlanSlide result={result} />}
-                  {slide.key === 'guide' && <SkinGuideSlide />}
-                  {slide.key === 'tracker' && <GlowUpTrackerSlide />}
-                </View>
-              ))}
-            </ScrollView>
-            <DotIndicator count={SLIDES.length} active={activeSlide} />
-          </Animated.View>
-
-          {/* Pricing */}
-          <Animated.View
-            entering={FadeInUp.delay(400).duration(500)}
-            style={styles.pricingSection}
-          >
-            <Text style={styles.scanCount}>500,000 scans completed</Text>
-
-            <View style={styles.planOptions}>
-              {PLANS.map((plan) => (
-                <Pressable
-                  key={plan.id}
-                  onPress={() => setSelectedPlan(plan.id)}
-                  style={[
-                    styles.planPill,
-                    selectedPlan === plan.id && styles.planPillSelected,
-                  ]}
-                >
-                  <View style={styles.planRow}>
-                    <Text
-                      style={[
-                        styles.planLabel,
-                        selectedPlan === plan.id && styles.planLabelSelected,
-                      ]}
-                    >
-                      {plan.label}
-                    </Text>
-                    {plan.badge && (
-                      <View style={styles.saveBadge}>
-                        <Text style={styles.saveBadgeText}>{plan.badge}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text
+        {/* 2 — Testimonial card */}
+        <Animated.View
+          entering={FadeInUp.delay(100).duration(500)}
+          style={styles.testimonialWrapper}
+        >
+          <View style={styles.testimonialCard}>
+            <View style={styles.testimonialHeader}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarInitial}>{testimonial.initial}</Text>
+              </View>
+              <View style={styles.testimonialMeta}>
+                <Text style={styles.testimonialName}>{testimonial.name}</Text>
+                <Text style={styles.testimonialHandle}>{testimonial.handle}</Text>
+              </View>
+            </View>
+            <Text style={styles.stars}>★★★★★</Text>
+            <Text style={styles.testimonialTitle}>{testimonial.title}</Text>
+            <Text style={styles.testimonialBody}>{testimonial.body}</Text>
+            <View style={styles.dotRow}>
+              {TESTIMONIALS.map((_, i) => (
+                <Pressable key={i} onPress={() => setActiveTestimonial(i)}>
+                  <View
                     style={[
-                      styles.planPrice,
-                      selectedPlan === plan.id && styles.planPriceSelected,
+                      styles.dot,
+                      i === activeTestimonial && styles.dotActive,
                     ]}
-                  >
-                    {plan.price}
-                  </Text>
+                  />
                 </Pressable>
               ))}
             </View>
+          </View>
+        </Animated.View>
 
-            <PrimaryButton label="Unlock Now 🙌" onPress={handlePurchase} />
+        {/* 3 — Feature checklist */}
+        <Animated.View
+          entering={FadeInUp.delay(200).duration(500)}
+          style={styles.featureSection}
+        >
+          <Text style={styles.featureSectionTitle}>Everything included</Text>
+          {FEATURES.map((feature) => (
+            <View key={feature} style={styles.featureRow}>
+              <View style={styles.checkCircle}>
+                <Text style={styles.checkMark}>✓</Text>
+              </View>
+              <Text style={styles.featureText}>{feature}</Text>
+              <Text style={styles.chevron}>›</Text>
+            </View>
+          ))}
+        </Animated.View>
 
-            <Text style={styles.priceNote}>
-              {selectedPlan === 'weekly'
-                ? '$4.99/week · Cancel anytime'
-                : '$29.99/year · Cancel anytime'}
-            </Text>
-          </Animated.View>
+        {/* 4 — Pricing cards */}
+        <Animated.View
+          entering={FadeInUp.delay(300).duration(500).springify().damping(18)}
+          style={styles.pricingSection}
+        >
+          <View style={styles.pricingRow}>
+            {/* Yearly */}
+            <Pressable style={{ flex: 1 }} onPress={() => selectPlan('yearly')}>
+              <Animated.View style={[styles.pricingCard, yearlyBorderStyle]}>
+                <View style={styles.mostPopularBadge}>
+                  <Text style={styles.mostPopularText}>MOST POPULAR</Text>
+                </View>
+                {selectedPlan === 'yearly' && (
+                  <View style={styles.selectedCheck}>
+                    <Text style={styles.selectedCheckMark}>✓</Text>
+                  </View>
+                )}
+                <Text style={styles.planTier}>YEARLY</Text>
+                <Text style={styles.planPrice}>$29.99</Text>
+                <View style={styles.perUnitBadge}>
+                  <Text style={styles.perUnitText}>$2.50/month</Text>
+                </View>
+                <Text style={styles.billedText}>Billed yearly</Text>
+              </Animated.View>
+            </Pressable>
 
-          {/* Footer links */}
-          <Animated.View
-            entering={FadeIn.delay(600).duration(400)}
-            style={styles.footer}
-          >
-            <Pressable
-              onPress={() => Linking.openURL('https://peakd.app/terms')}
-            >
-              <Text style={styles.footerLink}>Terms of Use</Text>
+            {/* Weekly */}
+            <Pressable style={{ flex: 1 }} onPress={() => selectPlan('weekly')}>
+              <Animated.View style={[styles.pricingCard, weeklyBorderStyle]}>
+                {selectedPlan === 'weekly' && (
+                  <View style={styles.selectedCheck}>
+                    <Text style={styles.selectedCheckMark}>✓</Text>
+                  </View>
+                )}
+                <Text style={styles.planTier}>WEEKLY</Text>
+                <Text style={styles.planPrice}>$4.99</Text>
+                <View style={styles.perUnitBadge}>
+                  <Text style={styles.perUnitText}>$4.99/week</Text>
+                </View>
+                <Text style={styles.billedText}>Billed weekly</Text>
+              </Animated.View>
             </Pressable>
-            <Text style={styles.footerDivider}>|</Text>
-            <Pressable onPress={handlePurchase}>
-              <Text style={styles.footerLink}>Restore Purchase</Text>
-            </Pressable>
-            <Text style={styles.footerDivider}>|</Text>
-            <Pressable
-              onPress={() => Linking.openURL('https://peakd.app/privacy')}
-            >
-              <Text style={styles.footerLink}>Privacy Policy</Text>
-            </Pressable>
-          </Animated.View>
-        </ScrollView>
-      </SafeScreen>
+          </View>
+        </Animated.View>
+      </ScrollView>
+
+      {/* 5 — Sticky bottom */}
+      <View style={styles.stickyBottom}>
+        <PrimaryButton
+          label="Unlock My Glow-Up →"
+          onPress={() => {
+            // TODO: wire RevenueCat here
+            console.log('Purchase:', selectedPlan);
+          }}
+        />
+        <Text style={styles.cancelNote}>No commitment. Cancel anytime.</Text>
+        <View style={styles.footerRow}>
+          <Pressable onPress={() => Linking.openURL('https://peakd.app/privacy')}>
+            <Text style={styles.footerLink}>Privacy Policy</Text>
+          </Pressable>
+          <Pressable onPress={() => console.log('Restore purchases')}>
+            <Text style={styles.footerLink}>Restore Purchases</Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL('https://peakd.app/terms')}>
+            <Text style={styles.footerLink}>Terms of Service</Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
-
-const slideStyles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
-  },
-  gridCard: {
-    width: '47%' as any,
-    flexGrow: 1,
-    flexBasis: '45%',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 14,
-    padding: 14,
-  },
-  gridLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  gridValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  slideContent: {
-    marginTop: 12,
-    gap: 10,
-  },
-  taskCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  taskTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    flex: 1,
-    marginRight: 10,
-  },
-  categoryBadge: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  categoryText: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  tipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 14,
-    padding: 16,
-  },
-  tipIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  tipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-  },
-  trackerMockup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 8,
-  },
-  trackerSide: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  trackerLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  trackerBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trackerBoxGlow: {
-    borderWidth: 1,
-    borderColor: Colors.accent,
-  },
-  trackerIcon: {
-    fontSize: 28,
-  },
-  trackerDivider: {
-    width: 2,
-    height: 60,
-    backgroundColor: Colors.border,
-    borderRadius: 1,
-  },
-  trackerCaption: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 16,
-  },
-});
-
-const dotStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.border,
-  },
-  dotActive: {
-    backgroundColor: Colors.primary,
-    width: 20,
-  },
-});
 
 const styles = StyleSheet.create({
   root: {
@@ -492,128 +227,277 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 160,
   },
-  closeButton: {
-    alignSelf: 'flex-start',
-    padding: 4,
-    marginTop: 4,
-  },
-  closeIcon: {
-    fontSize: 18,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  header: {
+
+  // 1 — Top
+  topSection: {
+    paddingTop: 48,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    marginTop: 8,
   },
-  title: {
-    fontSize: 40,
+  logoMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoLetter: {
+    fontSize: 24,
     fontWeight: '800',
-    fontStyle: 'italic',
-    color: Colors.textPrimary,
-    textAlign: 'center',
+    color: '#FFFFFF',
   },
-  subtitle: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  carouselSection: {
-    marginTop: 28,
-  },
-  carouselContent: {
-    paddingRight: 0,
-  },
-  slide: {
-    paddingHorizontal: 0,
-  },
-  slideTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  pricingSection: {
-    marginTop: 28,
-    alignItems: 'center',
-  },
-  scanCount: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginBottom: 16,
-  },
-  planOptions: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 20,
-  },
-  planPill: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  brandName: {
+    fontWeight: '800',
+    fontSize: 22,
+    color: Colors.textPrimary,
+  },
+  brandPro: {
+    fontWeight: '800',
+    fontSize: 22,
+    color: Colors.primary,
+  },
+  stat: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 6,
+  },
+
+  // 2 — Testimonial
+  testimonialWrapper: {
+    marginHorizontal: 24,
+    marginTop: 24,
+  },
+  testimonialCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  testimonialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  testimonialMeta: {
+    marginLeft: 12,
+  },
+  testimonialName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  testimonialHandle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  stars: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginTop: 8,
+  },
+  testimonialTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: 8,
+  },
+  testimonialBody: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  dotRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.border,
+  },
+  dotActive: {
+    width: 20,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
+  },
+
+  // 3 — Features
+  featureSection: {
+    marginHorizontal: 24,
+    marginTop: 28,
+  },
+  featureSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  featureText: {
+    fontSize: 15,
+    color: Colors.textPrimary,
+    flex: 1,
+    marginLeft: 14,
+  },
+  chevron: {
+    fontSize: 18,
+    color: Colors.textMuted,
+  },
+
+  // 4 — Pricing
+  pricingSection: {
+    marginHorizontal: 24,
+    marginTop: 28,
+  },
+  pricingRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  pricingCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: Colors.border,
-    padding: 16,
-    backgroundColor: Colors.surface,
+    padding: 20,
+    position: 'relative',
   },
-  planPillSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '0D',
+  mostPopularBadge: {
+    position: 'absolute',
+    top: -12,
+    right: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 100,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  planRow: {
-    flexDirection: 'row',
+  mostPopularText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  selectedCheck: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  planLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+  selectedCheckMark: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  planTier: {
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.textSecondary,
-  },
-  planLabelSelected: {
-    color: Colors.textPrimary,
+    letterSpacing: 1,
   },
   planPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textSecondary,
+    fontSize: 28,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginTop: 4,
   },
-  planPriceSelected: {
-    color: Colors.primary,
-  },
-  saveBadge: {
-    backgroundColor: Colors.success + '22',
-    borderRadius: 8,
+  perUnitBadge: {
+    backgroundColor: 'rgba(124,58,237,0.15)',
+    borderRadius: 100,
     paddingHorizontal: 8,
     paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginTop: 6,
   },
-  saveBadgeText: {
+  perUnitText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: Colors.success,
+    fontWeight: '600',
+    color: Colors.accent,
   },
-  priceNote: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 24,
-  },
-  footerLink: {
+  billedText: {
     fontSize: 11,
     color: Colors.textMuted,
+    marginTop: 6,
   },
-  footerDivider: {
+
+  // 5 — Sticky bottom
+  stickyBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 16,
+  },
+  cancelNote: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 12,
+  },
+  footerLink: {
     fontSize: 11,
     color: Colors.textMuted,
   },

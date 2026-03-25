@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, {
   FadeInUp,
@@ -52,6 +52,12 @@ export default function ScanPromptScreen() {
 
   return (
     <SafeScreen>
+      <View style={styles.backRow}>
+        <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Text style={styles.backChevron}>‹</Text>
+        </Pressable>
+      </View>
+
       <View style={{ paddingTop: 20 }}>
         <ProgressBar current={5} total={5} />
       </View>
@@ -92,6 +98,16 @@ export default function ScanPromptScreen() {
 }
 
 const styles = StyleSheet.create({
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  backChevron: {
+    fontSize: 28,
+    color: Colors.textSecondary,
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
