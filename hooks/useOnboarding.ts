@@ -5,6 +5,16 @@ import {
   getUserGoal,
   setUserGoal,
   setReferralCode,
+  getUserName,
+  setUserName as storeUserName,
+  getUserAge,
+  setUserAge as storeUserAge,
+  getUserWeight,
+  setUserWeight as storeUserWeight,
+  getUserGlowLevel,
+  setUserGlowLevel as storeUserGlowLevel,
+  getUserAesthetic,
+  setUserAesthetic as storeUserAesthetic,
 } from "@/lib/storage";
 
 type OnboardingStep = "splash" | "goal" | "social-proof" | "referral" | "auth";
@@ -21,16 +31,32 @@ export function useOnboarding() {
   const [isComplete, setIsComplete] = useState<boolean | null>(null);
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("splash");
   const [goal, setGoal] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
+  const [age, setAge] = useState<string | null>(null);
+  const [weight, setWeight] = useState<string | null>(null);
+  const [glowLevel, setGlowLevel] = useState<string | null>(null);
+  const [aesthetic, setAesthetic] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [complete, savedGoal] = await Promise.all([
-        isOnboardingComplete(),
-        getUserGoal(),
-      ]);
+      const [complete, savedGoal, savedName, savedAge, savedWeight, savedGlow, savedAesthetic] =
+        await Promise.all([
+          isOnboardingComplete(),
+          getUserGoal(),
+          getUserName(),
+          getUserAge(),
+          getUserWeight(),
+          getUserGlowLevel(),
+          getUserAesthetic(),
+        ]);
       setIsComplete(complete);
       setGoal(savedGoal);
+      setName(savedName);
+      setAge(savedAge);
+      setWeight(savedWeight);
+      setGlowLevel(savedGlow);
+      setAesthetic(savedAesthetic);
       setIsLoading(false);
     })();
   }, []);
@@ -53,6 +79,31 @@ export function useOnboarding() {
     }
   }, []);
 
+  const updateName = useCallback(async (value: string) => {
+    await storeUserName(value);
+    setName(value);
+  }, []);
+
+  const updateAge = useCallback(async (value: string) => {
+    await storeUserAge(value);
+    setAge(value);
+  }, []);
+
+  const updateWeight = useCallback(async (value: string) => {
+    await storeUserWeight(value);
+    setWeight(value);
+  }, []);
+
+  const updateGlowLevel = useCallback(async (value: string) => {
+    await storeUserGlowLevel(value);
+    setGlowLevel(value);
+  }, []);
+
+  const updateAesthetic = useCallback(async (value: string) => {
+    await storeUserAesthetic(value);
+    setAesthetic(value);
+  }, []);
+
   const finishOnboarding = useCallback(async () => {
     await completeOnboarding();
     setIsComplete(true);
@@ -63,9 +114,19 @@ export function useOnboarding() {
     isLoading,
     currentStep,
     goal,
+    name,
+    age,
+    weight,
+    glowLevel,
+    aesthetic,
     nextStep,
     selectGoal,
     submitReferral,
+    updateName,
+    updateAge,
+    updateWeight,
+    updateGlowLevel,
+    updateAesthetic,
     finishOnboarding,
   };
 }

@@ -10,6 +10,11 @@ const KEYS = {
   AUTH_TOKEN: "peakd_auth_token",
   DAILY_STREAK: "peakd_daily_streak",
   IS_PRO: "peakd_is_pro",
+  USER_NAME: "peakd_user_name",
+  USER_AGE: "peakd_user_age",
+  USER_WEIGHT: "peakd_user_weight",
+  USER_GLOW_LEVEL: "peakd_user_glow_level",
+  USER_AESTHETIC: "peakd_user_aesthetic",
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {
@@ -60,6 +65,48 @@ export async function setReferralCode(code: string): Promise<void> {
 
 export async function getReferralCode(): Promise<string | null> {
   return getItem<string>(KEYS.REFERRAL_CODE);
+}
+
+// --- Quiz profile data ---
+
+export async function getUserName(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_NAME);
+}
+
+export async function setUserName(name: string): Promise<void> {
+  await setItem(KEYS.USER_NAME, name);
+}
+
+export async function getUserAge(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_AGE);
+}
+
+export async function setUserAge(age: string): Promise<void> {
+  await setItem(KEYS.USER_AGE, age);
+}
+
+export async function getUserWeight(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_WEIGHT);
+}
+
+export async function setUserWeight(weight: string): Promise<void> {
+  await setItem(KEYS.USER_WEIGHT, weight);
+}
+
+export async function getUserGlowLevel(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_GLOW_LEVEL);
+}
+
+export async function setUserGlowLevel(level: string): Promise<void> {
+  await setItem(KEYS.USER_GLOW_LEVEL, level);
+}
+
+export async function getUserAesthetic(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_AESTHETIC);
+}
+
+export async function setUserAesthetic(aesthetic: string): Promise<void> {
+  await setItem(KEYS.USER_AESTHETIC, aesthetic);
 }
 
 // --- Daily Tasks ---

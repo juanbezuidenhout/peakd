@@ -9,6 +9,7 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Colors } from '@/constants/colors';
@@ -82,7 +83,7 @@ export function PrimaryButton({
       opacity.value = withTiming(1, { duration: 150 });
     })
     .onEnd(() => {
-      onPress();
+      runOnJS(onPress)();
     });
 
   return (

@@ -2,6 +2,7 @@ import "../global.css";
 import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isOnboardingComplete } from "@/lib/storage";
 import { useRouter } from "expo-router";
 import { ScreenLoader } from "@/components/ui/WaveformLoader";
@@ -23,7 +24,7 @@ export default function RootLayout() {
   if (!ready) return <ScreenLoader />;
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
         <Stack.Screen name="(onboarding)" />
@@ -41,6 +42,6 @@ export default function RootLayout() {
           options={{ animation: "slide_from_bottom", presentation: "modal" }}
         />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }
