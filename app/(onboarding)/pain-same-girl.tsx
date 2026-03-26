@@ -208,7 +208,7 @@ export default function PainSameGirlScreen() {
 
   const handleNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/quiz-name');
+    router.push('/(onboarding)/pain-same-energy');
   }, [router]);
 
   return (
