@@ -253,10 +253,12 @@ export default function PainSameGirlScreen() {
                 <View key={i} style={styles.dashSegment} />
               ))}
             </Animated.View>
-            <Animated.View style={[styles.sameLabelWrap, sameLabelStyle]}>
-              <Text style={styles.sameLabel}>Same girl.</Text>
-            </Animated.View>
           </View>
+
+          {/* "Same girl." label — absolutely positioned over the divider */}
+          <Animated.View style={[styles.sameLabelWrap, sameLabelStyle]}>
+            <Text style={styles.sameLabel}>Same girl.</Text>
+          </Animated.View>
 
           {/* RIGHT — After (soft-maxxed) */}
           <View style={styles.halfColumn}>
@@ -333,6 +335,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 24,
     alignItems: 'flex-start',
+    position: 'relative',
   },
   halfColumn: {
     flex: 1,
@@ -446,15 +449,21 @@ const styles = StyleSheet.create({
   sameLabelWrap: {
     position: 'absolute',
     top: '45%',
-    backgroundColor: Colors.background,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
   },
   sameLabel: {
-    fontSize: 10,
+    backgroundColor: '#0A0A0A',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    fontSize: 12.5,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: '#888888',
     letterSpacing: 1,
+    textAlign: 'center',
+    minWidth: 120,
   },
 
   subheadlineWrap: {
