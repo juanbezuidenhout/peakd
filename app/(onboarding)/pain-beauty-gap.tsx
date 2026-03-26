@@ -165,7 +165,7 @@ export default function PainBeautyGapScreen() {
 
   const handleNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/quiz-name');
+    router.push('/(onboarding)/pain-typewriter');
   }, [router]);
 
   return (
