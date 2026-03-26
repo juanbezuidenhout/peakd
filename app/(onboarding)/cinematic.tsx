@@ -463,7 +463,7 @@ export default function CinematicScreen() {
           style={styles.ctaButton}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push('/(onboarding)/quiz-name');
+            router.push('/(onboarding)/pain-glow-effect');
           }}
         >
           <Text style={styles.ctaLabel}>Next</Text>
