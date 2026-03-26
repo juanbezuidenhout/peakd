@@ -1,94 +1,206 @@
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withRepeat,
+  withSequence,
   Easing,
+  interpolate,
 } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
-import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { SafeScreen } from '@/components/layout/SafeScreen';
+
+const BARS = [
+  { label: 'Face', pct: 38, type: 'accent' },
+  { label: 'Body', pct: 27, type: 'white' },
+  { label: 'Hair & Style', pct: 16, type: 'grey' },
+  { label: 'Confidence', pct: 12, type: 'grey' },
+  { label: 'Personality', pct: 7, type: 'grey' },
+] as const;
+
+type BarType = (typeof BARS)[number]['type'];
+
+const BAR_ANIM_DURATION = 800;
+const BAR_STAGGER = 150;
+const TOTAL_BAR_ANIM = (BARS.length - 1) * BAR_STAGGER + BAR_ANIM_DURATION;
+
+function AccentBarFill({
+  progress,
+  glowPulse,
+}: {
+  progress: Animated.SharedValue<number>;
+  glowPulse: Animated.SharedValue<number>;
+}) {
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value}%`,
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(glowPulse.value, [0, 1], [0.4, 0.8]),
+    shadowRadius: interpolate(glowPulse.value, [0, 1], [8, 18]),
+  }));
+
+  return (
+    <Animated.View style={[styles.accentGlowWrap, fillStyle, glowStyle]}>
+      <LinearGradient
+        colors={['#06B6D4', '#22D3EE']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.barFillInner}
+      />
+    </Animated.View>
+  );
+}
+
+function BarRow({
+  label,
+  pct,
+  type,
+  progress,
+  glowPulse,
+}: {
+  label: string;
+  pct: number;
+  type: BarType;
+  progress: Animated.SharedValue<number>;
+  glowPulse: Animated.SharedValue<number>;
+}) {
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value}%`,
+  }));
+
+  const isAccent = type === 'accent';
+  const barColor = type === 'white' ? '#FFFFFF' : '#555555';
+
+  return (
+    <View style={styles.barRow}>
+      <Text style={styles.barLabel}>{label}</Text>
+      <View style={styles.barTrack}>
+        {isAccent ? (
+          <AccentBarFill progress={progress} glowPulse={glowPulse} />
+        ) : (
+          <Animated.View
+            style={[styles.barFill, { backgroundColor: barColor }, fillStyle]}
+          />
+        )}
+      </View>
+      <Text
+        style={[
+          styles.barPct,
+          { color: isAccent ? '#22D3EE' : '#FFFFFF' },
+        ]}
+      >
+        {pct}%
+      </Text>
+    </View>
+  );
+}
 
 export default function PainHaloScreen() {
   const router = useRouter();
 
-  const scaleLeft = useSharedValue(0.7);
-  const scaleRight = useSharedValue(0.7);
+  const progresses = BARS.map(() => useSharedValue(0));
+  const glowPulse = useSharedValue(0);
+  const cardOpacity = useSharedValue(0);
 
   useEffect(() => {
-    scaleLeft.value = withTiming(1, {
-      duration: 500,
-      easing: Easing.out(Easing.cubic),
+    BARS.forEach((bar, i) => {
+      progresses[i].value = withDelay(
+        i * BAR_STAGGER,
+        withTiming(bar.pct, {
+          duration: BAR_ANIM_DURATION,
+          easing: Easing.out(Easing.cubic),
+        }),
+      );
     });
-    scaleRight.value = withDelay(
-      150,
-      withTiming(1, {
-        duration: 500,
-        easing: Easing.out(Easing.cubic),
-      }),
+
+    glowPulse.value = withDelay(
+      BAR_ANIM_DURATION,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        true,
+      ),
+    );
+
+    cardOpacity.value = withDelay(
+      TOTAL_BAR_ANIM + 100,
+      withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) }),
     );
   }, []);
 
-  const leftStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleLeft.value }],
-  }));
-
-  const rightStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleRight.value }],
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
   }));
 
   return (
     <SafeScreen>
-      <Pressable onPress={() => router.back()} style={styles.backBtn}>
-        <Text style={styles.backChevron}>‹</Text>
-      </Pressable>
+      <View style={styles.container}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backChevron}>‹</Text>
+        </Pressable>
 
-      <Text style={styles.sectionLabel}>THE SCIENCE</Text>
-      <Text style={styles.headline}>{'THE HALO\nEFFECT'}</Text>
-
-      <Text style={styles.definition}>
-        A cognitive bias where we subconsciously assume someone's positive qualities —
-        intelligence, kindness, success — based on their physical appearance.
-      </Text>
-
-      <View style={styles.illustrationRow}>
-        <View style={styles.circleColumn}>
-          <Animated.View style={[styles.circleLeft, leftStyle]}>
-            <Text style={styles.circleEmoji}>✨</Text>
-          </Animated.View>
-          <Text style={styles.labelLeft}>Attractive</Text>
+        <View style={styles.headlineWrap}>
+          <Text style={styles.headline}>
+            {'WHAT MEN NOTICE\nFIRST'}
+          </Text>
         </View>
 
-        <View style={styles.circleColumn}>
-          <Animated.View style={[styles.circleRight, rightStyle]}>
-            <Text style={styles.circleEmoji}>😐</Text>
-          </Animated.View>
-          <Text style={styles.labelRight}>Average</Text>
+        <View style={styles.chartSection}>
+          {BARS.map((bar, i) => (
+            <BarRow
+              key={bar.label}
+              label={bar.label}
+              pct={bar.pct}
+              type={bar.type}
+              progress={progresses[i]}
+              glowPulse={glowPulse}
+            />
+          ))}
         </View>
-      </View>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>You Are Judged Before You Speak</Text>
-        <Text style={styles.infoBody}>
-          The Halo Effect means attractive women are consistently rated as more intelligent, more
-          competent, and more trustworthy — before they say a single word. This is the gap Peakd
-          helps you close.
+        <Text style={styles.sourceText}>
+          Source: Social Perception Research, 2023
         </Text>
-      </View>
 
-      <View style={{ flex: 1 }} />
+        <Animated.View style={[styles.infoCard, cardAnimStyle]}>
+          <Text style={styles.infoTitle}>The First 7 Seconds</Text>
+          <Text style={styles.infoBody}>
+            Before you speak, before your personality shows, his brain has
+            already decided. Your face is doing the talking — and right now, you
+            don't know what it's saying.
+          </Text>
+        </Animated.View>
 
-      <View style={styles.stickyBottom}>
-        <PrimaryButton label="Next →" onPress={() => router.push('/(onboarding)/pain-chat')} />
+        <View style={{ flex: 1 }} />
+
+        <Pressable
+          style={styles.ctaButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/(onboarding)/pain-chat');
+          }}
+        >
+          <Text style={styles.ctaLabel}>Next</Text>
+        </Pressable>
       </View>
     </SafeScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   backBtn: {
     marginTop: 8,
     alignSelf: 'flex-start',
@@ -97,94 +209,98 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: Colors.textSecondary,
   },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    marginTop: 24,
-    marginBottom: 12,
+  headlineWrap: {
+    paddingTop: '20%',
+    alignItems: 'center',
+    marginBottom: 48,
   },
   headline: {
-    fontSize: 38,
+    fontSize: 28,
     fontWeight: '800',
-    color: Colors.textPrimary,
-    lineHeight: 42,
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  definition: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  illustrationRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 32,
-    marginBottom: 32,
-  },
-  circleColumn: {
-    alignItems: 'center',
-  },
-  circleLeft: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circleRight: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circleEmoji: {
-    fontSize: 32,
-  },
-  labelLeft: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.primary,
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginTop: 8,
+    textTransform: 'uppercase',
+    lineHeight: 36,
   },
-  labelRight: {
-    fontSize: 12,
+  chartSection: {
+    paddingHorizontal: 4,
+  },
+  barRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  barLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    width: 110,
+  },
+  barTrack: {
+    flex: 1,
+    height: 14,
+    backgroundColor: 'transparent',
+    borderRadius: 7,
+    overflow: 'visible',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 7,
+  },
+  barFillInner: {
+    flex: 1,
+    borderRadius: 7,
+  },
+  accentGlowWrap: {
+    height: '100%',
+    borderRadius: 7,
+    shadowColor: '#06B6D4',
+    shadowOffset: { width: 0, height: 0 },
+    overflow: 'hidden',
+    elevation: 10,
+  },
+  barPct: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 12,
+    width: 48,
+    textAlign: 'right',
+  },
+  sourceText: {
+    fontSize: 13,
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
+    marginBottom: 24,
   },
   infoCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: 20,
   },
   infoTitle: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   infoBody: {
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.textSecondary,
     lineHeight: 22,
   },
-  stickyBottom: {
-    paddingBottom: 24,
-    paddingTop: 16,
+  ctaButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  ctaLabel: {
+    color: '#000000',
+    fontSize: 17,
+    fontWeight: '700',
   },
 });
