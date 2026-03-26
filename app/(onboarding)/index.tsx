@@ -35,7 +35,7 @@ export default function HeroScreen() {
     scanY.value = withRepeat(
       withTiming(svgHeight * 0.8, {
         duration: 3000,
-        easing: Easing.inOut(Easing.sine),
+        easing: Easing.inOut(Easing.sin),
       }),
       -1,
       true,
