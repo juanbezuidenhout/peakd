@@ -88,7 +88,7 @@ export default function PainSameEnergyScreen() {
 
   const handleNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/quiz-name');
+    router.push('/(onboarding)/pain-beauty-gap');
   }, [router]);
 
   return (
