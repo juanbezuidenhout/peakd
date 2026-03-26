@@ -6,7 +6,9 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isOnboardingComplete } from "@/lib/storage";
 import { useRouter } from "expo-router";
-import { ScreenLoader } from "@/components/ui/WaveformLoader";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 LogBox.ignoreLogs([
   "Reanimated",
@@ -33,7 +35,13 @@ export default function RootLayout() {
     })();
   }, []);
 
-  if (!ready) return <ScreenLoader />;
+  useEffect(() => {
+    if (ready) {
+      SplashScreen.hideAsync();
+    }
+  }, [ready]);
+
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
