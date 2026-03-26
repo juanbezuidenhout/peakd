@@ -1,11 +1,23 @@
 import "../global.css";
 import { useEffect, useState } from "react";
+import { LogBox } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isOnboardingComplete } from "@/lib/storage";
 import { useRouter } from "expo-router";
 import { ScreenLoader } from "@/components/ui/WaveformLoader";
+
+LogBox.ignoreLogs([
+  "Reanimated",
+  "Worklet",
+  "[react-native-css]",
+  "NativeWind",
+  "Failed to save",
+  "Failed to remove",
+  "Require cycle",
+  "Non-serializable values were found in the navigation state",
+]);
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
