@@ -1,12 +1,19 @@
 import { useEffect } from 'react';
 import {
-  Dimensions,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Svg, {
+  Rect,
+  Circle,
+  Path,
+  Defs,
+  LinearGradient,
+  Stop,
+} from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -19,52 +26,83 @@ import Animated, {
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const PHONE_W = SCREEN_W * 0.85;
+const ICON_SIZE = 44;
+
+function InstagramIcon({ gradientId = 'igBg' }: { gradientId?: string }) {
+  return (
+    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 44 44">
+      <Defs>
+        <LinearGradient id={gradientId} x1="0.9" y1="0" x2="0.1" y2="1">
+          <Stop offset="0%" stopColor="#515BD4" />
+          <Stop offset="26%" stopColor="#8134AF" />
+          <Stop offset="46%" stopColor="#DD2A7B" />
+          <Stop offset="66%" stopColor="#F58529" />
+          <Stop offset="100%" stopColor="#FEDA77" />
+        </LinearGradient>
+      </Defs>
+      <Rect x={0} y={0} width={44} height={44} rx={10} fill={`url(#${gradientId})`} />
+      <Rect
+        x={10} y={10} width={24} height={24} rx={7}
+        fill="none" stroke="#FFFFFF" strokeWidth={2.2}
+      />
+      <Circle cx={22} cy={22} r={5.5} fill="none" stroke="#FFFFFF" strokeWidth={2.2} />
+      <Circle cx={31.5} cy={12.5} r={1.8} fill="#FFFFFF" />
+    </Svg>
+  );
+}
+
+function HingeIcon() {
+  return (
+    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 44 44">
+      <Rect x={0} y={0} width={44} height={44} rx={10} fill="#FFFFFF" />
+      <Path d="M14 11 V33" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path d="M30 11 V27" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path d="M14 22 H30" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path
+        d="M30 27 C30 31 27 34 23 34"
+        stroke="#333333" strokeWidth={4.5} strokeLinecap="round" fill="none"
+      />
+    </Svg>
+  );
+}
 
 const NOTIFICATIONS = [
   {
-    initials: 'J',
-    avatarColor: '#444444',
-    primary: 'You: Hey! How\'s your week going?',
-    secondary: 'Read 2 days ago',
-    isSecondaryItalic: true,
-    textColor: '#FFFFFF',
+    icon: 'instagram' as const,
+    title: 'james_h',
+    body: "You: Hey! How's your week going?",
+    time: 'Read 2d ago',
+    isReadReceipt: true,
   },
   {
-    initials: '💔',
-    avatarColor: '#444444',
-    primary: 'Alex unmatched with you',
-    secondary: 'Yesterday',
-    isEmoji: true,
-    textColor: '#FFFFFF',
+    icon: 'hinge' as const,
+    title: 'Hinge',
+    body: 'Alex unmatched with you',
+    time: 'Yesterday',
+    isReadReceipt: false,
   },
   {
-    initials: '',
-    avatarColor: 'transparent',
-    primary: 'No new likes this week',
-    secondary: 'Try updating your profile',
-    isCentered: true,
-    isDashed: true,
-    textColor: '#666666',
+    icon: 'instagram' as const,
+    title: 'Instagram',
+    body: 'No new likes this week',
+    time: '3d ago',
+    isReadReceipt: false,
   },
   {
-    initials: 'M',
-    avatarColor: '#444444',
-    primary: 'You: Would love to grab coffee sometime!',
-    secondary: 'Seen',
-    isSecondaryItalic: true,
-    textColor: '#FFFFFF',
+    icon: 'instagram' as const,
+    title: 'mike.c',
+    body: 'You: Would love to grab coffee sometime!',
+    time: 'Seen',
+    isReadReceipt: true,
   },
   {
-    initials: '👤−',
-    avatarColor: '#444444',
-    primary: '-3 followers this week',
-    secondary: 'Today',
-    isEmoji: true,
-    textColor: '#666666',
+    icon: 'instagram' as const,
+    title: 'Instagram',
+    body: '3 followers unfollowed this week',
+    time: 'Today',
+    isReadReceipt: false,
   },
-] as const;
+];
 
 function NotificationItem({
   item,
@@ -73,54 +111,36 @@ function NotificationItem({
   item: (typeof NOTIFICATIONS)[number];
   index: number;
 }) {
-  if (item.isCentered) {
-    return (
-      <Animated.View
-        entering={FadeInUp.delay(800 + index * 400)
-          .duration(500)
-          .easing(Easing.out(Easing.cubic))}
-        style={[styles.notifRow, styles.notifRowDashed]}
-      >
-        <View style={styles.centeredCol}>
-          <Text style={[styles.notifBody, { color: item.textColor, textAlign: 'center' }]}>
-            {item.primary}
-          </Text>
-          <Text style={[styles.notifTime, { textAlign: 'center', marginTop: 2 }]}>
-            {item.secondary}
-          </Text>
-        </View>
-      </Animated.View>
-    );
-  }
-
   return (
     <Animated.View
       entering={FadeInUp.delay(800 + index * 400)
         .duration(500)
         .easing(Easing.out(Easing.cubic))}
-      style={styles.notifRow}
+      style={styles.notifCard}
     >
-      {item.isEmoji ? (
-        <View style={[styles.avatar, { backgroundColor: item.avatarColor }]}>
-          <Text style={styles.avatarEmoji}>{item.initials}</Text>
-        </View>
-      ) : (
-        <View style={[styles.avatar, { backgroundColor: item.avatarColor }]}>
-          <Text style={styles.avatarText}>{item.initials}</Text>
-        </View>
-      )}
-      <View style={styles.notifTextCol}>
-        <Text style={[styles.notifBody, { color: item.textColor }]} numberOfLines={1}>
-          {item.primary}
-        </Text>
-        {item.isSecondaryItalic ? (
-          <Text style={[styles.notifTime, { fontStyle: 'italic' }]}>
-            {item.secondary}
-          </Text>
+      <View style={styles.notifIconWrap}>
+        {item.icon === 'instagram' ? (
+          <InstagramIcon gradientId={`ig_os_${index}`} />
         ) : (
-          <Text style={styles.notifTime}>{item.secondary}</Text>
+          <HingeIcon />
         )}
       </View>
+      <View style={styles.notifTextCol}>
+        <Text style={styles.notifTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={styles.notifBody} numberOfLines={2}>
+          {item.body}
+        </Text>
+      </View>
+      <Text
+        style={[
+          styles.notifTime,
+          item.isReadReceipt && styles.notifTimeItalic,
+        ]}
+      >
+        {item.time}
+      </Text>
     </Animated.View>
   );
 }
@@ -129,8 +149,8 @@ export default function PainOtherSideScreen() {
   const router = useRouter();
 
   const headlineOpacity = useSharedValue(0);
-  const phoneOpacity = useSharedValue(0);
-  const phoneDim = useSharedValue(1);
+  const centreOpacity = useSharedValue(0);
+  const centreDim = useSharedValue(1);
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(16);
   const ctaOpacity = useSharedValue(0);
@@ -141,12 +161,12 @@ export default function PainOtherSideScreen() {
       withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) }),
     );
 
-    phoneOpacity.value = withDelay(
+    centreOpacity.value = withDelay(
       400,
       withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) }),
     );
 
-    phoneDim.value = withDelay(
+    centreDim.value = withDelay(
       3000,
       withTiming(0.85, { duration: 1200, easing: Easing.out(Easing.cubic) }),
     );
@@ -170,8 +190,8 @@ export default function PainOtherSideScreen() {
     opacity: headlineOpacity.value,
   }));
 
-  const phoneStyle = useAnimatedStyle(() => ({
-    opacity: phoneOpacity.value * phoneDim.value,
+  const centreStyle = useAnimatedStyle(() => ({
+    opacity: centreOpacity.value * centreDim.value,
   }));
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -194,9 +214,12 @@ export default function PainOtherSideScreen() {
           <Text style={styles.headline}>THE OTHER SIDE</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.phoneMockup, phoneStyle]}>
-          <View style={styles.phoneHeader}>
-            <Text style={styles.phoneTitle}>Notifications</Text>
+        <Animated.View style={[styles.notifCentre, centreStyle]}>
+          <View style={styles.centreHeader}>
+            <Text style={styles.centreTitle}>Notification Centre</Text>
+            <View style={styles.closeCircle}>
+              <Text style={styles.closeX}>×</Text>
+            </View>
           </View>
 
           {NOTIFICATIONS.map((item, i) => (
@@ -210,7 +233,7 @@ export default function PainOtherSideScreen() {
           <Text style={styles.infoTitle}>Everyone Else</Text>
           <Text style={styles.infoBody}>
             For most women, the dating app is silence. The DMs don't come. The
-            likes are sparse. It's not about being ugly — it's about not knowing
+            likes are sparse. It's not about being ugly, it's about not knowing
             what's holding you back. And no one tells you.
           </Text>
         </Animated.View>
@@ -246,7 +269,7 @@ const styles = StyleSheet.create({
   headlineWrap: {
     alignItems: 'center',
     marginTop: 24,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headline: {
     fontSize: 28,
@@ -256,74 +279,77 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
-  phoneMockup: {
-    width: PHONE_W,
-    alignSelf: 'center',
-    backgroundColor: '#111111',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-    padding: 16,
+  notifCentre: {
+    paddingHorizontal: 2,
   },
-  phoneHeader: {
+  centreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
+    paddingHorizontal: 2,
   },
-  phoneTitle: {
-    fontSize: 16,
+  centreTitle: {
+    fontSize: 30,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
-  notifRow: {
+  closeCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeX: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.55)',
+    fontWeight: '600',
+    marginTop: -1,
+  },
+  notifCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A2E',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 10,
-    height: 56,
+    backgroundColor: 'rgba(44, 44, 52, 0.72)',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    padding: 12,
+    marginBottom: 8,
   },
-  notifRowDashed: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#2A2A2A',
-    justifyContent: 'center',
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  avatarEmoji: {
-    fontSize: 16,
+  notifIconWrap: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: ICON_SIZE * 0.22,
+    overflow: 'hidden',
+    marginRight: 12,
   },
   notifTextCol: {
     flex: 1,
+    marginRight: 8,
   },
-  centeredCol: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  notifTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
   notifBody: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: 'rgba(255, 255, 255, 0.55)',
+    lineHeight: 18,
   },
   notifTime: {
-    fontSize: 12,
-    color: '#666666',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'flex-start',
     marginTop: 2,
+  },
+  notifTimeItalic: {
+    fontStyle: 'italic',
+    color: 'rgba(255, 255, 255, 0.25)',
   },
   infoCard: {
     backgroundColor: Colors.surfaceElevated,
