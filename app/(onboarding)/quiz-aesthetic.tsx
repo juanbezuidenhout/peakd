@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  FlatList,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -14,8 +13,11 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
-  withTiming,
+  useAnimatedScrollHandler,
   useSharedValue,
+  interpolate,
+  Extrapolation,
+  SharedValue,
 } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -44,31 +46,113 @@ const aesthetics: Aesthetic[] = [
   { id: '12', name: 'Sydney Thomas', image: require('@/assets/aesthetics/sydney-thomas.png') },
 ];
 
-function Dot({ active }: { active: boolean }) {
-  const width = useSharedValue(active ? 20 : 6);
+function Dot({ index, scrollX, snapInterval }: { index: number; scrollX: SharedValue<number>; snapInterval: number }) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
+      scrollX.value,
+      [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval],
+      [0, 1, 0],
+      Extrapolation.CLAMP,
+    );
 
-  width.value = withTiming(active ? 20 : 6, { duration: 200 });
+    return {
+      width: interpolate(progress, [0, 1], [6, 24]),
+      backgroundColor: progress > 0.5 ? Colors.primary : Colors.border,
+      opacity: interpolate(progress, [0, 1], [0.4, 1]),
+    };
+  });
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: width.value,
-  }));
+  return <Animated.View style={[styles.dot, animatedStyle]} />;
+}
+
+function CarouselCard({
+  item,
+  index,
+  scrollX,
+  cardWidth,
+  cardMargin,
+  snapInterval,
+}: {
+  item: Aesthetic;
+  index: number;
+  scrollX: SharedValue<number>;
+  cardWidth: number;
+  cardMargin: number;
+  snapInterval: number;
+}) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * snapInterval,
+      index * snapInterval,
+      (index + 1) * snapInterval,
+    ];
+
+    const scale = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.88, 1, 0.88],
+      Extrapolation.CLAMP,
+    );
+
+    const opacity = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.5, 1, 0.5],
+      Extrapolation.CLAMP,
+    );
+
+    const translateY = interpolate(
+      scrollX.value,
+      inputRange,
+      [12, 0, 12],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      transform: [{ scale }, { translateY }],
+      opacity,
+    };
+  });
+
+  const borderStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
+      scrollX.value,
+      [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval],
+      [0, 1, 0],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      borderColor: progress > 0.5 ? Colors.primary : Colors.border,
+    };
+  });
 
   return (
     <Animated.View
       style={[
-        styles.dot,
-        { backgroundColor: active ? Colors.primary : Colors.border },
         animatedStyle,
+        { width: cardWidth, height: 360, marginHorizontal: cardMargin },
       ]}
-    />
+    >
+      <Animated.View style={[styles.card, borderStyle]}>
+        <View style={styles.cardImageWrap}>
+          <Image source={item.image} style={styles.cardImage} />
+        </View>
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardName}>{item.name}</Text>
+        </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
+
+const AnimatedFlatList = Animated.FlatList<Aesthetic>;
 
 export default function QuizAestheticScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [selectedAesthetic, setSelectedAesthetic] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollX = useSharedValue(0);
 
   const CARD_WIDTH = width * 0.72;
   const CARD_MARGIN = 10;
@@ -76,11 +160,16 @@ export default function QuizAestheticScreen() {
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
 
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x;
+    },
+  });
+
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0) {
         const centered = viewableItems[0];
-        setActiveIndex(centered.index ?? 0);
         setSelectedAesthetic((centered.item as Aesthetic).name);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -89,29 +178,17 @@ export default function QuizAestheticScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: Aesthetic }) => {
-      const isSelected = selectedAesthetic === item.name;
-      return (
-        <View
-          style={[
-            styles.card,
-            {
-              width: CARD_WIDTH,
-              marginHorizontal: CARD_MARGIN,
-              borderColor: isSelected ? Colors.primary : Colors.border,
-            },
-          ]}
-        >
-          <View style={styles.cardImageWrap}>
-            <Image source={item.image} style={styles.cardImage} />
-          </View>
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{item.name}</Text>
-          </View>
-        </View>
-      );
-    },
-    [CARD_WIDTH, CARD_MARGIN, selectedAesthetic],
+    ({ item, index }: { item: Aesthetic; index: number }) => (
+      <CarouselCard
+        item={item}
+        index={index}
+        scrollX={scrollX}
+        cardWidth={CARD_WIDTH}
+        cardMargin={CARD_MARGIN}
+        snapInterval={SNAP_INTERVAL}
+      />
+    ),
+    [CARD_WIDTH, CARD_MARGIN, SNAP_INTERVAL, scrollX],
   );
 
   return (
@@ -131,17 +208,19 @@ export default function QuizAestheticScreen() {
       <Text style={styles.subtext}>Your starting point, not a limit.</Text>
 
       <View style={styles.carouselWrap}>
-        <FlatList
+        <AnimatedFlatList
           horizontal
           data={aesthetics}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           snapToInterval={SNAP_INTERVAL}
-          decelerationRate="fast"
+          decelerationRate={0.92}
+          scrollEventThrottle={16}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: (width - CARD_WIDTH) / 2,
           }}
+          onScroll={scrollHandler}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
         />
@@ -149,7 +228,7 @@ export default function QuizAestheticScreen() {
 
       <View style={styles.dotsRow}>
         {aesthetics.map((item, i) => (
-          <Dot key={item.id} active={i === activeIndex} />
+          <Dot key={item.id} index={i} scrollX={scrollX} snapInterval={SNAP_INTERVAL} />
         ))}
       </View>
 
@@ -210,7 +289,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
   },
   card: {
-    height: 360,
+    flex: 1,
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: Colors.surface,
