@@ -7,11 +7,18 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Svg, {
+  Rect,
+  Circle,
+  Path,
+  Defs,
+  LinearGradient,
+  Stop,
+} from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useDerivedValue,
   withTiming,
   withDelay,
   withRepeat,
@@ -22,41 +29,78 @@ import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-const PHONE_W = SCREEN_W * 0.85;
+const ICON_SIZE = 44;
+
+function InstagramIcon({ size = ICON_SIZE, gradientId = 'igBg' }: { size?: number; gradientId?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 44 44">
+      <Defs>
+        <LinearGradient id={gradientId} x1="0.9" y1="0" x2="0.1" y2="1">
+          <Stop offset="0%" stopColor="#515BD4" />
+          <Stop offset="26%" stopColor="#8134AF" />
+          <Stop offset="46%" stopColor="#DD2A7B" />
+          <Stop offset="66%" stopColor="#F58529" />
+          <Stop offset="100%" stopColor="#FEDA77" />
+        </LinearGradient>
+      </Defs>
+      <Rect x={0} y={0} width={44} height={44} rx={10} fill={`url(#${gradientId})`} />
+      <Rect
+        x={10} y={10} width={24} height={24} rx={7}
+        fill="none" stroke="#FFFFFF" strokeWidth={2.2}
+      />
+      <Circle cx={22} cy={22} r={5.5} fill="none" stroke="#FFFFFF" strokeWidth={2.2} />
+      <Circle cx={31.5} cy={12.5} r={1.8} fill="#FFFFFF" />
+    </Svg>
+  );
+}
+
+function HingeIcon({ size = ICON_SIZE }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 44 44">
+      <Rect x={0} y={0} width={44} height={44} rx={10} fill="#FFFFFF" />
+      <Path d="M14 11 V33" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path d="M30 11 V27" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path d="M14 22 H30" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+      <Path
+        d="M30 27 C30 31 27 34 23 34"
+        stroke="#333333" strokeWidth={4.5} strokeLinecap="round" fill="none"
+      />
+    </Svg>
+  );
+}
 
 const NOTIFICATIONS = [
   {
-    initials: 'J',
-    gradient: ['#7C3AED', '#A855F7'],
-    text: 'James liked your photo',
+    icon: 'instagram' as const,
+    title: 'james_97',
+    body: 'Liked your photo',
     time: 'just now',
   },
   {
-    initials: '♥',
-    gradient: ['#E11D48', '#FB7185'],
-    text: 'New match! You and Alex',
+    icon: 'hinge' as const,
+    title: 'Hinge',
+    body: 'New match! You and Alex matched',
     time: '2m ago',
-    isHeart: true,
   },
   {
-    initials: 'R',
-    gradient: ['#0D9488', '#2DD4BF'],
-    text: "You're actually stunning 😍",
+    icon: 'instagram' as const,
+    title: 'sarah.m',
+    body: "you're actually stunning 😍",
     time: '5m ago',
   },
   {
-    initials: '+',
-    gradient: ['#6366F1', '#818CF8'],
-    text: '+12 new followers today',
+    icon: 'instagram' as const,
+    title: 'Instagram',
+    body: '+12 new followers today',
     time: '1h ago',
   },
   {
-    initials: 'M',
-    gradient: ['#D97706', '#FBBF24'],
-    text: 'Hey, saw your story — coffee?',
+    icon: 'instagram' as const,
+    title: 'mike.c',
+    body: 'Hey, saw your story. Want to grab coffee?',
     time: '3h ago',
   },
-] as const;
+];
 
 function NotificationItem({
   item,
@@ -70,29 +114,24 @@ function NotificationItem({
       entering={FadeInUp.delay(800 + index * 400)
         .duration(500)
         .easing(Easing.out(Easing.cubic))}
-      style={styles.notifRow}
+      style={styles.notifCard}
     >
-      <View
-        style={[
-          styles.avatar,
-          { backgroundColor: item.gradient[0] },
-        ]}
-      >
-        <Text
-          style={[
-            styles.avatarText,
-            item.isHeart && styles.avatarHeart,
-          ]}
-        >
-          {item.initials}
-        </Text>
+      <View style={styles.notifIconWrap}>
+        {item.icon === 'instagram' ? (
+          <InstagramIcon gradientId={`ig_${index}`} />
+        ) : (
+          <HingeIcon />
+        )}
       </View>
       <View style={styles.notifTextCol}>
-        <Text style={styles.notifBody} numberOfLines={1}>
-          {item.text}
+        <Text style={styles.notifTitle} numberOfLines={1}>
+          {item.title}
         </Text>
-        <Text style={styles.notifTime}>{item.time}</Text>
+        <Text style={styles.notifBody} numberOfLines={2}>
+          {item.body}
+        </Text>
       </View>
+      <Text style={styles.notifTime}>{item.time}</Text>
     </Animated.View>
   );
 }
@@ -101,14 +140,11 @@ export default function PainGlowEffectScreen() {
   const router = useRouter();
 
   const headlineOpacity = useSharedValue(0);
-  const phoneOpacity = useSharedValue(0);
-  const counterRaw = useSharedValue(0);
+  const centreOpacity = useSharedValue(0);
   const glowPulse = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(16);
   const ctaOpacity = useSharedValue(0);
-
-  const counterDisplay = useDerivedValue(() => Math.round(counterRaw.value));
 
   useEffect(() => {
     headlineOpacity.value = withDelay(
@@ -116,14 +152,9 @@ export default function PainGlowEffectScreen() {
       withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) }),
     );
 
-    phoneOpacity.value = withDelay(
+    centreOpacity.value = withDelay(
       400,
       withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) }),
-    );
-
-    counterRaw.value = withDelay(
-      1000,
-      withTiming(23, { duration: 2000, easing: Easing.out(Easing.cubic) }),
     );
 
     glowPulse.value = withDelay(
@@ -154,26 +185,16 @@ export default function PainGlowEffectScreen() {
     opacity: headlineOpacity.value,
   }));
 
-  const phoneStyle = useAnimatedStyle(() => ({
-    opacity: phoneOpacity.value,
+  const centreStyle = useAnimatedStyle(() => ({
+    opacity: centreOpacity.value,
   }));
 
   const glowStyle = useAnimatedStyle(() => ({
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: glowPulse.value * 0.1,
-    shadowRadius: 20 + glowPulse.value * 10,
+    shadowOpacity: glowPulse.value * 0.12,
+    shadowRadius: 24 + glowPulse.value * 12,
     elevation: glowPulse.value * 8,
-  }));
-
-  const badgeStyle = useAnimatedStyle(() => ({
-    opacity: phoneOpacity.value,
-  }));
-
-  const badgeTextStyle = useAnimatedStyle(() => ({
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700' as const,
   }));
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -196,14 +217,12 @@ export default function PainGlowEffectScreen() {
           <Text style={styles.headline}>THE GLOW EFFECT</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.phoneMockup, phoneStyle, glowStyle]}>
-          <View style={styles.phoneHeader}>
-            <Text style={styles.phoneTitle}>Notifications</Text>
-            <Animated.View style={[styles.badge, badgeStyle]}>
-              <Animated.Text style={badgeTextStyle}>
-                {counterDisplay}
-              </Animated.Text>
-            </Animated.View>
+        <Animated.View style={[styles.notifCentre, centreStyle, glowStyle]}>
+          <View style={styles.centreHeader}>
+            <Text style={styles.centreTitle}>Notification Centre</Text>
+            <View style={styles.closeCircle}>
+              <Text style={styles.closeX}>×</Text>
+            </View>
           </View>
 
           {NOTIFICATIONS.map((item, i) => (
@@ -217,8 +236,8 @@ export default function PainGlowEffectScreen() {
           <Text style={styles.infoTitle}>Her Reality</Text>
           <Text style={styles.infoBody}>
             For women in the top 20%, attention is effortless. Dates, DMs,
-            compliments, opportunities — they come to her. This isn't luck. It's
-            the glow effect — and it's measurable.
+            compliments, opportunities all come to her. This isn't luck. It's
+            the glow effect, and it's measurable.
           </Text>
         </Animated.View>
 
@@ -253,7 +272,7 @@ const styles = StyleSheet.create({
   headlineWrap: {
     alignItems: 'center',
     marginTop: 24,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headline: {
     fontSize: 28,
@@ -263,73 +282,72 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
-  phoneMockup: {
-    width: PHONE_W,
-    alignSelf: 'center',
-    backgroundColor: '#111111',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
-    padding: 16,
-    overflow: 'visible',
+  notifCentre: {
+    paddingHorizontal: 2,
   },
-  phoneHeader: {
+  centreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
+    paddingHorizontal: 2,
   },
-  phoneTitle: {
-    fontSize: 16,
+  centreTitle: {
+    fontSize: 30,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
-  badge: {
-    backgroundColor: '#EF4444',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 6,
+  closeCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  notifRow: {
+  closeX: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.55)',
+    fontWeight: '600',
+    marginTop: -1,
+  },
+  notifCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A2E',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 10,
-    height: 56,
+    backgroundColor: 'rgba(44, 44, 52, 0.72)',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    padding: 12,
+    marginBottom: 8,
   },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  avatarHeart: {
-    fontSize: 18,
-    color: '#FFFFFF',
+  notifIconWrap: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: ICON_SIZE * 0.22,
+    overflow: 'hidden',
+    marginRight: 12,
   },
   notifTextCol: {
     flex: 1,
+    marginRight: 8,
+  },
+  notifTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
   notifBody: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: 'rgba(255, 255, 255, 0.55)',
+    lineHeight: 18,
   },
   notifTime: {
-    fontSize: 12,
-    color: '#666666',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'flex-start',
     marginTop: 2,
   },
   infoCard: {

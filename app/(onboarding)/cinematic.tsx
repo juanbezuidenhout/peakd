@@ -38,9 +38,7 @@ function LeftFigure() {
         </RadialGradient>
       </Defs>
 
-      {/* Halo glow */}
       <Ellipse cx={70} cy={18} rx={32} ry={10} fill="url(#haloGlow)" />
-      {/* Halo ring */}
       <Ellipse
         cx={70}
         cy={18}
@@ -52,110 +50,149 @@ function LeftFigure() {
         transform="rotate(-8, 70, 18)"
       />
 
-      {/* Hair — flowing, longer for femininity */}
       <Path
-        d="M42 62 C38 40, 55 24, 70 26 C85 24, 102 40, 98 62
-           L100 90 C102 96, 100 102, 96 106
-           L96 106 C96 96, 94 82, 92 72
-           L92 72 C90 80, 86 60, 70 58
-           C54 60, 50 80, 48 72
-           L48 72 C46 82, 44 96, 44 106
-           L44 106 C40 102, 38 96, 40 90 Z"
+        d="M44 52 C42 36, 54 26, 70 26 C86 26, 98 36, 96 52"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.8}
         strokeLinecap="round"
       />
-      {/* Extra hair strands */}
       <Path
-        d="M40 90 C36 100, 34 114, 38 124"
+        d="M44 52 C42 68, 38 90, 37 112 C36 122, 38 132, 42 140"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.4}
+        strokeWidth={1.6}
         strokeLinecap="round"
       />
       <Path
-        d="M100 90 C104 100, 106 114, 102 124"
+        d="M96 52 C98 68, 102 90, 103 112 C104 122, 102 132, 98 140"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.4}
+        strokeWidth={1.6}
         strokeLinecap="round"
+      />
+      <Path
+        d="M47 56 C45 70, 44 86, 46 100"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+        opacity={0.4}
+      />
+      <Path
+        d="M93 56 C95 70, 96 86, 94 100"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+        opacity={0.4}
       />
 
-      {/* Face outline */}
       <Path
-        d="M50 62 C50 50, 56 42, 70 42 C84 42, 90 50, 90 62
-           L90 78 C90 96, 82 106, 70 108 C58 106, 50 96, 50 78 Z"
+        d="M52 54 C52 42, 58 36, 70 36 C82 36, 88 42, 88 54
+           L88 72 C88 88, 82 97, 70 99 C58 97, 52 88, 52 72 Z"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.8}
         strokeLinecap="round"
       />
 
-      {/* Left eye */}
       <Path
-        d="M56 68 C58 65, 63 65, 65 68"
+        d="M55 56 C58 53, 63 53, 66 56"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.5}
+        strokeWidth={1.2}
         strokeLinecap="round"
       />
-      {/* Left eyelash */}
-      <Line x1={55} y1={67} x2={53} y2={64} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-      <Line x1={58} y1={65.5} x2={57} y2={62.5} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-
-      {/* Right eye */}
       <Path
-        d="M75 68 C77 65, 82 65, 84 68"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-      {/* Right eyelash */}
-      <Line x1={85} y1={67} x2={87} y2={64} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-      <Line x1={82} y1={65.5} x2={83} y2={62.5} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-
-      {/* Nose */}
-      <Path
-        d="M68 76 C68 80, 66 84, 64 86 C66 87, 74 87, 76 86 C74 84, 72 80, 72 76"
+        d="M74 56 C77 53, 82 53, 85 56"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.2}
         strokeLinecap="round"
       />
 
-      {/* Smile */}
       <Path
-        d="M62 93 C65 97, 75 97, 78 93"
+        d="M55 62 C58 59, 63 59, 66 62 C63 64.5, 58 64.5, 55 62"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={60.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
+      <Path
+        d="M54 61.5 C57 58, 64 57.5, 67 60.5"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M74 62 C77 59, 82 59, 85 62 C82 64.5, 77 64.5, 74 62"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={79.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
+      <Path
+        d="M73 60.5 C76 57.5, 83 58, 86 61.5"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M70 68 C69 73, 68 77, 67 79"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M65 81 C67 82.5, 73 82.5, 75 81"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M63 88 C65 86, 68 85.5, 70 87 C72 85.5, 75 86, 77 88"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.3}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M63 88 C66 92, 74 92, 77 88"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.3}
+        strokeLinecap="round"
+      />
+
+      <Line x1={65} y1={99} x2={63} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={75} y1={99} x2={77} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+
+      <Path
+        d="M63 118 C57 120, 38 128, 28 140
+           M77 118 C83 120, 102 128, 112 140"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.5}
         strokeLinecap="round"
       />
 
-      {/* Neck */}
-      <Line x1={64} y1={108} x2={62} y2={128} stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" />
-      <Line x1={76} y1={108} x2={78} y2={128} stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" />
-
-      {/* Shoulders */}
       <Path
-        d="M62 128 C56 130, 34 136, 26 148
-           M78 128 C84 130, 106 136, 114 148"
+        d="M46 132 C56 129, 63 128, 70 128 C77 128, 84 129, 94 132"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.6}
+        strokeWidth={0.9}
         strokeLinecap="round"
-      />
-
-      {/* Collarbone hints */}
-      <Path
-        d="M48 140 C54 137, 62 136, 70 136 C78 136, 86 137, 92 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1}
-        strokeLinecap="round"
-        opacity={0.5}
+        opacity={0.4}
       />
     </Svg>
   );
@@ -164,7 +201,6 @@ function LeftFigure() {
 function RightFigure() {
   return (
     <Svg width={FIGURE_W} height={FIGURE_H} viewBox="0 0 140 180">
-      {/* Devil horns */}
       <G>
         <Path
           d="M48 36 L42 12 C42 12, 46 20, 52 28 Z"
@@ -182,109 +218,149 @@ function RightFigure() {
         />
       </G>
 
-      {/* Hair — same flowing style */}
       <Path
-        d="M42 62 C38 40, 55 24, 70 26 C85 24, 102 40, 98 62
-           L100 90 C102 96, 100 102, 96 106
-           L96 106 C96 96, 94 82, 92 72
-           L92 72 C90 80, 86 60, 70 58
-           C54 60, 50 80, 48 72
-           L48 72 C46 82, 44 96, 44 106
-           L44 106 C40 102, 38 96, 40 90 Z"
+        d="M44 52 C42 36, 54 26, 70 26 C86 26, 98 36, 96 52"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.8}
         strokeLinecap="round"
       />
       <Path
-        d="M40 90 C36 100, 34 114, 38 124"
+        d="M44 52 C42 68, 38 90, 37 112 C36 122, 38 132, 42 140"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.4}
+        strokeWidth={1.6}
         strokeLinecap="round"
       />
       <Path
-        d="M100 90 C104 100, 106 114, 102 124"
+        d="M96 52 C98 68, 102 90, 103 112 C104 122, 102 132, 98 140"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.4}
+        strokeWidth={1.6}
         strokeLinecap="round"
+      />
+      <Path
+        d="M47 56 C45 70, 44 86, 46 100"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+        opacity={0.4}
+      />
+      <Path
+        d="M93 56 C95 70, 96 86, 94 100"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+        opacity={0.4}
       />
 
-      {/* Face outline */}
       <Path
-        d="M50 62 C50 50, 56 42, 70 42 C84 42, 90 50, 90 62
-           L90 78 C90 96, 82 106, 70 108 C58 106, 50 96, 50 78 Z"
+        d="M52 54 C52 42, 58 36, 70 36 C82 36, 88 42, 88 54
+           L88 72 C88 88, 82 97, 70 99 C58 97, 52 88, 52 72 Z"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.8}
         strokeLinecap="round"
       />
 
-      {/* Left eye */}
       <Path
-        d="M56 68 C58 65, 63 65, 65 68"
+        d="M55 56 C58 53, 63 53, 66 56"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.5}
+        strokeWidth={1.2}
         strokeLinecap="round"
       />
-      {/* Left eyelash */}
-      <Line x1={55} y1={67} x2={53} y2={64} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-      <Line x1={58} y1={65.5} x2={57} y2={62.5} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-
-      {/* Right eye */}
       <Path
-        d="M75 68 C77 65, 82 65, 84 68"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-      {/* Right eyelash */}
-      <Line x1={85} y1={67} x2={87} y2={64} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-      <Line x1={82} y1={65.5} x2={83} y2={62.5} stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" />
-
-      {/* Nose */}
-      <Path
-        d="M68 76 C68 80, 66 84, 64 86 C66 87, 74 87, 76 86 C74 84, 72 80, 72 76"
+        d="M74 56 C77 53, 82 53, 85 56"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.2}
         strokeLinecap="round"
       />
 
-      {/* Sad/neutral mouth — downturned */}
       <Path
-        d="M62 96 C65 92, 75 92, 78 96"
+        d="M55 62 C58 59, 63 59, 66 62 C63 64.5, 58 64.5, 55 62"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={60.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
+      <Path
+        d="M54 61.5 C57 58, 64 57.5, 67 60.5"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M74 62 C77 59, 82 59, 85 62 C82 64.5, 77 64.5, 74 62"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={79.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
+      <Path
+        d="M73 60.5 C76 57.5, 83 58, 86 61.5"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M70 68 C69 73, 68 77, 67 79"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M65 81 C67 82.5, 73 82.5, 75 81"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+
+      <Path
+        d="M63 91 C65 89, 68 88.5, 70 89.5 C72 88.5, 75 89, 77 91"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.3}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M63 91 C66 88, 74 88, 77 91"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={1.3}
+        strokeLinecap="round"
+      />
+
+      <Line x1={65} y1={99} x2={63} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={75} y1={99} x2={77} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+
+      <Path
+        d="M63 118 C57 120, 38 128, 28 140
+           M77 118 C83 120, 102 128, 112 140"
         fill="none"
         stroke="#FFFFFF"
         strokeWidth={1.5}
         strokeLinecap="round"
       />
 
-      {/* Neck */}
-      <Line x1={64} y1={108} x2={62} y2={128} stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" />
-      <Line x1={76} y1={108} x2={78} y2={128} stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" />
-
-      {/* Shoulders */}
       <Path
-        d="M62 128 C56 130, 34 136, 26 148
-           M78 128 C84 130, 106 136, 114 148"
+        d="M46 132 C56 129, 63 128, 70 128 C77 128, 84 129, 94 132"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={1.6}
+        strokeWidth={0.9}
         strokeLinecap="round"
-      />
-
-      {/* Collarbone hints */}
-      <Path
-        d="M48 140 C54 137, 62 136, 70 136 C78 136, 86 137, 92 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1}
-        strokeLinecap="round"
-        opacity={0.5}
+        opacity={0.4}
       />
     </Svg>
   );
