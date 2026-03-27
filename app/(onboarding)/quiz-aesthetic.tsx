@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,18 @@ import {
   Pressable,
   StyleSheet,
   useWindowDimensions,
-  ViewToken,
   ImageSourcePropType,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
-  useAnimatedScrollHandler,
-  useSharedValue,
   interpolate,
   Extrapolation,
   SharedValue,
+  useSharedValue,
 } from 'react-native-reanimated';
+import Carousel from 'react-native-reanimated-carousel';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -46,19 +45,15 @@ const aesthetics: Aesthetic[] = [
   { id: '12', name: 'Sydney Thomas', image: require('@/assets/aesthetics/sydney-thomas.png') },
 ];
 
-function Dot({ index, scrollX, snapInterval }: { index: number; scrollX: SharedValue<number>; snapInterval: number }) {
+function Dot({ index, progressValue }: { index: number; progressValue: SharedValue<number> }) {
   const animatedStyle = useAnimatedStyle(() => {
-    const progress = interpolate(
-      scrollX.value,
-      [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval],
-      [0, 1, 0],
-      Extrapolation.CLAMP,
-    );
+    const dist = Math.abs(progressValue.value - index);
+    const clamped = interpolate(dist, [0, 1], [1, 0], Extrapolation.CLAMP);
 
     return {
-      width: interpolate(progress, [0, 1], [6, 24]),
-      backgroundColor: progress > 0.5 ? Colors.primary : Colors.border,
-      opacity: interpolate(progress, [0, 1], [0.4, 1]),
+      width: interpolate(clamped, [0, 1], [6, 24]),
+      opacity: interpolate(clamped, [0, 1], [0.3, 1]),
+      backgroundColor: clamped > 0.5 ? Colors.primary : Colors.border,
     };
   });
 
@@ -67,58 +62,55 @@ function Dot({ index, scrollX, snapInterval }: { index: number; scrollX: SharedV
 
 function CarouselCard({
   item,
-  index,
-  scrollX,
-  cardWidth,
-  cardMargin,
-  snapInterval,
+  animationValue,
 }: {
   item: Aesthetic;
-  index: number;
-  scrollX: SharedValue<number>;
-  cardWidth: number;
-  cardMargin: number;
-  snapInterval: number;
+  animationValue: SharedValue<number>;
 }) {
-  const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = [
-      (index - 1) * snapInterval,
-      index * snapInterval,
-      (index + 1) * snapInterval,
-    ];
-
+  const cardStyle = useAnimatedStyle(() => {
     const scale = interpolate(
-      scrollX.value,
-      inputRange,
-      [0.88, 1, 0.88],
+      animationValue.value,
+      [-1, 0, 1],
+      [0.85, 1, 0.85],
       Extrapolation.CLAMP,
     );
 
     const opacity = interpolate(
-      scrollX.value,
-      inputRange,
-      [0.5, 1, 0.5],
+      animationValue.value,
+      [-1, 0, 1],
+      [0.4, 1, 0.4],
       Extrapolation.CLAMP,
     );
 
     const translateY = interpolate(
-      scrollX.value,
-      inputRange,
-      [12, 0, 12],
+      animationValue.value,
+      [-1, 0, 1],
+      [20, 0, 20],
+      Extrapolation.CLAMP,
+    );
+
+    const rotateZ = interpolate(
+      animationValue.value,
+      [-1, 0, 1],
+      [-2, 0, 2],
       Extrapolation.CLAMP,
     );
 
     return {
-      transform: [{ scale }, { translateY }],
+      transform: [
+        { scale },
+        { translateY },
+        { rotateZ: `${rotateZ}deg` },
+      ],
       opacity,
     };
   });
 
   const borderStyle = useAnimatedStyle(() => {
     const progress = interpolate(
-      scrollX.value,
-      [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval],
-      [0, 1, 0],
+      Math.abs(animationValue.value),
+      [0, 0.5],
+      [1, 0],
       Extrapolation.CLAMP,
     );
 
@@ -128,12 +120,7 @@ function CarouselCard({
   });
 
   return (
-    <Animated.View
-      style={[
-        animatedStyle,
-        { width: cardWidth, height: 360, marginHorizontal: cardMargin },
-      ]}
-    >
+    <Animated.View style={[styles.cardOuter, cardStyle]}>
       <Animated.View style={[styles.card, borderStyle]}>
         <View style={styles.cardImageWrap}>
           <Image source={item.image} style={styles.cardImage} />
@@ -146,50 +133,18 @@ function CarouselCard({
   );
 }
 
-const AnimatedFlatList = Animated.FlatList<Aesthetic>;
-
 export default function QuizAestheticScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [selectedAesthetic, setSelectedAesthetic] = useState<string | null>(null);
-  const scrollX = useSharedValue(0);
+  const [selectedAesthetic, setSelectedAesthetic] = useState<string>(aesthetics[0].name);
+  const progressValue = useSharedValue(0);
 
-  const CARD_WIDTH = width * 0.72;
-  const CARD_MARGIN = 10;
-  const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN * 2;
+  const CARD_WIDTH = width * 0.74;
 
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
-
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0) {
-        const centered = viewableItems[0];
-        setSelectedAesthetic((centered.item as Aesthetic).name);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    },
-    [],
-  );
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: Aesthetic; index: number }) => (
-      <CarouselCard
-        item={item}
-        index={index}
-        scrollX={scrollX}
-        cardWidth={CARD_WIDTH}
-        cardMargin={CARD_MARGIN}
-        snapInterval={SNAP_INTERVAL}
-      />
-    ),
-    [CARD_WIDTH, CARD_MARGIN, SNAP_INTERVAL, scrollX],
-  );
+  const onSnapToItem = useCallback((index: number) => {
+    setSelectedAesthetic(aesthetics[index].name);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
 
   return (
     <SafeScreen>
@@ -208,27 +163,29 @@ export default function QuizAestheticScreen() {
       <Text style={styles.subtext}>Your starting point, not a limit.</Text>
 
       <View style={styles.carouselWrap}>
-        <AnimatedFlatList
-          horizontal
+        <Carousel
+          width={CARD_WIDTH + 20}
+          height={380}
           data={aesthetics}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          snapToInterval={SNAP_INTERVAL}
-          decelerationRate={0.92}
-          scrollEventThrottle={16}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: (width - CARD_WIDTH) / 2,
+          loop={false}
+          scrollAnimationDuration={600}
+          onSnapToItem={onSnapToItem}
+          onProgressChange={(_, absoluteProgress) => {
+            progressValue.value = absoluteProgress;
           }}
-          onScroll={scrollHandler}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
+          style={{ width }}
+          renderItem={({ item, animationValue }) => (
+            <CarouselCard item={item} animationValue={animationValue} />
+          )}
+          panGestureHandlerProps={{
+            activeOffsetX: [-10, 10],
+          }}
         />
       </View>
 
       <View style={styles.dotsRow}>
         {aesthetics.map((item, i) => (
-          <Dot key={item.id} index={i} scrollX={scrollX} snapInterval={SNAP_INTERVAL} />
+          <Dot key={item.id} index={i} progressValue={progressValue} />
         ))}
       </View>
 
@@ -239,7 +196,7 @@ export default function QuizAestheticScreen() {
           label="Next →"
           disabled={!selectedAesthetic}
           onPress={async () => {
-            await setUserAesthetic(selectedAesthetic!);
+            await setUserAesthetic(selectedAesthetic);
             router.push('/(onboarding)/commitment');
           }}
         />
@@ -287,6 +244,12 @@ const styles = StyleSheet.create({
   carouselWrap: {
     marginTop: 24,
     marginHorizontal: -20,
+    alignItems: 'center',
+  },
+  cardOuter: {
+    flex: 1,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
   },
   card: {
     flex: 1,
