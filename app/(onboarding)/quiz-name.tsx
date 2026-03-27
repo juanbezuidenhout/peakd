@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -13,6 +13,7 @@ export default function QuizNameScreen() {
 
   return (
     <SafeScreen>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -37,7 +38,6 @@ export default function QuizNameScreen() {
           style={styles.input}
           placeholder="Your first name"
           placeholderTextColor={Colors.textMuted}
-          autoFocus
           returnKeyType="done"
           onChangeText={setName}
           value={name}
@@ -57,6 +57,7 @@ export default function QuizNameScreen() {
           />
         </View>
       </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </SafeScreen>
   );
 }

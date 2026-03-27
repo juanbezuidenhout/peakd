@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { useState, useCallback, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet, Platform, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withSequence,
 } from 'react-native-reanimated';
+import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -16,18 +17,85 @@ import { setUserGlowLevel } from '@/lib/storage';
 
 const CYAN = '#22D3EE';
 
+function DumbbellIcon() {
+  return (
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+      <Rect x={2} y={9} width={4} height={6} rx={1} fill="#fff" />
+      <Rect x={18} y={9} width={4} height={6} rx={1} fill="#fff" />
+      <Rect x={5} y={10.5} width={3} height={3} rx={0.5} fill="#fff" />
+      <Rect x={16} y={10.5} width={3} height={3} rx={0.5} fill="#fff" />
+      <Rect x={8} y={11} width={8} height={2} rx={0.5} fill="#fff" />
+    </Svg>
+  );
+}
+
+function DropletIcon() {
+  return (
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 2.5c0 0-7 8.5-7 13a7 7 0 0 0 14 0c0-4.5-7-13-7-13z"
+        fill="#fff"
+      />
+    </Svg>
+  );
+}
+
+function ScissorsIcon() {
+  return (
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={6} cy={6} r={3} />
+      <Circle cx={6} cy={18} r={3} />
+      <Line x1={20} y1={4} x2={8.12} y2={15.88} />
+      <Line x1={14.47} y1={14.48} x2={20} y2={20} />
+      <Line x1={8.12} y1={8.12} x2={12} y2={12} />
+    </Svg>
+  );
+}
+
+function HammerIcon() {
+  return (
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 15l4-4" />
+      <Path d="M2 21l4.5-4.5" />
+      <Path d="M11 10l1.5-1.5" />
+      <Path d="M13.5 7.5L19 2l3 3-5.5 5.5" />
+      <Path d="M10 13l-7 7" />
+    </Svg>
+  );
+}
+
+function StethoscopeIcon() {
+  return (
+    <Svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke={CYAN} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4.8 2.3A2 2 0 0 0 3 4.5v3a5 5 0 0 0 5 5 1 1 0 0 0 1-1V4.5A2 2 0 0 0 7.2 2.3" />
+      <Path d="M14.8 2.3A2 2 0 0 0 13 4.5v3a5 5 0 0 1-5 5" />
+      <Path d="M16.8 2.3A2 2 0 0 1 19 4.5v3a5 5 0 0 1-5 5 1 1 0 0 1-1-1V4.5a2 2 0 0 1 2.2-2.2" />
+      <Path d="M19 7.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" />
+      <Path d="M19 10.5V14a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-1" />
+    </Svg>
+  );
+}
+
+const ICON_MAP: Record<string, () => React.JSX.Element> = {
+  natural: DumbbellIcon,
+  softmaxxing: DropletIcon,
+  hardmaxxing: ScissorsIcon,
+  experimental: HammerIcon,
+};
+
+const DISCLAIMER_IDS = new Set(['hardmaxxing', 'experimental']);
+
 interface CardOption {
   id: string;
-  emoji: string;
   title: string;
   subtitle: string;
 }
 
 const CARDS: CardOption[] = [
-  { id: 'natural', emoji: '🌿', title: 'Natural', subtitle: 'Lifestyle & skincare only' },
-  { id: 'softmaxxing', emoji: '✨', title: 'Soft-maxxing', subtitle: 'Makeup, styling & habits' },
-  { id: 'hardmaxxing', emoji: '💎', title: 'Hard-maxxing', subtitle: 'Non-invasive procedures' },
-  { id: 'experimental', emoji: '⚡', title: 'Experimental', subtitle: 'Cutting-edge & trending' },
+  { id: 'natural', title: 'Natural', subtitle: 'Lifestyle-based improvement' },
+  { id: 'softmaxxing', title: 'Softmaxxing', subtitle: 'Non-surgical enhancement' },
+  { id: 'hardmaxxing', title: 'Hardmaxxing', subtitle: 'Surgical enhancement' },
+  { id: 'experimental', title: 'Experimental', subtitle: 'Unverified cutting-edge methods' },
 ];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -41,6 +109,7 @@ function GlowCard({
   isSelected: boolean;
   onToggle: () => void;
 }) {
+  const IconComponent = ICON_MAP[card.id];
   const scale = useSharedValue(1);
   const borderProgress = useSharedValue(isSelected ? 1 : 0);
 
@@ -72,7 +141,9 @@ function GlowCard({
       onPress={handlePress}
     >
       <View style={styles.cardTopRow}>
-        <Text style={styles.cardEmoji}>{card.emoji}</Text>
+        <View style={styles.cardIcon}>
+          {IconComponent && <IconComponent />}
+        </View>
         <View style={[styles.radio, isSelected && styles.radioSelected]}>
           {isSelected && <Text style={styles.radioCheck}>✓</Text>}
         </View>
@@ -89,12 +160,38 @@ function GlowCard({
 export default function QuizGlowScreen() {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
+  const [disclaimerVisible, setDisclaimerVisible] = useState(false);
+  const pendingId = useRef<string | null>(null);
 
   const toggleCard = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+
+    const isDeselecting = selected.includes(id);
+    if (isDeselecting) {
+      setSelected((prev) => prev.filter((x) => x !== id));
+      return;
+    }
+
+    if (DISCLAIMER_IDS.has(id)) {
+      pendingId.current = id;
+      setDisclaimerVisible(true);
+      return;
+    }
+
+    setSelected((prev) => [...prev, id]);
+  }, [selected]);
+
+  const handleAcceptDisclaimer = useCallback(() => {
+    if (pendingId.current) {
+      setSelected((prev) => [...prev, pendingId.current!]);
+      pendingId.current = null;
+    }
+    setDisclaimerVisible(false);
+  }, []);
+
+  const handleCancelDisclaimer = useCallback(() => {
+    pendingId.current = null;
+    setDisclaimerVisible(false);
   }, []);
 
   return (
@@ -138,6 +235,44 @@ export default function QuizGlowScreen() {
           }}
         />
       </View>
+
+      <Modal
+        visible={disclaimerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDisclaimer}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconWrap}>
+              <StethoscopeIcon />
+            </View>
+
+            <Text style={styles.modalTitle}>Medical Disclaimer</Text>
+
+            <Text style={styles.modalBody}>
+              Surgical and experimental looksmaxxing recommendations provided by
+              PSL are AI-generated and for informational purposes only. They are
+              not a substitute for professional medical advice, diagnosis, or
+              treatment.
+            </Text>
+            <Text style={styles.modalBody}>
+              Always consult a licensed healthcare provider before pursuing any
+              surgical or experimental procedure. PSL assumes no liability for
+              actions taken based on app content. By proceeding, you acknowledge
+              and accept these terms.
+            </Text>
+
+            <Pressable style={styles.modalAcceptBtn} onPress={handleAcceptDisclaimer}>
+              <Text style={styles.modalAcceptText}>I Understand & Accept</Text>
+            </Pressable>
+
+            <Pressable onPress={handleCancelDisclaimer} hitSlop={12}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeScreen>
   );
 }
@@ -198,8 +333,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  cardEmoji: {
-    fontSize: 28,
+  cardIcon: {
+    width: 32,
+    height: 32,
   },
   radio: {
     width: 24,
@@ -239,5 +375,55 @@ const styles = StyleSheet.create({
   },
   bottom: {
     paddingBottom: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#1E1E1E',
+    borderRadius: 20,
+    padding: 28,
+    alignItems: 'center',
+  },
+  modalIconWrap: {
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  modalBody: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: '#AAAAAA',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalAcceptBtn: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#3A3A3A',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  modalAcceptText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalCancelText: {
+    fontSize: 14,
+    color: '#888888',
+    paddingVertical: 4,
   },
 });

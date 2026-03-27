@@ -195,7 +195,7 @@ export default function PainAttentionScreen() {
 
   const handleNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/pain-same-energy');
+    router.push('/(onboarding)/pain-beauty-gap');
   }, [router]);
 
   const sepY = (getIconY(1) + getIconY(2)) / 2;
