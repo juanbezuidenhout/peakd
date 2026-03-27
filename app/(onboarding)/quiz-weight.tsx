@@ -149,14 +149,6 @@ export default function QuizWeightScreen() {
         />
       )}
 
-      <Pressable
-        style={styles.skipWrap}
-        onPress={() => router.push('/(onboarding)/quiz-glow')}
-        hitSlop={8}
-      >
-        <Text style={styles.skipText}>Skip this step</Text>
-      </Pressable>
-
       <View style={styles.spacer} />
 
       <View style={styles.bottom}>
@@ -287,15 +279,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.textSecondary,
     marginLeft: 8,
-  },
-  skipWrap: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  skipText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textDecorationLine: 'underline',
   },
   spacer: {
     flex: 1,

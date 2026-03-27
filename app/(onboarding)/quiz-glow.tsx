@@ -1,34 +1,101 @@
-import { useState } from 'react';
-import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { setUserGlowLevel } from '@/lib/storage';
 
-const CARDS = [
-  { id: 'natural', emoji: '🌿', label: 'Natural', sublabel: 'Lifestyle & skincare only' },
-  { id: 'soft-maxxing', emoji: '✨', label: 'Soft-maxxing', sublabel: 'Makeup, styling & habits' },
-  { id: 'hard-maxxing', emoji: '💎', label: 'Hard-maxxing', sublabel: 'Non-invasive procedures' },
-  { id: 'experimental', emoji: '⚡', label: 'Experimental', sublabel: 'Cutting-edge & trending' },
-] as const;
+const CYAN = '#22D3EE';
 
-const DISCLAIMER_IDS = new Set(['hard-maxxing', 'experimental']);
+interface CardOption {
+  id: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+}
+
+const CARDS: CardOption[] = [
+  { id: 'natural', emoji: '🌿', title: 'Natural', subtitle: 'Lifestyle & skincare only' },
+  { id: 'softmaxxing', emoji: '✨', title: 'Soft-maxxing', subtitle: 'Makeup, styling & habits' },
+  { id: 'hardmaxxing', emoji: '💎', title: 'Hard-maxxing', subtitle: 'Non-invasive procedures' },
+  { id: 'experimental', emoji: '⚡', title: 'Experimental', subtitle: 'Cutting-edge & trending' },
+];
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function GlowCard({
+  card,
+  isSelected,
+  onToggle,
+}: {
+  card: CardOption;
+  isSelected: boolean;
+  onToggle: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const borderProgress = useSharedValue(isSelected ? 1 : 0);
+
+  const handlePress = useCallback(() => {
+    scale.value = withSequence(
+      withTiming(0.97, { duration: 80 }),
+      withTiming(1, { duration: 80 }),
+    );
+    borderProgress.value = withTiming(isSelected ? 0 : 1, { duration: 200 });
+    onToggle();
+  }, [isSelected, onToggle, scale, borderProgress]);
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    borderColor: borderProgress.value > 0.5 ? CYAN : '#2A2A2A',
+    ...(borderProgress.value > 0.5 && Platform.OS === 'ios'
+      ? {
+          shadowColor: CYAN,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.3 * borderProgress.value,
+          shadowRadius: 12,
+        }
+      : {}),
+  }));
+
+  return (
+    <AnimatedPressable
+      style={[styles.card, cardAnimStyle]}
+      onPress={handlePress}
+    >
+      <View style={styles.cardTopRow}>
+        <Text style={styles.cardEmoji}>{card.emoji}</Text>
+        <View style={[styles.radio, isSelected && styles.radioSelected]}>
+          {isSelected && <Text style={styles.radioCheck}>✓</Text>}
+        </View>
+      </View>
+
+      <View style={styles.cardBottomArea}>
+        <Text style={styles.cardTitle}>{card.title}</Text>
+        <Text style={styles.cardSubtitle}>{card.subtitle}</Text>
+      </View>
+    </AnimatedPressable>
+  );
+}
 
 export default function QuizGlowScreen() {
   const router = useRouter();
-  const [selectedGlow, setSelectedGlow] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
 
-  function handleCardPress(id: string) {
+  const toggleCard = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedGlow(id);
-    if (DISCLAIMER_IDS.has(id)) {
-      setModalVisible(true);
-    }
-  }
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
 
   return (
     <SafeScreen>
@@ -49,69 +116,28 @@ export default function QuizGlowScreen() {
       </Text>
 
       <View style={styles.grid}>
-        {CARDS.map((card) => {
-          const selected = selectedGlow === card.id;
-          return (
-            <Pressable
-              key={card.id}
-              style={[styles.card, selected && styles.cardSelected]}
-              onPress={() => handleCardPress(card.id)}
-            >
-              <View style={styles.cardTop}>
-                <Text style={styles.emoji}>{card.emoji}</Text>
-                <View style={[styles.circle, selected && styles.circleSelected]}>
-                  {selected && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-              </View>
-              <View style={styles.cardSpacer} />
-              <Text style={styles.cardLabel}>{card.label}</Text>
-              <Text style={styles.cardSublabel}>{card.sublabel}</Text>
-            </Pressable>
-          );
-        })}
+        {CARDS.map((card) => (
+          <GlowCard
+            key={card.id}
+            card={card}
+            isSelected={selected.includes(card.id)}
+            onToggle={() => toggleCard(card.id)}
+          />
+        ))}
       </View>
-
-      <Pressable
-        style={styles.skipWrap}
-        onPress={() => router.push('/(onboarding)/quiz-aesthetic')}
-        hitSlop={8}
-      >
-        <Text style={styles.skipText}>Skip this step</Text>
-      </Pressable>
 
       <View style={styles.spacer} />
 
       <View style={styles.bottom}>
         <PrimaryButton
           label="Next →"
-          disabled={!selectedGlow}
+          disabled={selected.length === 0}
           onPress={async () => {
-            await setUserGlowLevel(selectedGlow!);
+            await setUserGlowLevel(JSON.stringify(selected));
             router.push('/(onboarding)/quiz-aesthetic');
           }}
         />
       </View>
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.sheet}>
-            <Text style={styles.sheetIcon}>🩺</Text>
-            <Text style={styles.sheetTitle}>Just so you know</Text>
-            <Text style={styles.sheetBody}>
-              Peakd's recommendations are for non-surgical enhancement only.
-              {'\n'}For medical procedures, always consult a qualified professional.
-            </Text>
-            <View style={styles.sheetButton}>
-              <PrimaryButton label="I understand" onPress={() => setModalVisible(false)} />
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeScreen>
   );
 }
@@ -148,7 +174,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: '#888888',
     lineHeight: 22,
     marginBottom: 0,
   },
@@ -159,110 +185,59 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   card: {
-    width: '47%',
-    aspectRatio: 1,
-    backgroundColor: Colors.surface,
+    width: '48%',
+    height: 160,
+    backgroundColor: '#1E1E1E',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: '#2A2A2A',
+    padding: 20,
   },
-  cardSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
-  },
-  cardTop: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    width: '100%',
   },
-  emoji: {
+  cardEmoji: {
     fontSize: 28,
   },
-  circle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#2A2A2A',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleSelected: {
-    backgroundColor: Colors.primary,
+  radioSelected: {
+    backgroundColor: CYAN,
     borderWidth: 0,
   },
-  checkmark: {
-    fontSize: 11,
+  radioCheck: {
+    fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '700',
+    marginTop: -1,
   },
-  cardSpacer: {
-    flex: 1,
+  cardBottomArea: {
+    marginTop: 'auto' as any,
   },
-  cardLabel: {
-    fontSize: 15,
+  cardTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#FFFFFF',
   },
-  cardSublabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  skipWrap: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  skipText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textDecorationLine: 'underline',
+  cardSubtitle: {
+    fontSize: 12.5,
+    color: '#888888',
+    marginTop: 3,
   },
   spacer: {
     flex: 1,
   },
   bottom: {
     paddingBottom: 24,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 28,
-  },
-  sheetIcon: {
-    fontSize: 40,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-  },
-  sheetBody: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 22,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  sheetButton: {
-    marginTop: 24,
   },
 });

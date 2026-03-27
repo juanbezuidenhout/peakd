@@ -44,14 +44,6 @@ export default function QuizNameScreen() {
           selectionColor={Colors.primary}
         />
 
-        <Pressable
-          style={styles.skipWrap}
-          onPress={() => router.push('/(onboarding)/quiz-age')}
-          hitSlop={8}
-        >
-          <Text style={styles.skipText}>Skip this step</Text>
-        </Pressable>
-
         <View style={styles.spacer} />
 
         <View style={styles.bottom}>
@@ -113,15 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: Colors.textPrimary,
-  },
-  skipWrap: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  skipText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textDecorationLine: 'underline',
   },
   spacer: {
     flex: 1,

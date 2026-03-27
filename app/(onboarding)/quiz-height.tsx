@@ -122,14 +122,6 @@ export default function QuizHeightScreen() {
         />
       </View>
 
-      <Pressable
-        style={styles.skipWrap}
-        onPress={() => router.push('/(onboarding)/quiz-weight')}
-        hitSlop={8}
-      >
-        <Text style={styles.skipText}>Skip this step</Text>
-      </Pressable>
-
       <View style={styles.spacer} />
 
       <View style={styles.bottom}>
@@ -229,15 +221,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: Colors.textPrimary,
-  },
-  skipWrap: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  skipText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textDecorationLine: 'underline',
   },
   spacer: {
     flex: 1,
