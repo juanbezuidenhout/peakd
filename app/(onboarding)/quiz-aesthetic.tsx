@@ -2,11 +2,13 @@ import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   FlatList,
   Pressable,
   StyleSheet,
   useWindowDimensions,
   ViewToken,
+  ImageSourcePropType,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -24,17 +26,22 @@ import { setUserAesthetic } from '@/lib/storage';
 interface Aesthetic {
   id: string;
   name: string;
-  emoji: string;
-  description: string;
+  image: ImageSourcePropType;
 }
 
 const aesthetics: Aesthetic[] = [
-  { id: '1', name: 'Dark Feminine', emoji: '🌙', description: 'Dramatic, bold, magnetic' },
-  { id: '2', name: 'Clean Girl', emoji: '🤍', description: 'Minimal, dewy, effortless' },
-  { id: '3', name: 'Ethereal', emoji: '🦋', description: 'Soft, angelic, otherworldly' },
-  { id: '4', name: 'Siren', emoji: '🔥', description: 'Alluring, confident, powerful' },
-  { id: '5', name: 'Edgy', emoji: '⚡', description: 'Sharp, alternative, cool' },
-  { id: '6', name: 'Classic Beauty', emoji: '👑', description: 'Timeless, polished, refined' },
+  { id: '1', name: 'Adriana Lima', image: require('@/assets/aesthetics/adriana-lima.png') },
+  { id: '2', name: 'Anja Winkelmann', image: require('@/assets/aesthetics/anja-winkelmann.png') },
+  { id: '3', name: 'Taylor Hill', image: require('@/assets/aesthetics/taylor-hill.png') },
+  { id: '4', name: 'Megan Fox', image: require('@/assets/aesthetics/megan-fox.png') },
+  { id: '5', name: 'Madison Beer', image: require('@/assets/aesthetics/madison-beer.png') },
+  { id: '6', name: 'Barbara Palvin', image: require('@/assets/aesthetics/barbara-palvin.png') },
+  { id: '7', name: 'Angelina Jolie', image: require('@/assets/aesthetics/angelina-jolie.png') },
+  { id: '8', name: 'Zoe Kravitz', image: require('@/assets/aesthetics/zoe-kravitz.png') },
+  { id: '9', name: 'Sui He', image: require('@/assets/aesthetics/sui-he.png') },
+  { id: '10', name: 'Yael Shelbia', image: require('@/assets/aesthetics/yael-shelbia.png') },
+  { id: '11', name: 'Brooke Shields', image: require('@/assets/aesthetics/brooke-shields.png') },
+  { id: '12', name: 'Sydney Thomas', image: require('@/assets/aesthetics/sydney-thomas.png') },
 ];
 
 function Dot({ active }: { active: boolean }) {
@@ -95,12 +102,11 @@ export default function QuizAestheticScreen() {
             },
           ]}
         >
-          <View style={styles.cardImage}>
-            <Text style={styles.cardEmoji}>{item.emoji}</Text>
+          <View style={styles.cardImageWrap}>
+            <Image source={item.image} style={styles.cardImage} />
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{item.name}</Text>
-            <Text style={styles.cardDescription}>{item.description}</Text>
           </View>
         </View>
       );
@@ -204,36 +210,31 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
   },
   card: {
-    height: 320,
+    height: 360,
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: Colors.surface,
     borderWidth: 2,
   },
-  cardImage: {
-    flex: 3,
+  cardImageWrap: {
+    flex: 1,
     backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  cardEmoji: {
-    fontSize: 64,
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   cardInfo: {
-    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     backgroundColor: Colors.surface,
-    padding: 16,
-    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
-  },
-  cardDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 4,
   },
   dotsRow: {
     flexDirection: 'row',
