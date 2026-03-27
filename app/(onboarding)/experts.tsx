@@ -1,4 +1,13 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Image,
+  StyleSheet,
+  ImageSourcePropType,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
@@ -6,44 +15,107 @@ import { SafeScreen } from '@/components/layout/SafeScreen';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 
-const EXPERTS = [
+type ExpertKind = 'person' | 'institution';
+
+interface Expert {
+  kind: ExpertKind;
+  name: string;
+  handle?: string;
+  initial: string;
+  brandColor: string;
+  image?: ImageSourcePropType;
+  quote: string;
+  source?: string;
+}
+
+const EXPERTS: Expert[] = [
   {
-    name: 'Dr. Whitney Bowe',
-    handle: '@drwhitneybowe',
-    initial: 'D',
-    avatarBg: Colors.primary,
+    kind: 'person',
+    name: 'Dr. Mike Mew',
+    handle: '@mewingbymikemew',
+    initial: 'M',
+    brandColor: '#374151',
+    // image: require('@/assets/experts/mike-mew.png'),
     quote:
-      'The skin-brain connection is real. When you look good, you feel good — and that confidence loop is scientifically measurable.',
-    source: 'Journal of Dermatology, 2023',
+      'Although there\'s a very strong genetic influence on how you grow and how you look, clearly there are also some environmental influences and the environmental influences can be affected.',
   },
   {
+    kind: 'institution',
+    name: 'Harvard T.H. Chan School of Public Health',
+    initial: 'H',
+    brandColor: '#A51C30',
+    // image: require('@/assets/experts/harvard.png'),
+    quote:
+      'Facial bone structure and development are influenced by environmental factors including posture, breathing patterns, and muscular habits during critical growth periods.',
+    source: '(2021) Craniofacial Development Research',
+  },
+  {
+    kind: 'person',
     name: 'Dr. Andrew Huberman',
     handle: '@hubermanlab',
-    initial: 'D',
-    avatarBg: Colors.surfaceElevated,
-    quote:
-      'Facial structure and skin quality are far more malleable than most people realise. The right protocol, consistently applied, produces remarkable results.',
-    source: 'Stanford Neuroscience Lab',
+    initial: 'A',
+    brandColor: '#374151',
+    // image: require('@/assets/experts/andrew-huberman.png'),
+    quote: 'Facial structure is something that can be modified.',
   },
   {
-    name: 'Harvard T.H. Chan',
-    handle: '@HarvardChan',
-    initial: 'H',
-    avatarBg: Colors.primary,
+    kind: 'institution',
+    name: 'Stanford Medicine',
+    initial: 'S',
+    brandColor: '#8C1515',
+    // image: require('@/assets/experts/stanford.png'),
     quote:
-      'Appearance-based confidence significantly impacts social outcomes, career trajectory, and mental health in young women.',
-    source: 'Harvard Public Health, 2022',
+      'Physical attractiveness significantly impacts social perception, career opportunities, and overall quality of life across multiple domains.',
+    source: '(2022) Social Psychology and Medicine',
   },
   {
-    name: 'Princeton University',
-    handle: '@Princeton',
-    initial: 'P',
-    avatarBg: Colors.surfaceElevated,
+    kind: 'person',
+    name: 'Bryan Johnson',
+    handle: '@bryanjohnson_',
+    initial: 'B',
+    brandColor: '#374151',
+    // image: require('@/assets/experts/bryan-johnson.png'),
     quote:
-      'Judgements of competence based on facial appearance predicted outcomes more accurately than chance in 70% of cases studied.',
-    source: 'Princeton Social Perception Lab, 2021',
+      "Pursuing 'hotness' and pursuing longevity are closely related in principle.",
+  },
+  {
+    kind: 'institution',
+    name: 'Yale School of Medicine',
+    initial: 'Y',
+    brandColor: '#00356B',
+    // image: require('@/assets/experts/yale.png'),
+    quote:
+      'Early intervention with lifestyle and postural modifications can significantly influence craniofacial development and aesthetic outcomes in young adults.',
+    source: '(2023) Orthodontics & Craniofacial Research',
   },
 ];
+
+function Avatar({ expert }: { expert: Expert }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (expert.image && !imgFailed) {
+    return (
+      <Image
+        source={expert.image}
+        style={styles.avatarImage}
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <View style={[styles.avatar, { backgroundColor: expert.brandColor }]}>
+      <Text
+        style={[
+          styles.avatarText,
+          expert.kind === 'institution' && styles.avatarTextInstitution,
+        ]}
+      >
+        {expert.initial}
+      </Text>
+    </View>
+  );
+}
 
 export default function ExpertsScreen() {
   const router = useRouter();
@@ -52,42 +124,50 @@ export default function ExpertsScreen() {
     <SafeScreen>
       <View style={styles.backRow}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backChevron}>‹</Text>
+          <Text style={styles.backChevron}>←</Text>
         </Pressable>
+        <View style={styles.progressInline}>
+          <ProgressBar current={2} total={3} />
+        </View>
       </View>
 
-      <View style={styles.progressWrap}>
-        <ProgressBar current={1} total={4} />
-      </View>
+      <Text style={styles.headline}>
+        {'Backed by experts.\nDesigned for you.'}
+      </Text>
 
-      <Text style={styles.sectionLabel}>BACKED BY SCIENCE</Text>
-      <Text style={styles.headline}>{'Backed by experts.\nDesigned for you.'}</Text>
-
-      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {EXPERTS.map((expert, index) => (
           <Animated.View
             key={expert.name}
-            entering={FadeInUp.delay(index * 100).duration(400)}
+            entering={FadeInUp.delay(index * 80).duration(400)}
             style={styles.card}
           >
             <View style={styles.cardTopRow}>
-              <View style={[styles.avatar, { backgroundColor: expert.avatarBg }]}>
-                <Text style={styles.avatarText}>{expert.initial}</Text>
-              </View>
+              <Avatar expert={expert} />
               <View style={styles.nameBlock}>
                 <Text style={styles.expertName}>{expert.name}</Text>
-                <Text style={styles.handle}>{expert.handle}</Text>
+                {expert.handle && (
+                  <Text style={styles.handle}>{expert.handle}</Text>
+                )}
               </View>
             </View>
-            <Text style={styles.quote}>{expert.quote}</Text>
-            <Text style={styles.source}>{expert.source}</Text>
+
+            <Text style={styles.quote}>"{expert.quote}"</Text>
+
+            {expert.source && (
+              <Text style={styles.source}>{expert.source}</Text>
+            )}
           </Animated.View>
         ))}
       </ScrollView>
 
       <View style={styles.bottom}>
         <PrimaryButton
-          label="Next →"
+          label="Next"
           onPress={() => router.push('/(onboarding)/testimonials')}
         />
       </View>
@@ -99,84 +179,87 @@ const styles = StyleSheet.create({
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
+    gap: 16,
+    marginTop: 4,
+    marginBottom: 8,
   },
   backChevron: {
-    fontSize: 28,
-    color: Colors.textSecondary,
+    fontSize: 22,
+    color: Colors.textPrimary,
   },
-  progressWrap: {
-    paddingTop: 20,
-    marginBottom: 32,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    marginBottom: 12,
+  progressInline: {
+    flex: 1,
   },
   headline: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '800',
     color: Colors.textPrimary,
-    lineHeight: 34,
-    marginTop: 24,
+    lineHeight: 38,
+    marginTop: 20,
     marginBottom: 24,
   },
   scrollArea: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 8,
+  },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: 20,
     marginBottom: 12,
   },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
   avatarText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  avatarTextInstitution: {
+    fontSize: 20,
+    fontWeight: '800',
+    fontFamily: 'serif',
+  },
   nameBlock: {
     marginLeft: 12,
+    flex: 1,
   },
   expertName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   handle: {
     fontSize: 12,
-    color: Colors.primary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   quote: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-    fontStyle: 'italic',
+    fontSize: 14,
+    color: '#CCCCCC',
+    lineHeight: 21,
   },
   source: {
     fontSize: 11,
-    color: Colors.textMuted,
-    marginTop: 8,
+    color: Colors.textSecondary,
+    marginTop: 10,
   },
   bottom: {
     paddingBottom: 24,

@@ -6,7 +6,7 @@ export default function OnboardingLayout() {
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     >
       <Stack.Screen name="cinematic" options={{ animation: "fade" }} />
