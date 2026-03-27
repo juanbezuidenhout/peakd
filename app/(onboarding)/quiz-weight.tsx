@@ -103,10 +103,10 @@ export default function QuizWeightScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={3} total={8} />
+        <ProgressBar current={4} total={8} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 3 OF 8</Text>
+      <Text style={styles.stepLabel}>STEP 4 OF 8</Text>
       <Text style={styles.headline}>{'What do\nyou weigh?'}</Text>
       <Text style={styles.subtext}>
         This is factored into your personalised glow-up plan.

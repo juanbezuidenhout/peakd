@@ -39,10 +39,10 @@ export default function QuizGlowScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={4} total={8} />
+        <ProgressBar current={5} total={8} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 4 OF 8</Text>
+      <Text style={styles.stepLabel}>STEP 5 OF 8</Text>
       <Text style={styles.headline}>{'What are you\nopen to?'}</Text>
       <Text style={styles.subtext}>
         No judgment. Be honest with yourself. This calibrates your plan.

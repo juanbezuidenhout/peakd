@@ -13,29 +13,17 @@ import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { setUserAge } from '@/lib/storage';
+import { setUserHeight } from '@/lib/storage';
 
 const ITEM_HEIGHT = 52;
 const VISIBLE_COUNT = 3;
 const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_COUNT;
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+const FEET = ['3 ft', '4 ft', '5 ft', '6 ft', '7 ft'];
+const INCHES = Array.from({ length: 12 }, (_, i) => `${i} in`);
 
-const DAYS = Array.from({ length: 31 }, (_, i) => `${i + 1}`);
-const YEARS = Array.from({ length: 21 }, (_, i) => `${2010 - i}`);
+const DEFAULT_FEET_INDEX = FEET.indexOf('5 ft');
+const DEFAULT_INCHES_INDEX = 4;
 
 interface PickerColumnProps {
   data: string[];
@@ -97,14 +85,11 @@ function PickerColumn({ data, initialIndex, onIndexChange, flex = 1 }: PickerCol
   );
 }
 
-export default function QuizAgeScreen() {
+export default function QuizHeightScreen() {
   const router = useRouter();
-  const currentMonthIndex = new Date().getMonth();
-  const defaultYearIndex = YEARS.indexOf('2000');
 
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthIndex);
-  const [selectedDay, setSelectedDay] = useState(0);
-  const [selectedYear, setSelectedYear] = useState(defaultYearIndex);
+  const [selectedFeet, setSelectedFeet] = useState(DEFAULT_FEET_INDEX);
+  const [selectedInches, setSelectedInches] = useState(DEFAULT_INCHES_INDEX);
 
   return (
     <SafeScreen>
@@ -115,37 +100,31 @@ export default function QuizAgeScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={2} total={8} />
+        <ProgressBar current={3} total={8} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 2 OF 8</Text>
-      <Text style={styles.headline}>{'When were\nyou born?'}</Text>
+      <Text style={styles.stepLabel}>STEP 3 OF 8</Text>
+      <Text style={styles.headline}>{'How tall\nare you?'}</Text>
       <Text style={styles.subtext}>
-        We use this to calibrate your personalised glow-up plan.
+        This helps us understand your proportions and tailor your protocol.
       </Text>
 
       <View style={styles.pickerRow}>
         <PickerColumn
-          data={MONTHS}
-          initialIndex={currentMonthIndex}
-          onIndexChange={setSelectedMonth}
-          flex={2}
+          data={FEET}
+          initialIndex={DEFAULT_FEET_INDEX}
+          onIndexChange={setSelectedFeet}
         />
         <PickerColumn
-          data={DAYS}
-          initialIndex={0}
-          onIndexChange={setSelectedDay}
-        />
-        <PickerColumn
-          data={YEARS}
-          initialIndex={defaultYearIndex}
-          onIndexChange={setSelectedYear}
+          data={INCHES}
+          initialIndex={DEFAULT_INCHES_INDEX}
+          onIndexChange={setSelectedInches}
         />
       </View>
 
       <Pressable
         style={styles.skipWrap}
-        onPress={() => router.push('/(onboarding)/quiz-height')}
+        onPress={() => router.push('/(onboarding)/quiz-weight')}
         hitSlop={8}
       >
         <Text style={styles.skipText}>Skip this step</Text>
@@ -157,9 +136,10 @@ export default function QuizAgeScreen() {
         <PrimaryButton
           label="Next →"
           onPress={async () => {
-            const age = `${MONTHS[selectedMonth]} ${DAYS[selectedDay]}, ${YEARS[selectedYear]}`;
-            await setUserAge(age);
-            router.push('/(onboarding)/quiz-height');
+            const feet = FEET[selectedFeet].replace(' ft', '');
+            const inches = INCHES[selectedInches].replace(' in', '');
+            await setUserHeight(`${feet}'${inches}"`);
+            router.push('/(onboarding)/quiz-weight');
           }}
         />
       </View>

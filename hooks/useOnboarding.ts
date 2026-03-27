@@ -9,6 +9,8 @@ import {
   setUserName as storeUserName,
   getUserAge,
   setUserAge as storeUserAge,
+  getUserHeight,
+  setUserHeight as storeUserHeight,
   getUserWeight,
   setUserWeight as storeUserWeight,
   getUserGlowLevel,
@@ -33,6 +35,7 @@ export function useOnboarding() {
   const [goal, setGoal] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
+  const [height, setHeight] = useState<string | null>(null);
   const [weight, setWeight] = useState<string | null>(null);
   const [glowLevel, setGlowLevel] = useState<string | null>(null);
   const [aesthetic, setAesthetic] = useState<string | null>(null);
@@ -40,12 +43,13 @@ export function useOnboarding() {
 
   useEffect(() => {
     (async () => {
-      const [complete, savedGoal, savedName, savedAge, savedWeight, savedGlow, savedAesthetic] =
+      const [complete, savedGoal, savedName, savedAge, savedHeight, savedWeight, savedGlow, savedAesthetic] =
         await Promise.all([
           isOnboardingComplete(),
           getUserGoal(),
           getUserName(),
           getUserAge(),
+          getUserHeight(),
           getUserWeight(),
           getUserGlowLevel(),
           getUserAesthetic(),
@@ -54,6 +58,7 @@ export function useOnboarding() {
       setGoal(savedGoal);
       setName(savedName);
       setAge(savedAge);
+      setHeight(savedHeight);
       setWeight(savedWeight);
       setGlowLevel(savedGlow);
       setAesthetic(savedAesthetic);
@@ -89,6 +94,11 @@ export function useOnboarding() {
     setAge(value);
   }, []);
 
+  const updateHeight = useCallback(async (value: string) => {
+    await storeUserHeight(value);
+    setHeight(value);
+  }, []);
+
   const updateWeight = useCallback(async (value: string) => {
     await storeUserWeight(value);
     setWeight(value);
@@ -116,6 +126,7 @@ export function useOnboarding() {
     goal,
     name,
     age,
+    height,
     weight,
     glowLevel,
     aesthetic,
@@ -124,6 +135,7 @@ export function useOnboarding() {
     submitReferral,
     updateName,
     updateAge,
+    updateHeight,
     updateWeight,
     updateGlowLevel,
     updateAesthetic,

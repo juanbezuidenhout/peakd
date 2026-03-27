@@ -117,10 +117,10 @@ export default function QuizAestheticScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={5} total={8} />
+        <ProgressBar current={6} total={8} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 5 OF 8</Text>
+      <Text style={styles.stepLabel}>STEP 6 OF 8</Text>
       <Text style={styles.headline}>{"Who's your\ndream aesthetic?"}</Text>
       <Text style={styles.subtext}>Your starting point, not a limit.</Text>
 

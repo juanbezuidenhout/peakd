@@ -12,6 +12,7 @@ const KEYS = {
   IS_PRO: "peakd_is_pro",
   USER_NAME: "peakd_user_name",
   USER_AGE: "peakd_user_age",
+  USER_HEIGHT: "peakd_user_height",
   USER_WEIGHT: "peakd_user_weight",
   USER_GLOW_LEVEL: "peakd_user_glow_level",
   USER_AESTHETIC: "peakd_user_aesthetic",
@@ -83,6 +84,14 @@ export async function getUserAge(): Promise<string | null> {
 
 export async function setUserAge(age: string): Promise<void> {
   await setItem(KEYS.USER_AGE, age);
+}
+
+export async function getUserHeight(): Promise<string | null> {
+  return getItem<string>(KEYS.USER_HEIGHT);
+}
+
+export async function setUserHeight(height: string): Promise<void> {
+  await setItem(KEYS.USER_HEIGHT, height);
 }
 
 export async function getUserWeight(): Promise<string | null> {
