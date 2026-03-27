@@ -12,9 +12,9 @@ import { SafeScreen } from '@/components/layout/SafeScreen';
 
 const SENTENCES = [
   'Nobody talks about it, but you already feel it.',
-  'The way people treat you, the opportunities you get, the attention you receive — it all starts with how you look.',
+  'The way people treat you, the opportunities you get, the attention you receive it all starts with how you look.',
   'And in the age of filters and FaceTune, the standard has never been higher.',
-  "But for the first time, AI can show you exactly what's holding you back — and exactly how to fix it.",
+  "But for the first time, AI can show you exactly what's holding you back and exactly how to fix it.",
   'No guessing. No generic advice. A protocol built for your face.',
   'But first, we need to learn a little about you...',
 ];
@@ -110,7 +110,6 @@ export default function PainTypewriterScreen() {
   return (
     <SafeScreen>
       <View style={styles.container}>
-        <View style={styles.glow} />
         <View style={{ flex: 9 }} />
         <View style={styles.textArea}>
           <Animated.Text style={[styles.text, animatedTextStyle]}>
@@ -127,17 +126,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginHorizontal: -20,
-  },
-  glow: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: '#1A1A1A',
-    opacity: 0.4,
-    left: '50%',
-    top: '50%',
-    transform: [{ translateX: -200 }, { translateY: -200 }],
   },
   textArea: {
     paddingHorizontal: 40,
