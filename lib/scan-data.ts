@@ -18,3 +18,17 @@ export function setPendingImageUri(uri: string) {
 export function getPendingImageUri(): string | null {
   return _pendingImageUri;
 }
+
+let _pendingSideImageUri: string | null = null;
+
+export function setPendingSideImageUri(uri: string) {
+  _pendingSideImageUri = uri;
+}
+
+export function getPendingSideImageUri(): string | null {
+  return _pendingSideImageUri;
+}
+
+export function clearPendingSideImageUri() {
+  _pendingSideImageUri = null;
+}

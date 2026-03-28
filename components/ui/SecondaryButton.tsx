@@ -4,6 +4,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   interpolateColor,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Colors } from '@/constants/colors';
@@ -38,7 +39,7 @@ export function SecondaryButton({
       pressed.value = withTiming(0, { duration: 150 });
     })
     .onEnd(() => {
-      onPress();
+      runOnJS(onPress)();
     });
 
   return (

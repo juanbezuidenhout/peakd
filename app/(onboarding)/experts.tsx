@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ const EXPERTS: Expert[] = [
     handle: '@mewingbymikemew',
     initial: 'M',
     brandColor: '#374151',
-    // image: require('@/assets/experts/mike-mew.png'),
+    image: require('@/assets/experts/mike-mew.png'),
     quote:
       'Although there\'s a very strong genetic influence on how you grow and how you look, clearly there are also some environmental influences and the environmental influences can be affected.',
   },
@@ -44,7 +44,7 @@ const EXPERTS: Expert[] = [
     name: 'Harvard T.H. Chan School of Public Health',
     initial: 'H',
     brandColor: '#A51C30',
-    // image: require('@/assets/experts/harvard.png'),
+    image: require('@/assets/experts/harvard.png'),
     quote:
       'Facial bone structure and development are influenced by environmental factors including posture, breathing patterns, and muscular habits during critical growth periods.',
     source: '(2021) Craniofacial Development Research',
@@ -55,7 +55,7 @@ const EXPERTS: Expert[] = [
     handle: '@hubermanlab',
     initial: 'A',
     brandColor: '#374151',
-    // image: require('@/assets/experts/andrew-huberman.png'),
+    image: require('@/assets/experts/andrew-huberman.png'),
     quote: 'Facial structure is something that can be modified.',
   },
   {
@@ -63,7 +63,7 @@ const EXPERTS: Expert[] = [
     name: 'Stanford Medicine',
     initial: 'S',
     brandColor: '#8C1515',
-    // image: require('@/assets/experts/stanford.png'),
+    image: require('@/assets/experts/stanford.png'),
     quote:
       'Physical attractiveness significantly impacts social perception, career opportunities, and overall quality of life across multiple domains.',
     source: '(2022) Social Psychology and Medicine',
@@ -74,7 +74,7 @@ const EXPERTS: Expert[] = [
     handle: '@bryanjohnson_',
     initial: 'B',
     brandColor: '#374151',
-    // image: require('@/assets/experts/bryan-johnson.png'),
+    image: require('@/assets/experts/bryan-johnson.png'),
     quote:
       "Pursuing 'hotness' and pursuing longevity are closely related in principle.",
   },
@@ -83,7 +83,7 @@ const EXPERTS: Expert[] = [
     name: 'Yale School of Medicine',
     initial: 'Y',
     brandColor: '#00356B',
-    // image: require('@/assets/experts/yale.png'),
+    image: require('@/assets/experts/yale.png'),
     quote:
       'Early intervention with lifestyle and postural modifications can significantly influence craniofacial development and aesthetic outcomes in young adults.',
     source: '(2023) Orthodontics & Craniofacial Research',
@@ -94,10 +94,23 @@ function Avatar({ expert }: { expert: Expert }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   if (expert.image && !imgFailed) {
+    if (expert.kind === 'institution') {
+      return (
+        <View style={styles.institutionAvatarContainer}>
+          <Image
+            source={expert.image}
+            style={styles.institutionAvatarImage}
+            resizeMode="cover"
+            onError={() => setImgFailed(true)}
+          />
+        </View>
+      );
+    }
     return (
       <Image
         source={expert.image}
         style={styles.avatarImage}
+        resizeMode="cover"
         onError={() => setImgFailed(true)}
       />
     );
@@ -226,6 +239,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: '#2A2A2E',
+  },
+  institutionAvatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  institutionAvatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
   },
   avatarText: {
     fontSize: 18,

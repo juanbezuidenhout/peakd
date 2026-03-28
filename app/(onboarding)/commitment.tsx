@@ -206,16 +206,9 @@ export default function CommitmentScreen() {
 
       <View style={styles.bottom}>
         <PrimaryButton
-          label="I'm serious. Let's glow. →"
+          label="I'm serious. Let's Peak. →"
           onPress={() => router.push('/(onboarding)/experts')}
         />
-        <Pressable
-          style={styles.thinkWrap}
-          onPress={() => router.push('/(onboarding)/experts')}
-          hitSlop={8}
-        >
-          <Text style={styles.thinkText}>I'll think about it</Text>
-        </Pressable>
       </View>
     </SafeScreen>
   );
@@ -315,13 +308,5 @@ const styles = StyleSheet.create({
   bottom: {
     paddingBottom: 24,
     gap: 12,
-  },
-  thinkWrap: {
-    alignItems: 'center',
-  },
-  thinkText: {
-    fontSize: 14,
-    color: Colors.textMuted,
-    textAlign: 'center',
   },
 });

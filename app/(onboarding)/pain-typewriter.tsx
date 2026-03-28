@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
 } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
@@ -57,7 +58,7 @@ export default function PainTypewriterScreen() {
 
     charIndexRef.current = 0;
     setDisplayedText('');
-    opacity.value = 1;
+    opacity.value = withDelay(50, withTiming(1, { duration: 80 }));
 
     intervalRef.current = setInterval(() => {
       if (!mountedRef.current) {

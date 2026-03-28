@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { Alert, StyleSheet, Text, View, StatusBar } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, {
   FadeIn,
@@ -11,16 +11,16 @@ import Animated, {
 import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { ErrorCard } from '@/components/ui/ErrorCard';
 import { Colors } from '@/constants/colors';
-import { analyzePhoto, AnalysisResult } from '@/lib/openai';
-import { consumePendingBase64, getPendingImageUri } from '@/lib/scan-data';
-import { setItem, KEYS, getUserName } from '@/lib/storage';
+import { analyzeFaceWithRetry, FaceAnalysisResult, ProgressStage } from '@/lib/anthropic';
+import { getPendingImageUri } from '@/lib/scan-data';
+import { setItem, getItem, KEYS, getUserName } from '@/lib/storage';
 
 const ANALYSIS_STEPS = [
-  'Detecting face shape...',
-  'Reading color season...',
-  'Analyzing eye type...',
-  'Identifying skin tone...',
-  'Building your plan...',
+  'Mapping facial geometry...',
+  'Analyzing skin quality...',
+  'Evaluating facial harmony...',
+  'Scoring features...',
+  'Building your protocol...',
 ];
 
 const MOTIVATIONAL_MESSAGES = [
@@ -47,7 +47,7 @@ function getMessage(percent: number, name: string): string {
 
 export default function ScanProcessingScreen() {
   const router = useRouter();
-  const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
+  const { imageUri: paramImageUri } = useLocalSearchParams<{ imageUri: string }>();
   const [currentStep, setCurrentStep] = useState(0);
   const [complete, setComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,28 +111,47 @@ export default function ScanProcessingScreen() {
     barWidth.value = 0;
 
     try {
-      const base64 = consumePendingBase64();
-      if (!base64) {
+      // Try multiple sources for the image URI
+      let uri = getPendingImageUri();
+      if (!uri && paramImageUri) {
+        uri = paramImageUri;
+      }
+      if (!uri) {
+        const stored = await getItem<string>(KEYS.SCAN_IMAGE_URI);
+        if (stored) uri = stored;
+      }
+      if (!uri) {
         setError('No image data available. Please go back and try again.');
         return;
       }
 
-      const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-      if (!apiKey) {
-        setError('API key not configured.');
-        return;
-      }
+      const response = await analyzeFaceWithRetry(uri, (stage: ProgressStage) => {
+        const stagePercent: Record<ProgressStage, number> = {
+          preparing: 10,
+          uploading: 30,
+          analyzing: 55,
+          scoring: 80,
+          finalizing: 90,
+          complete: 100,
+        };
+        const target = stagePercent[stage] ?? progressRef.current;
+        progressRef.current = target;
+        setProgressPercent(target);
+        barWidth.value = withTiming(target, { duration: 300 });
+      });
 
-      const result = await analyzePhoto(base64, apiKey);
-
-      const uri = getPendingImageUri();
-      await setItem<AnalysisResult>(KEYS.SCAN_RESULT, result);
+      // Save results
+      await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
+      if (response.scanId) await setItem('scan_id', response.scanId);
       if (uri) await setItem(KEYS.SCAN_IMAGE_URI, uri);
       setComplete(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Analysis failed');
+      const msg = e instanceof Error ? e.message : 'Analysis failed';
+      console.error('[ScanProcessing] Error:', msg);
+      Alert.alert('Debug Error', msg);
+      setError(msg);
     }
-  }, [barWidth]);
+  }, [barWidth, paramImageUri]);
 
   useEffect(() => {
     runAnalysis();
@@ -154,7 +173,7 @@ export default function ScanProcessingScreen() {
         <StatusBar hidden />
         <View style={styles.center}>
           <ErrorCard
-            message="Something went wrong. Try again."
+            message={error}
             onRetry={handleRetry}
           />
           <View style={styles.errorButton}>

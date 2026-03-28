@@ -19,7 +19,7 @@ import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { Colors } from '@/constants/colors';
 import { getItem, KEYS } from '@/lib/storage';
-import { AnalysisResult } from '@/lib/openai';
+import { FaceAnalysisResult } from '@/lib/anthropic';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -132,13 +132,13 @@ function LockedCard({ label, icon }: { label: string; icon: string }) {
 
 export default function ResultsScreen() {
   const router = useRouter();
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<FaceAnalysisResult | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const scanResult = await getItem<AnalysisResult>(KEYS.SCAN_RESULT);
+      const scanResult = await getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT);
       const uri = await getItem<string>(KEYS.SCAN_IMAGE_URI);
       if (scanResult) setResult(scanResult);
       if (uri) setImageUri(uri);
@@ -154,11 +154,11 @@ export default function ResultsScreen() {
     );
   }
 
-  const auraScore = result?.aura_score ?? 74;
-  const potentialScore = result?.potential_score ?? 89;
-  const archetype = result?.archetype ?? 'Ethereal Doe';
+  const glowScoreRaw = result?.glowScore ?? 7.4;
+  const displayScore = Math.round(glowScoreRaw * 10);
+  const archetypeName = result?.archetype?.name ?? 'Ethereal Doe';
   const archetypeDesc =
-    result?.archetype_description ??
+    result?.archetype?.description ??
     'A soft, luminous beauty with expressive doe eyes and an ethereal glow.';
 
   const handleShare = async () => {
@@ -192,7 +192,7 @@ export default function ResultsScreen() {
               </View>
             )}
           </View>
-          <Text style={styles.archetype}>{archetype}</Text>
+          <Text style={styles.archetype}>{archetypeName}</Text>
           <Text style={styles.archetypeDesc}>{archetypeDesc}</Text>
         </Animated.View>
 
@@ -201,10 +201,10 @@ export default function ResultsScreen() {
           entering={FadeInUp.delay(200).duration(500)}
           style={styles.scoreSection}
         >
-          <Text style={styles.scoreLabel}>AURA SCORE</Text>
-          <ScoreRing score={auraScore} />
+          <Text style={styles.scoreLabel}>GLOW SCORE</Text>
+          <ScoreRing score={displayScore} />
           <Text style={styles.potentialText}>
-            Your potential: {potentialScore}/100
+            {glowScoreRaw.toFixed(1)} / 10.0
           </Text>
         </Animated.View>
 

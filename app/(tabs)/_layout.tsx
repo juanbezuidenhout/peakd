@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { Tabs } from "expo-router";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { Colors } from "@/constants/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Path, Circle } from "react-native-svg";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { getItem, KEYS } from "@/lib/storage";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 
 export const unstable_settings = {
   initialRouteName: "coach",
@@ -76,7 +79,15 @@ const TAB_ICONS: Record<string, React.FC<{ size: number; color: string }>> = {
   coach: CoachIcon,
 };
 
+const SPRING_CONFIG = { damping: 20, stiffness: 190, mass: 0.75 };
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const BAR_HEIGHT = 64;
+const BAR_RADIUS = 28;
+const INDICATOR_H_PAD = 5;
+const INDICATOR_V_PAD = 8;
+const INDICATOR_HEIGHT = BAR_HEIGHT - INDICATOR_V_PAD * 2;
+const INDICATOR_RADIUS = 20;
 
 function TabBarButton({
   route,
@@ -85,6 +96,7 @@ function TabBarButton({
   onPress,
   onLongPress,
   showBadge,
+  width,
 }: {
   route: string;
   label: string;
@@ -92,33 +104,41 @@ function TabBarButton({
   onPress: () => void;
   onLongPress: () => void;
   showBadge?: boolean;
+  width: number;
 }) {
   const scale = useSharedValue(1);
+  const itemOpacity = useSharedValue(focused ? 1 : 0.4);
   const Icon = TAB_ICONS[route];
-  const color = focused ? "#FFFFFF" : Colors.textMuted;
-  const iconSize = focused ? 26 : 22;
+
+  useEffect(() => {
+    itemOpacity.value = withTiming(focused ? 1 : 0.4, { duration: 220 });
+  }, [focused]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: itemOpacity.value,
   }));
 
   return (
     <AnimatedPressable
-      style={[styles.tabButton, animatedStyle]}
+      style={[styles.tabButton, { width }, animatedStyle]}
       onPressIn={() => {
-        scale.value = withSpring(1.1, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(0.88, { damping: 15, stiffness: 400 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(1, { damping: 12, stiffness: 350 });
       }}
-      onPress={onPress}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
       onLongPress={onLongPress}
     >
-      <View>
-        {Icon && <Icon size={iconSize} color={color} />}
+      <View style={styles.iconContainer}>
+        {Icon && <Icon size={21} color="#FFFFFF" />}
         {showBadge && <View style={styles.badge} />}
       </View>
-      <Text style={[styles.tabLabel, { color }]}>{label}</Text>
+      <Text style={styles.tabLabel}>{label}</Text>
     </AnimatedPressable>
   );
 }
@@ -126,6 +146,9 @@ function TabBarButton({
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const [hasScanResult, setHasScanResult] = useState(false);
+  const [barWidth, setBarWidth] = useState(0);
+  const indicatorX = useSharedValue(0);
+  const numTabs = state.routes.length;
 
   useEffect(() => {
     (async () => {
@@ -134,36 +157,121 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     })();
   }, []);
 
-  return (
-    <View style={[styles.tabBar, { paddingBottom: insets.bottom }]}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const label = (options.title ?? route.name) as string;
-        const focused = state.index === index;
+  useEffect(() => {
+    if (barWidth <= 0) return;
+    const tabW = barWidth / numTabs;
+    indicatorX.value = withSpring(
+      state.index * tabW + INDICATOR_H_PAD,
+      SPRING_CONFIG
+    );
+  }, [state.index, barWidth, numTabs]);
 
-        return (
-          <TabBarButton
-            key={route.key}
-            route={route.name}
-            label={label}
-            focused={focused}
-            showBadge={route.name === "scan" && hasScanResult}
-            onPress={() => {
-              const event = navigation.emit({
-                type: "tabPress",
-                target: route.key,
-                canPreventDefault: true,
-              });
-              if (!focused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
-              }
-            }}
-            onLongPress={() => {
-              navigation.emit({ type: "tabLongPress", target: route.key });
-            }}
-          />
-        );
-      })}
+  const indicatorAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const tabW = barWidth > 0 ? barWidth / numTabs : 0;
+  const indicW = tabW - INDICATOR_H_PAD * 2;
+
+  return (
+    <View
+      style={[styles.outerWrapper, { paddingBottom: insets.bottom + 6 }]}
+    >
+      <View
+        style={styles.glassBar}
+        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+      >
+        {/* Glass base layer */}
+        <View style={[StyleSheet.absoluteFill, styles.glassBase]} />
+
+        {/* Top highlight — glass refraction */}
+        <LinearGradient
+          colors={[
+            "rgba(255,255,255,0.09)",
+            "rgba(255,255,255,0.03)",
+            "transparent",
+          ]}
+          locations={[0, 0.3, 0.6]}
+          style={styles.topHighlight}
+        />
+
+        {/* Bottom subtle edge light */}
+        <LinearGradient
+          colors={["transparent", "rgba(255,255,255,0.02)"]}
+          style={styles.bottomEdge}
+        />
+
+        {/* Scrollable tab content */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          alwaysBounceHorizontal
+          style={StyleSheet.absoluteFill}
+          contentContainerStyle={styles.scrollInner}
+        >
+          <View style={styles.tabsRow}>
+            {/* Liquid indicator pill */}
+            {barWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.indicator,
+                  { width: indicW, height: INDICATOR_HEIGHT },
+                  indicatorAnimStyle,
+                ]}
+              >
+                <LinearGradient
+                  colors={[
+                    "rgba(124, 58, 237, 0.32)",
+                    "rgba(155, 77, 255, 0.14)",
+                  ]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { borderRadius: INDICATOR_RADIUS },
+                  ]}
+                />
+                <View style={styles.indicatorShine} />
+                <View style={styles.indicatorEdge} />
+              </Animated.View>
+            )}
+
+            {/* Tab buttons */}
+            {state.routes.map((route, index) => {
+              const { options } = descriptors[route.key];
+              const label = (options.title ?? route.name) as string;
+              const focused = state.index === index;
+
+              return (
+                <TabBarButton
+                  key={route.key}
+                  route={route.name}
+                  label={label}
+                  focused={focused}
+                  width={tabW}
+                  showBadge={route.name === "scan" && hasScanResult}
+                  onPress={() => {
+                    const event = navigation.emit({
+                      type: "tabPress",
+                      target: route.key,
+                      canPreventDefault: true,
+                    });
+                    if (!focused && !event.defaultPrevented) {
+                      navigation.navigate(route.name);
+                    }
+                  }}
+                  onLongPress={() => {
+                    navigation.emit({
+                      type: "tabLongPress",
+                      target: route.key,
+                    });
+                  }}
+                />
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -183,31 +291,95 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
+  outerWrapper: {
+    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  glassBar: {
+    height: BAR_HEIGHT,
+    borderRadius: BAR_RADIUS,
+    overflow: "hidden",
+    borderWidth: 0.5,
+    borderColor: "rgba(255, 255, 255, 0.10)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  glassBase: {
+    backgroundColor: "rgba(22, 22, 24, 0.95)",
+  },
+  topHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "55%",
+  },
+  bottomEdge: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+  },
+  scrollInner: {
+    flexGrow: 1,
+  },
+  tabsRow: {
+    flex: 1,
     flexDirection: "row",
-    backgroundColor: "#0A0A0A",
-    borderTopWidth: 1,
-    borderTopColor: "#1A1A1A",
-    paddingTop: 10,
+    alignItems: "center",
+    height: BAR_HEIGHT,
+  },
+  indicator: {
+    position: "absolute",
+    top: INDICATOR_V_PAD,
+    borderRadius: INDICATOR_RADIUS,
+    overflow: "hidden",
+  },
+  indicatorShine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "42%",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderTopLeftRadius: INDICATOR_RADIUS,
+    borderTopRightRadius: INDICATOR_RADIUS,
+  },
+  indicatorEdge: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: INDICATOR_RADIUS,
+    borderWidth: 0.5,
+    borderColor: "rgba(255, 255, 255, 0.13)",
   },
   tabButton: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    paddingVertical: 6,
+    height: BAR_HEIGHT,
+    gap: 3,
+  },
+  iconContainer: {
+    position: "relative",
   },
   tabLabel: {
     fontSize: 10,
-    fontWeight: "500",
+    fontWeight: "600",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
   badge: {
     position: "absolute",
     top: -2,
     right: -6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: Colors.primary,
+    borderWidth: 1.5,
+    borderColor: "rgba(22, 22, 24, 0.95)",
   },
 });

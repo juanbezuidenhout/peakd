@@ -252,13 +252,13 @@ export default function QuizGlowScreen() {
 
             <Text style={styles.modalBody}>
               Surgical and experimental looksmaxxing recommendations provided by
-              PSL are AI-generated and for informational purposes only. They are
+              Peakd are AI-generated and for informational purposes only. They are
               not a substitute for professional medical advice, diagnosis, or
               treatment.
             </Text>
             <Text style={styles.modalBody}>
               Always consult a licensed healthcare provider before pursuing any
-              surgical or experimental procedure. PSL assumes no liability for
+              surgical or experimental procedure. Peakd assumes no liability for
               actions taken based on app content. By proceeding, you acknowledge
               and accept these terms.
             </Text>
