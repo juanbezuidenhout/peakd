@@ -12,7 +12,11 @@ import { SafeScreen } from '@/components/layout/SafeScreen';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
-import { setPendingBase64, setPendingImageUri } from '@/lib/scan-data';
+import {
+  setPendingBase64,
+  setPendingImageUri,
+  setPendingSideImageUri,
+} from '@/lib/scan-data';
 
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   if (!visible) return null;
@@ -42,6 +46,10 @@ function FaceOutlineIcon() {
 export default function ScanScreen() {
   const router = useRouter();
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [sideImageUri, setSideImageUri] = useState<string | null>(null);
+  const [captureStep, setCaptureStep] = useState<'front' | 'side' | 'ready'>(
+    'front',
+  );
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -51,68 +59,86 @@ export default function ScanScreen() {
     setTimeout(() => setToastVisible(false), 2500);
   }, []);
 
-  const handleTakePhoto = useCallback(async () => {
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) return;
+  const takePhoto = useCallback(
+    async (target: 'front' | 'side') => {
+      try {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) return;
 
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-        base64: true,
-        cameraType: ImagePicker.CameraType.front,
-      });
+        const result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [3, 4],
+          quality: 0.8,
+          base64: true,
+          cameraType: ImagePicker.CameraType.front,
+        });
 
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        setPendingImageUri(result.assets[0].uri);
-        if (result.assets[0].base64) {
-          setPendingBase64(result.assets[0].base64);
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          if (target === 'front') {
+            setImageUri(asset.uri);
+            if (asset.base64) setPendingBase64(asset.base64);
+            if (captureStep === 'front') setCaptureStep('side');
+          } else {
+            setSideImageUri(asset.uri);
+            setCaptureStep('ready');
+          }
         }
+      } catch {
+        showToast('Photo capture failed. Please try again.');
       }
-    } catch {
-      showToast('Photo capture failed. Please try again.');
-    }
-  }, [showToast]);
+    },
+    [showToast, captureStep],
+  );
 
-  const handleUploadPhoto = useCallback(async () => {
-    try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) return;
+  const uploadPhoto = useCallback(
+    async (target: 'front' | 'side') => {
+      try {
+        const permission =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) return;
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-        base64: true,
-      });
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [3, 4],
+          quality: 0.8,
+          base64: true,
+        });
 
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        setPendingImageUri(result.assets[0].uri);
-        if (result.assets[0].base64) {
-          setPendingBase64(result.assets[0].base64);
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          if (target === 'front') {
+            setImageUri(asset.uri);
+            if (asset.base64) setPendingBase64(asset.base64);
+            if (captureStep === 'front') setCaptureStep('side');
+          } else {
+            setSideImageUri(asset.uri);
+            setCaptureStep('ready');
+          }
         }
+      } catch {
+        showToast('Image upload failed. Please try again.');
       }
-    } catch {
-      showToast('Image upload failed. Please try again.');
-    }
-  }, [showToast]);
+    },
+    [showToast, captureStep],
+  );
 
-  const handleReset = useCallback(() => {
+  const handleStartOver = useCallback(() => {
     setImageUri(null);
+    setSideImageUri(null);
+    setCaptureStep('front');
   }, []);
 
   const handleAnalyze = useCallback(() => {
-    if (!imageUri) return;
+    if (!imageUri || !sideImageUri) return;
+    setPendingImageUri(imageUri);
+    setPendingSideImageUri(sideImageUri);
     router.push({
       pathname: '/scan-processing',
       params: { imageUri },
     });
-  }, [imageUri, router]);
+  }, [imageUri, sideImageUri, router]);
 
   return (
     <SafeScreen>
@@ -126,44 +152,123 @@ export default function ScanScreen() {
         </Pressable>
       </View>
 
-      <Animated.View
-        entering={FadeInUp.duration(500)}
-        style={styles.previewArea}
-      >
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.previewImage} />
-        ) : (
-          <View style={styles.emptyState}>
-            <FaceOutlineIcon />
-            <Text style={styles.emptyTitle}>
-              Upload a front-facing selfie
-            </Text>
-            <Text style={styles.emptyCaption}>
-              Good lighting = better results
-            </Text>
-          </View>
-        )}
-      </Animated.View>
+      {captureStep === 'front' && (
+        <>
+          <Animated.View
+            entering={FadeInUp.duration(500)}
+            style={styles.previewArea}
+          >
+            <View style={styles.emptyState}>
+              <FaceOutlineIcon />
+              <Text style={styles.emptyTitle}>
+                Upload a front-facing selfie
+              </Text>
+              <Text style={styles.emptyCaption}>
+                Good lighting = better results
+              </Text>
+            </View>
+          </Animated.View>
 
-      <Animated.View
-        entering={FadeIn.delay(300).duration(400)}
-        style={styles.buttons}
-      >
-        {imageUri ? (
-          <>
-            <SecondaryButton label="Use Another" onPress={handleReset} />
-            <PrimaryButton label="Analyze My Face" onPress={handleAnalyze} />
-          </>
-        ) : (
-          <>
-            <PrimaryButton label="Take a Selfie" onPress={handleTakePhoto} />
+          <Animated.View
+            entering={FadeIn.delay(300).duration(400)}
+            style={styles.buttons}
+          >
+            <PrimaryButton
+              label="Take a Selfie"
+              onPress={() => takePhoto('front')}
+            />
             <SecondaryButton
               label="Upload from Library"
-              onPress={handleUploadPhoto}
+              onPress={() => uploadPhoto('front')}
             />
-          </>
-        )}
-      </Animated.View>
+          </Animated.View>
+        </>
+      )}
+
+      {captureStep === 'side' && (
+        <>
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={styles.thumbRow}
+          >
+            <View style={styles.thumbContainer}>
+              <Image source={{ uri: imageUri! }} style={styles.thumbImage} />
+              <View style={styles.checkBadge}>
+                <Text style={styles.checkText}>✓</Text>
+              </View>
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.duration(500)}
+            style={styles.previewArea}
+          >
+            <View style={styles.emptyState}>
+              <FaceOutlineIcon />
+              <Text style={styles.emptyTitle}>Now take a side profile</Text>
+              <Text style={styles.emptyCaption}>
+                Turn your head to show your profile
+              </Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeIn.delay(300).duration(400)}
+            style={styles.buttons}
+          >
+            <PrimaryButton
+              label="Take Side Photo"
+              onPress={() => takePhoto('side')}
+            />
+            <SecondaryButton
+              label="Upload from Library"
+              onPress={() => uploadPhoto('side')}
+            />
+          </Animated.View>
+        </>
+      )}
+
+      {captureStep === 'ready' && (
+        <>
+          <Animated.View
+            entering={FadeInUp.duration(500)}
+            style={styles.photoRow}
+          >
+            <Pressable
+              style={styles.photoWrapper}
+              onPress={() => takePhoto('front')}
+            >
+              <View style={styles.photoContainer}>
+                <Image
+                  source={{ uri: imageUri! }}
+                  style={styles.photoImage}
+                />
+              </View>
+              <Text style={styles.photoLabel}>Front</Text>
+            </Pressable>
+            <Pressable
+              style={styles.photoWrapper}
+              onPress={() => takePhoto('side')}
+            >
+              <View style={styles.photoContainer}>
+                <Image
+                  source={{ uri: sideImageUri! }}
+                  style={styles.photoImage}
+                />
+              </View>
+              <Text style={styles.photoLabel}>Side</Text>
+            </Pressable>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeIn.delay(300).duration(400)}
+            style={styles.buttons}
+          >
+            <PrimaryButton label="Analyze My Face" onPress={handleAnalyze} />
+            <SecondaryButton label="Start Over" onPress={handleStartOver} />
+          </Animated.View>
+        </>
+      )}
 
       <Toast message={toastMessage} visible={toastVisible} />
     </SafeScreen>
@@ -266,11 +371,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignSelf: 'center',
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -292,5 +392,70 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 20,
     paddingBottom: 8,
+  },
+  thumbRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  thumbContainer: {
+    width: 60,
+    height: 80,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  checkBadge: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  photoRow: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    alignItems: 'center',
+  },
+  photoWrapper: {
+    width: '45%',
+    alignItems: 'center',
+  },
+  photoContainer: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  photoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
