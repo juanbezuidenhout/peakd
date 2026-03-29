@@ -12,7 +12,7 @@ import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { ErrorCard } from '@/components/ui/ErrorCard';
 import { Colors } from '@/constants/colors';
 import { analyzeFaceWithRetry, FaceAnalysisResult, ProgressStage } from '@/lib/anthropic';
-import { getPendingImageUri } from '@/lib/scan-data';
+import { getPendingImageUri, getPendingSideImageUri } from '@/lib/scan-data';
 import { setItem, getItem, KEYS, getUserName } from '@/lib/storage';
 
 const ANALYSIS_STEPS = [
@@ -125,20 +125,27 @@ export default function ScanProcessingScreen() {
         return;
       }
 
-      const response = await analyzeFaceWithRetry(uri, (stage: ProgressStage) => {
-        const stagePercent: Record<ProgressStage, number> = {
-          preparing: 10,
-          uploading: 30,
-          analyzing: 55,
-          scoring: 80,
-          finalizing: 90,
-          complete: 100,
-        };
-        const target = stagePercent[stage] ?? progressRef.current;
-        progressRef.current = target;
-        setProgressPercent(target);
-        barWidth.value = withTiming(target, { duration: 300 });
-      });
+      const sideUri = getPendingSideImageUri();
+
+      const response = await analyzeFaceWithRetry(
+        uri,
+        (stage: ProgressStage) => {
+          const stagePercent: Record<ProgressStage, number> = {
+            preparing: 10,
+            uploading: 30,
+            analyzing: 55,
+            scoring: 80,
+            finalizing: 90,
+            complete: 100,
+          };
+          const target = stagePercent[stage] ?? progressRef.current;
+          progressRef.current = target;
+          setProgressPercent(target);
+          barWidth.value = withTiming(target, { duration: 300 });
+        },
+        2,
+        sideUri,
+      );
 
       // Save results
       await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
