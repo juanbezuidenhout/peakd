@@ -10,16 +10,7 @@ import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
 
-LogBox.ignoreLogs([
-  "Reanimated",
-  "Worklet",
-  "[react-native-css]",
-  "NativeWind",
-  "Failed to save",
-  "Failed to remove",
-  "Require cycle",
-  "Non-serializable values were found in the navigation state",
-]);
+LogBox.ignoreAllLogs();
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

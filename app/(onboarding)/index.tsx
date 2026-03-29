@@ -1,109 +1,127 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, Dimensions, LayoutChangeEvent } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, Image, StyleSheet, StatusBar, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Line, Circle } from 'react-native-svg';
-import Animated, {
-  FadeInUp,
-  useSharedValue,
-  useAnimatedProps,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
+import ReAnimated, { FadeInUp } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const AnimatedLine = Animated.createAnimatedComponent(Line);
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const TOP_ZONE_HEIGHT = SCREEN_HEIGHT * 0.58;
+
+const SLIDES = [
+  { type: 'image' as const, uri: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80' },
+  { type: 'view' as const, id: 'glow-score' },
+  { type: 'view' as const, id: 'countdown' },
+  { type: 'image' as const, uri: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&q=80' },
+];
+
+const CIRCLE_RADIUS = 120;
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+const ARC_PERCENT = 0.75;
+
+function GlowScoreSlide() {
+  return (
+    <View style={styles.slideView}>
+      <Text style={styles.glowLabel}>YOUR GLOW SCORE</Text>
+      <Text style={styles.glowNumber}>6.2</Text>
+      <View style={styles.progressTrack}>
+        <View style={styles.progressFill} />
+      </View>
+      <Text style={styles.glowSub}>Enhancement zones identified</Text>
+    </View>
+  );
+}
+
+function CountdownSlide() {
+  return (
+    <View style={styles.slideView}>
+      <Svg
+        width={CIRCLE_RADIUS * 2 + 20}
+        height={CIRCLE_RADIUS * 2 + 20}
+        style={styles.countdownSvg}
+      >
+        <Circle
+          cx={CIRCLE_RADIUS + 10}
+          cy={CIRCLE_RADIUS + 10}
+          r={CIRCLE_RADIUS}
+          stroke="#2A2A2A"
+          strokeWidth={8}
+          fill="none"
+        />
+        <Circle
+          cx={CIRCLE_RADIUS + 10}
+          cy={CIRCLE_RADIUS + 10}
+          r={CIRCLE_RADIUS}
+          stroke={Colors.primary}
+          strokeWidth={8}
+          fill="none"
+          strokeDasharray={`${CIRCLE_CIRCUMFERENCE}`}
+          strokeDashoffset={CIRCLE_CIRCUMFERENCE * (1 - ARC_PERCENT)}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${CIRCLE_RADIUS + 10}, ${CIRCLE_RADIUS + 10}`}
+        />
+      </Svg>
+      <View style={styles.countdownTextContainer}>
+        <Text style={styles.countdownNumber}>30</Text>
+        <Text style={styles.countdownLabel}>DAYS UNTIL</Text>
+        <Text style={styles.countdownAccent}>YOUR PEAK</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function HeroScreen() {
   const router = useRouter();
-  const [svgWidth, setSvgWidth] = useState(0);
-  const [svgHeight, setSvgHeight] = useState(0);
-  const scanY = useSharedValue(0);
-
-  const handleLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setSvgWidth(width);
-    setSvgHeight(height);
-  };
+  const [activeIndex, setActiveIndex] = useState(0);
+  const fadeAnims = useRef(SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))).current;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (svgWidth <= 0 || svgHeight <= 0) return;
-    scanY.value = svgHeight * 0.2;
-    scanY.value = withRepeat(
-      withTiming(svgHeight * 0.8, {
-        duration: 3000,
-        easing: Easing.inOut(Easing.sin),
-      }),
-      -1,
-      true,
-    );
-  }, [svgWidth, svgHeight, scanY]);
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % SLIDES.length;
+        Animated.parallel([
+          Animated.timing(fadeAnims[prev], { toValue: 0, duration: 600, useNativeDriver: true }),
+          Animated.timing(fadeAnims[next], { toValue: 1, duration: 600, useNativeDriver: true }),
+        ]).start();
+        return next;
+      });
+    }, 2800);
 
-  const scanLineProps = useAnimatedProps(() => ({
-    y1: scanY.value,
-    y2: scanY.value,
-  }));
-
-  const cx = svgWidth / 2;
-  const cy = svgHeight / 2;
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fadeAnims]);
 
   return (
     <View style={styles.container}>
       <StatusBar hidden />
 
-      <View style={styles.topZone} onLayout={handleLayout}>
-        {svgWidth > 0 && svgHeight > 0 && (
-          <Svg width="100%" height="100%">
-            {Array.from({ length: 7 }, (_, i) => {
-              const x = (svgWidth / 8) * (i + 1);
-              return (
-                <Line
-                  key={`v${i}`}
-                  x1={x}
-                  y1={0}
-                  x2={x}
-                  y2={svgHeight}
-                  stroke="#1C1C1C"
-                  strokeWidth={0.6}
-                />
-              );
-            })}
-
-            {Array.from({ length: 9 }, (_, i) => {
-              const y = (svgHeight / 10) * (i + 1);
-              return (
-                <Line
-                  key={`h${i}`}
-                  x1={0}
-                  y1={y}
-                  x2={svgWidth}
-                  y2={y}
-                  stroke="#1C1C1C"
-                  strokeWidth={0.6}
-                />
-              );
-            })}
-
-            <Circle cx={cx} cy={cy} r={svgWidth * 0.22} stroke="#2C2C2C" strokeWidth={1} fill="none" />
-            <Circle cx={cx} cy={cy} r={svgWidth * 0.36} stroke="#2C2C2C" strokeWidth={1} fill="none" />
-            <Circle cx={cx} cy={cy} r={svgWidth * 0.50} stroke="#2C2C2C" strokeWidth={1} fill="none" />
-
-            <AnimatedLine
-              x1={0}
-              x2={svgWidth}
-              animatedProps={scanLineProps}
-              stroke={Colors.primary}
-              strokeWidth={1.5}
-              opacity={0.65}
-            />
-
-            <Line x1={cx - 12} x2={cx + 12} y1={cy} y2={cy} stroke={Colors.primary} strokeWidth={1.5} />
-            <Line x1={cx} x2={cx} y1={cy - 12} y2={cy + 12} stroke={Colors.primary} strokeWidth={1.5} />
-          </Svg>
-        )}
+      <View style={styles.topZone}>
+        {SLIDES.map((slide, index) => {
+          if (slide.type === 'image') {
+            return (
+              <Animated.View key={index} style={[styles.slideAbsolute, { opacity: fadeAnims[index] }]}>
+                <Image source={{ uri: slide.uri }} style={styles.slideImage} resizeMode="cover" />
+              </Animated.View>
+            );
+          }
+          if (slide.id === 'glow-score') {
+            return (
+              <Animated.View key={index} style={[styles.slideAbsolute, { opacity: fadeAnims[index] }]}>
+                <GlowScoreSlide />
+              </Animated.View>
+            );
+          }
+          return (
+            <Animated.View key={index} style={[styles.slideAbsolute, { opacity: fadeAnims[index] }]}>
+              <CountdownSlide />
+            </Animated.View>
+          );
+        })}
 
         <LinearGradient
           colors={['transparent', Colors.background]}
@@ -118,36 +136,36 @@ export default function HeroScreen() {
 
       <View style={styles.bottom}>
         <View>
-          <Animated.View entering={FadeInUp.delay(150).duration(500)}>
+          <ReAnimated.View entering={FadeInUp.delay(150).duration(500)}>
             <Text style={styles.label}>AI BEAUTY INTELLIGENCE</Text>
-          </Animated.View>
+          </ReAnimated.View>
 
-          <Animated.View entering={FadeInUp.delay(300).duration(500)}>
+          <ReAnimated.View entering={FadeInUp.delay(300).duration(500)}>
             <Text style={styles.headline}>
               {'Find Out How Much\n'}
               <Text style={styles.headlineAccent}>Hotter</Text>
               {' You\nCould Look'}
             </Text>
-          </Animated.View>
+          </ReAnimated.View>
 
-          <Animated.View entering={FadeInUp.delay(450).duration(500)}>
+          <ReAnimated.View entering={FadeInUp.delay(450).duration(500)}>
             <Text style={styles.subtext}>
               Your beauty archetype, glow score, and 30-day protocol. Built by AI in 60 seconds.
             </Text>
-          </Animated.View>
+          </ReAnimated.View>
         </View>
 
         <View>
-          <Animated.View entering={FadeInUp.delay(600).duration(500)}>
+          <ReAnimated.View entering={FadeInUp.delay(600).duration(500)}>
             <PrimaryButton
               label="Get Started →"
               onPress={() => router.push('/(onboarding)/pain-dating')}
             />
-          </Animated.View>
+          </ReAnimated.View>
 
-          <Animated.View entering={FadeInUp.delay(750).duration(500)}>
+          <ReAnimated.View entering={FadeInUp.delay(750).duration(500)}>
             <Text style={styles.socialProof}>50,000+ women already glowing up</Text>
-          </Animated.View>
+          </ReAnimated.View>
         </View>
       </View>
     </View>
@@ -161,16 +179,31 @@ const styles = StyleSheet.create({
   },
   topZone: {
     width: '100%',
-    height: SCREEN_HEIGHT * 0.56,
+    height: TOP_ZONE_HEIGHT,
     overflow: 'hidden',
     backgroundColor: '#0A0A0A',
+  },
+  slideAbsolute: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: TOP_ZONE_HEIGHT,
+  },
+  slideImage: {
+    width: '100%',
+    height: '100%',
+  },
+  slideView: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   topGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 110,
+    height: 100,
   },
   logoRow: {
     flexDirection: 'row',
@@ -187,6 +220,66 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 22,
     color: Colors.primary,
+  },
+  glowLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 3,
+    color: '#C084FC',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  glowNumber: {
+    fontSize: 72,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  progressTrack: {
+    width: SCREEN_WIDTH * 0.7,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#2A2A2A',
+    marginBottom: 12,
+  },
+  progressFill: {
+    width: '80%',
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
+  },
+  glowSub: {
+    fontSize: 13,
+    color: '#888888',
+  },
+  countdownSvg: {
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 20,
+  },
+  countdownTextContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countdownNumber: {
+    fontSize: 64,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  countdownLabel: {
+    fontSize: 14,
+    color: '#888888',
+    textTransform: 'uppercase',
+    marginTop: -4,
+  },
+  countdownAccent: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.accent,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   bottom: {
     flex: 1,
