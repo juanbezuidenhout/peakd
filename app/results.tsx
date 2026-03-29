@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, Share } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
+  FadeIn,
   FadeInUp,
   useSharedValue,
   useAnimatedProps,
-  useAnimatedStyle,
   withTiming,
   withDelay,
   Easing,
@@ -13,138 +13,78 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { Colors } from '@/constants/colors';
 import { getItem, KEYS } from '@/lib/storage';
-import { FaceAnalysisResult } from '@/lib/anthropic';
+import type { FaceAnalysisResult } from '@/lib/anthropic';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const RING_SIZE = 180;
-const RING_STROKE = 6;
+const RING_SIZE = 200;
+const RING_STROKE = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-const LOCKED_CATEGORIES = [
-  { label: 'Face Shape', icon: '💎' },
-  { label: 'Eye Type', icon: '👁️' },
-  { label: 'Color Season', icon: '🎨' },
-  { label: 'Skin Tone', icon: '✨' },
-  { label: 'Top Feature', icon: '⭐' },
-  { label: 'Archetype', icon: '👑' },
-];
-
-function AnimatedScore({ target }: { target: number }) {
-  const progress = useSharedValue(0);
-  const [displayScore, setDisplayScore] = useState(0);
-
-  const updateDisplay = (val: number) => {
-    setDisplayScore(Math.round(val));
-  };
-
-  useDerivedValue(() => {
-    runOnJS(updateDisplay)(progress.value);
-  });
-
-  useEffect(() => {
-    progress.value = withDelay(
-      400,
-      withTiming(target, { duration: 1500, easing: Easing.out(Easing.cubic) }),
-    );
-  }, [target, progress]);
-
-  return (
-    <View style={scoreStyles.container}>
-      <Text style={scoreStyles.number}>{displayScore}</Text>
-      <Text style={scoreStyles.denominator}>/100</Text>
-    </View>
-  );
-}
-
-function ScoreRing({ score }: { score: number }) {
-  const animatedProgress = useSharedValue(0);
-
-  useEffect(() => {
-    animatedProgress.value = withDelay(
-      400,
-      withTiming(score / 100, {
-        duration: 1500,
-        easing: Easing.out(Easing.cubic),
-      }),
-    );
-  }, [score, animatedProgress]);
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: RING_CIRCUMFERENCE * (1 - animatedProgress.value),
-  }));
-
-  return (
-    <View style={scoreStyles.ringWrapper}>
-      <Svg width={RING_SIZE} height={RING_SIZE}>
-        <Circle
-          cx={RING_SIZE / 2}
-          cy={RING_SIZE / 2}
-          r={RING_RADIUS}
-          stroke={Colors.border}
-          strokeWidth={RING_STROKE}
-          fill="transparent"
-        />
-        <AnimatedCircle
-          cx={RING_SIZE / 2}
-          cy={RING_SIZE / 2}
-          r={RING_RADIUS}
-          stroke={Colors.primary}
-          strokeWidth={RING_STROKE}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeDasharray={RING_CIRCUMFERENCE}
-          animatedProps={animatedProps}
-          rotation="-90"
-          origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
-        />
-      </Svg>
-      <View style={scoreStyles.scoreOverlay}>
-        <AnimatedScore target={score} />
-      </View>
-    </View>
-  );
-}
-
-function LockedCard({ label, icon }: { label: string; icon: string }) {
-  return (
-    <View style={gridStyles.card}>
-      <Text style={gridStyles.cardLabel}>{label}</Text>
-      <View style={gridStyles.blurredValue}>
-        <Text style={gridStyles.blurredText}>██████</Text>
-      </View>
-      <View style={gridStyles.progressTrack}>
-        <View style={gridStyles.progressFill} />
-      </View>
-      <View style={gridStyles.lockOverlay}>
-        <Text style={gridStyles.lockIcon}>🔒</Text>
-      </View>
-    </View>
-  );
+function getScoreLabel(score: number): { text: string; color: string } {
+  if (score >= 8.0) return { text: 'Exceptional', color: Colors.success };
+  if (score >= 6.5) return { text: 'Above Average', color: Colors.gold };
+  if (score >= 5.0) return { text: 'Room to Glow', color: Colors.textSecondary };
+  return { text: 'Early Journey', color: Colors.textSecondary };
 }
 
 export default function ResultsScreen() {
   const router = useRouter();
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
-  const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [displayScore, setDisplayScore] = useState('0.0');
+  const [ringDone, setRingDone] = useState(false);
+
+  const progress = useSharedValue(0);
 
   useEffect(() => {
     (async () => {
       const scanResult = await getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT);
-      const uri = await getItem<string>(KEYS.SCAN_IMAGE_URI);
       if (scanResult) setResult(scanResult);
-      if (uri) setImageUri(uri);
       setLoading(false);
     })();
   }, []);
+
+  const handleRingComplete = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRingDone(true);
+  }, []);
+
+  const updateDisplay = useCallback((val: number) => {
+    setDisplayScore(val.toFixed(1));
+  }, []);
+
+  useDerivedValue(() => {
+    runOnJS(updateDisplay)(progress.value);
+  });
+
+  const glowScore = result?.glowScore ?? 0;
+
+  useEffect(() => {
+    if (!loading && result) {
+      progress.value = withDelay(
+        500,
+        withTiming(
+          result.glowScore,
+          { duration: 2000, easing: Easing.out(Easing.cubic) },
+          (finished) => {
+            if (finished) runOnJS(handleRingComplete)();
+          },
+        ),
+      );
+    }
+  }, [loading, result, progress, handleRingComplete]);
+
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: RING_CIRCUMFERENCE * (1 - progress.value / 10),
+  }));
 
   if (loading) {
     return (
@@ -154,23 +94,10 @@ export default function ResultsScreen() {
     );
   }
 
-  const glowScoreRaw = result?.glowScore ?? 7.4;
-  const displayScore = Math.round(glowScoreRaw * 10);
-  const archetypeName = result?.archetype?.name ?? 'Ethereal Doe';
-  const archetypeDesc =
-    result?.archetype?.description ??
-    'A soft, luminous beauty with expressive doe eyes and an ethereal glow.';
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message:
-          'I just discovered my beauty archetype with Peakd! Try it yourself ✨',
-      });
-    } catch {
-      // share cancelled
-    }
-  };
+  const scoreLabel = getScoreLabel(glowScore);
+  const archetype = result?.archetype;
+  const topStrength = result?.topStrength;
+  const topOpportunity = result?.topOpportunity;
 
   return (
     <SafeScreen>
@@ -178,242 +105,238 @@ export default function ResultsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Photo + Archetype */}
-        <Animated.View
-          entering={FadeInUp.duration(500)}
-          style={styles.heroSection}
-        >
-          <View style={styles.photoRing}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.photo} />
-            ) : (
-              <View style={[styles.photo, styles.photoPlaceholder]}>
-                <Text style={styles.photoPlaceholderIcon}>👤</Text>
-              </View>
-            )}
+        {/* Section 1 — Glow Score Reveal */}
+        <View style={styles.heroSection}>
+          <View style={styles.ringGlow}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={Colors.border}
+                strokeWidth={RING_STROKE}
+                fill="transparent"
+              />
+              <AnimatedCircle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={Colors.primary}
+                strokeWidth={RING_STROKE}
+                fill="transparent"
+                strokeLinecap="round"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                animatedProps={animatedProps}
+                rotation="-90"
+                origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+              />
+            </Svg>
+            <View style={styles.scoreOverlay}>
+              <Text style={styles.scoreNumber}>{displayScore}</Text>
+              <Text style={styles.scoreDenominator}>/10</Text>
+            </View>
           </View>
-          <Text style={styles.archetype}>{archetypeName}</Text>
-          <Text style={styles.archetypeDesc}>{archetypeDesc}</Text>
-        </Animated.View>
 
-        {/* Score Section */}
-        <Animated.View
-          entering={FadeInUp.delay(200).duration(500)}
-          style={styles.scoreSection}
-        >
-          <Text style={styles.scoreLabel}>GLOW SCORE</Text>
-          <ScoreRing score={displayScore} />
-          <Text style={styles.potentialText}>
-            {glowScoreRaw.toFixed(1)} / 10.0
+          <Text style={[styles.scoreLabel, { color: scoreLabel.color }]}>
+            {scoreLabel.text}
           </Text>
-        </Animated.View>
+        </View>
 
-        {/* Locked Grid */}
-        <Animated.View
-          entering={FadeInUp.delay(400).duration(500)}
-          style={styles.lockedSection}
-        >
-          <Text style={styles.sectionTitle}>Your Beauty Breakdown</Text>
-          <View style={gridStyles.grid}>
-            {LOCKED_CATEGORIES.map((cat) => (
-              <LockedCard key={cat.label} label={cat.label} icon={cat.icon} />
-            ))}
-          </View>
-        </Animated.View>
+        {/* Section 2 — Archetype */}
+        {ringDone && archetype && (
+          <Animated.View
+            entering={FadeIn.delay(500).duration(400)}
+            style={styles.archetypeCard}
+          >
+            <Text style={styles.cardLabel}>YOUR ARCHETYPE</Text>
+            <Text style={styles.archetypeName}>{archetype.name}</Text>
+            <Text style={styles.archetypeDesc}>{archetype.description}</Text>
+          </Animated.View>
+        )}
 
-        {/* Bottom CTA */}
-        <Animated.View
-          entering={FadeInUp.delay(600).duration(500)}
-          style={styles.ctaSection}
-        >
-          <PrimaryButton
-            label="Unlock My Full Plan ✨"
-            onPress={() => router.push('/paywall')}
-          />
-          <View style={styles.secondaryButtonWrap}>
-            <SecondaryButton
-              label="Invite 3 Friends to Unlock"
-              onPress={handleShare}
+        {/* Section 3 — Top Strength */}
+        {ringDone && topStrength && (
+          <Animated.View
+            entering={FadeInUp.delay(700).duration(400)}
+            style={[styles.highlightCard, styles.strengthBorder]}
+          >
+            <Text style={[styles.highlightLabel, { color: Colors.success }]}>
+              YOUR TOP STRENGTH
+            </Text>
+            <Text style={styles.highlightFeature}>{topStrength.feature}</Text>
+            <Text style={styles.highlightInsight}>{topStrength.insight}</Text>
+          </Animated.View>
+        )}
+
+        {/* Section 4 — Top Opportunity */}
+        {ringDone && topOpportunity && (
+          <Animated.View
+            entering={FadeInUp.delay(900).duration(400)}
+            style={[styles.highlightCard, styles.opportunityBorder]}
+          >
+            <Text style={[styles.highlightLabel, { color: Colors.warning }]}>
+              YOUR #1 OPPORTUNITY
+            </Text>
+            <Text style={styles.highlightFeature}>
+              {topOpportunity.feature}
+            </Text>
+            <Text style={styles.highlightInsight}>
+              {topOpportunity.insight}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Section 5 — CTA */}
+        {ringDone && (
+          <Animated.View
+            entering={FadeIn.delay(1100).duration(400)}
+            style={styles.ctaSection}
+          >
+            <Text style={styles.ctaHeading}>
+              See your full beauty blueprint
+            </Text>
+            <Text style={styles.ctaSubtext}>
+              All 8 feature scores {'\u2022'} 5 personalized recommendations{' '}
+              {'\u2022'} Your shareable Glow Card
+            </Text>
+            <PrimaryButton
+              label="Unlock Full Results \u2192"
+              onPress={() => router.push('/paywall')}
             />
-          </View>
-          <Text style={styles.socialProof}>
-            Join 500,000+ women who found their glow
-          </Text>
-        </Animated.View>
+            <Text style={styles.socialProof}>
+              Join 500,000+ women on their glow journey
+            </Text>
+          </Animated.View>
+        )}
       </ScrollView>
     </SafeScreen>
   );
 }
 
-const scoreStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  heroSection: {
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 100,
+    paddingBottom: 40,
+    gap: 16,
   },
-  number: {
-    fontSize: 72,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    lineHeight: 78,
-  },
-  denominator: {
-    fontSize: 24,
-    color: Colors.textSecondary,
-    marginBottom: 10,
-    marginLeft: 2,
-  },
-  ringWrapper: {
+  ringGlow: {
     width: RING_SIZE,
     height: RING_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 30,
+    shadowOpacity: 0.4,
+    elevation: 12,
   },
   scoreOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
-
-const gridStyles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 16,
+  scoreNumber: {
+    fontSize: 56,
+    fontWeight: '800',
+    color: Colors.textPrimary,
   },
-  card: {
-    width: '47%' as any,
-    flexGrow: 1,
-    flexBasis: '45%',
-    backgroundColor: Colors.surfaceElevated,
+  scoreDenominator: {
+    fontSize: 20,
+    color: Colors.textSecondary,
+  },
+  scoreLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+
+  archetypeCard: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: 16,
-    padding: 16,
-    overflow: 'hidden',
+    padding: 24,
+    marginHorizontal: 24,
   },
   cardLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: 8,
-  },
-  blurredValue: {
-    marginBottom: 10,
-  },
-  blurredText: {
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: '700',
     color: Colors.textMuted,
-    opacity: 0.3,
+    letterSpacing: 1.5,
+    marginBottom: 8,
   },
-  progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.border,
-  },
-  progressFill: {
-    width: '60%',
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.textMuted,
-    opacity: 0.3,
-  },
-  lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 10, 10, 0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-  },
-  lockIcon: {
-    fontSize: 24,
-  },
-});
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  heroSection: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  photoRing: {
-    width: 126,
-    height: 126,
-    borderRadius: 63,
-    borderWidth: 3,
-    borderColor: Colors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  photo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  photoPlaceholder: {
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoPlaceholderIcon: {
-    fontSize: 40,
-  },
-  archetype: {
-    fontSize: 24,
+  archetypeName: {
+    fontSize: 22,
     fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: 16,
-    textAlign: 'center',
+    color: Colors.accent,
   },
   archetypeDesc: {
     fontSize: 14,
     color: Colors.textSecondary,
-    textAlign: 'center',
+    lineHeight: 22,
     marginTop: 8,
-    paddingHorizontal: 20,
-    lineHeight: 20,
   },
-  scoreSection: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  scoreLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginBottom: 16,
-  },
-  potentialText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: Colors.accent,
+
+  highlightCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 24,
     marginTop: 16,
   },
-  lockedSection: {
-    marginTop: 36,
+  strengthBorder: {
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.success,
   },
-  sectionTitle: {
+  opportunityBorder: {
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.warning,
+  },
+  highlightLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  highlightFeature: {
     fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
+    marginTop: 6,
   },
+  highlightInsight: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 21,
+    marginTop: 6,
+  },
+
   ctaSection: {
     marginTop: 32,
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 48,
   },
-  secondaryButtonWrap: {
-    width: '100%',
-    marginTop: 12,
+  ctaHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  ctaSubtext: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+    marginBottom: 24,
   },
   socialProof: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 16,
   },
