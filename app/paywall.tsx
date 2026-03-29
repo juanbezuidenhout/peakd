@@ -5,60 +5,544 @@ import {
   Pressable,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   SlideInRight,
   SlideOutLeft,
+  FadeIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import Svg, { Circle, Path, Rect, Line } from 'react-native-svg';
 import { getItem, KEYS } from '@/lib/storage';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// ── Design tokens (light theme) ───────────────────────────────────────────
 const C = {
-  background: '#FFFFFF',
-  backgroundGradientTop: '#E8F4FD',
-  backgroundGradientBottom: '#FFFFFF',
-  text: '#1A1A1A',
+  bg: '#FFFFFF',
+  gradTop: '#EDF2FF',
+  gradBottom: '#FFFFFF',
+  navy: '#1A1A2E',
+  blue: '#4A90D9',
+  blueLight: '#7BB3F0',
+  blueBg: 'rgba(74,144,217,0.08)',
+  blueBgSolid: '#F0F4FF',
+  cardBg: '#FAFBFC',
+  cardBorder: '#F0F2F5',
+  textPrimary: '#1A1A2E',
   textSecondary: '#6B7280',
   textMuted: '#9CA3AF',
-  cardBackground: '#F9FAFB',
-  cardBorder: '#E5E7EB',
-  selectedBorder: '#1A1A1A',
-  buttonBackground: '#1A1A1A',
-  buttonText: '#FFFFFF',
-  accent: '#7C3AED',
-  iconBackground: '#EEF2FF',
+  border: '#E8EDF3',
+  success: '#34C759',
+  successBg: 'rgba(52,199,89,0.1)',
+  white: '#FFFFFF',
+  lock: '#B0B8C9',
 };
 
-const FEATURE_NAMES: Record<keyof FeatureScores, string> = {
-  facialStructure: 'Structure',
-  skinQuality: 'Skin',
-  eyes: 'Eyes',
-  overallHarmony: 'Harmony',
-  lipsAndMouth: 'Lips',
-  nose: 'Nose',
-  hair: 'Hair',
-  eyebrows: 'Brows',
-};
+// ── SVG Icons ─────────────────────────────────────────────────────────────
 
-function getTop2Features(fs: FeatureScores) {
-  return (Object.entries(fs) as [keyof FeatureScores, { score: number }][])
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, 2)
-    .map(([key, val]) => ({ name: FEATURE_NAMES[key], score: val.score }));
+function IconChevronLeft() {
+  return (
+    <Svg width={10} height={18} viewBox="0 0 10 18" fill="none">
+      <Path d="M9 1L1 9L9 17" stroke={C.navy} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
 }
+
+function IconLock() {
+  return (
+    <Svg width={12} height={12} viewBox="0 0 16 16" fill="none">
+      <Rect x={3} y={7} width={10} height={7} rx={2} fill={C.lock} />
+      <Path d="M5 7V5a3 3 0 116 0v2" stroke={C.lock} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconCheck() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+      <Circle cx={10} cy={10} r={10} fill={C.navy} />
+      <Path d="M6 10.5L8.5 13L14 7.5" stroke={C.white} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconSmallCheck() {
+  return (
+    <Svg width={10} height={8} viewBox="0 0 12 9" fill="none">
+      <Path d="M1 4.5L4.5 8L11 1" stroke={C.white} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconDroplet() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <Path d="M8 2C8 2 3.5 7.5 3.5 10a4.5 4.5 0 109 0C12.5 7.5 8 2 8 2z" stroke={C.blue} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" fill="rgba(74,144,217,0.1)" />
+    </Svg>
+  );
+}
+
+function IconDiamond() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <Path d="M8 1.5L14.5 8L8 14.5L1.5 8L8 1.5z" stroke={C.blue} strokeWidth={1.4} strokeLinejoin="round" fill="rgba(74,144,217,0.1)" />
+    </Svg>
+  );
+}
+
+function IconStar() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <Path d="M8 2l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 2z" stroke={C.blue} strokeWidth={1.3} strokeLinejoin="round" fill="rgba(74,144,217,0.1)" />
+    </Svg>
+  );
+}
+
+function IconCamera() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <Rect x={1.5} y={4.5} width={13} height={9} rx={2} stroke={C.blue} strokeWidth={1.3} fill="rgba(74,144,217,0.1)" />
+      <Path d="M5.5 4.5L6.5 2.5h3l1 2" stroke={C.blue} strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={8} cy={9} r={2.2} stroke={C.blue} strokeWidth={1.3} />
+    </Svg>
+  );
+}
+
+function IconCheckCircle() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 16 16" fill="none">
+      <Circle cx={8} cy={8} r={6} stroke={C.blue} strokeWidth={1.3} fill="rgba(74,144,217,0.08)" />
+      <Path d="M5.5 8.2L7 9.8L10.5 6.2" stroke={C.blue} strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconSearch() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 16 16" fill="none">
+      <Circle cx={7} cy={7} r={4.5} stroke={C.blue} strokeWidth={1.4} />
+      <Path d="M10.5 10.5L14 14" stroke={C.blue} strokeWidth={1.4} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconClipboard() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 16 16" fill="none">
+      <Rect x={3} y={2.5} width={10} height={12} rx={2} stroke={C.blue} strokeWidth={1.3} fill="rgba(74,144,217,0.05)" />
+      <Path d="M6 2.5V2a2 2 0 014 0v.5" stroke={C.blue} strokeWidth={1.3} />
+      <Line x1={6} y1={7} x2={10} y2={7} stroke={C.blue} strokeWidth={1.2} strokeLinecap="round" />
+      <Line x1={6} y1={9.5} x2={9} y2={9.5} stroke={C.blue} strokeWidth={1.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconLightbulb() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 16 16" fill="none">
+      <Path d="M6.5 13h3M8 1.5a4.5 4.5 0 00-2 8.5v1.5h4V10A4.5 4.5 0 008 1.5z" stroke={C.blue} strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" fill="rgba(74,144,217,0.06)" />
+    </Svg>
+  );
+}
+
+function IconTrendUp() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 16 16" fill="none">
+      <Path d="M2 12L6 7.5 9 10l5-6" stroke={C.blue} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M11 4h3v3" stroke={C.blue} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconShield() {
+  return (
+    <Svg width={13} height={13} viewBox="0 0 16 16" fill="none">
+      <Path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 6.5 3-1 5.5-3 5.5-6.5V4L8 1.5z" stroke={C.textMuted} strokeWidth={1.2} fill="rgba(156,163,175,0.08)" />
+      <Path d="M6 8.2L7.3 9.5 10 6.5" stroke={C.textMuted} strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconStarFilled() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 16 16" fill="none">
+      <Path d="M8 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L8 11.8 3.8 14l.8-4.7L1.2 6l4.7-.7z" fill="#FFB800" />
+    </Svg>
+  );
+}
+
+function IconArrowRight() {
+  return (
+    <Svg width={16} height={12} viewBox="0 0 16 12" fill="none">
+      <Path d="M0 6h12M10 2l4 4-4 4" stroke={C.blue} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+const CATEGORY_ICONS = [IconDroplet, IconDiamond, IconStar, IconCamera, IconCheckCircle, IconDroplet, IconDiamond, IconStar];
+const PHASE_ICONS = [IconDroplet, IconDiamond, IconStar, IconCamera];
+
+const CATEGORY_KEYS: (keyof FeatureScores)[] = [
+  'skinQuality', 'facialStructure', 'eyes', 'nose', 'lipsAndMouth', 'eyebrows', 'hair', 'overallHarmony',
+];
+
+const CATEGORY_LABELS: Record<keyof FeatureScores, string> = {
+  skinQuality: 'Skin Clarity',
+  facialStructure: 'Symmetry',
+  eyes: 'Eyes',
+  nose: 'Nose',
+  lipsAndMouth: 'Lips',
+  eyebrows: 'Brows',
+  hair: 'Hair & Grooming',
+  overallHarmony: 'Overall Harmony',
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function getTopCategories(fs: FeatureScores, count = 5) {
+  return CATEGORY_KEYS
+    .map((key, i) => ({
+      key,
+      name: CATEGORY_LABELS[key],
+      score: fs[key].score,
+      potential: `+${(Math.random() * 1.5 + 0.5).toFixed(1)}`,
+      IconComponent: CATEGORY_ICONS[i],
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count);
+}
+
+// ── Animated Score Ring ───────────────────────────────────────────────────
+
+function ScoreRing({ score, size = 90 }: { score: number; size?: number }) {
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const color = score >= 7.5 ? C.success : score >= 5.5 ? C.blue : '#FF6B6B';
+  const offset = circumference * (1 - score / 10);
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
+        <Circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={C.border} strokeWidth={strokeWidth} />
+        <Circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
+          strokeDasharray={`${circumference}`} strokeDashoffset={offset} strokeLinecap="round" />
+      </Svg>
+      <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ fontSize: 26, fontWeight: '700', color: C.navy }}>{score.toFixed(1)}</Text>
+        <Text style={{ fontSize: 10, color: C.textMuted, fontWeight: '500' }}>/10</Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Progress Dots ─────────────────────────────────────────────────────────
+
+function Dots({ current }: { current: number }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={{
+          width: i === current ? 20 : 6, height: 6, borderRadius: 3,
+          backgroundColor: i === current ? C.blue : '#E2E8F0',
+        }} />
+      ))}
+    </View>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCREEN 1 — Glow Card + What You Unlock
+// ══════════════════════════════════════════════════════════════════════════
+
+function Screen1({
+  user,
+  onNext,
+}: {
+  user: { name: string; rating: number; categories: { name: string; score: number; potential: string; IconComponent: React.FC }[] };
+  onNext: () => void;
+}) {
+  const UNLOCK_ITEMS = [
+    'Personalized 60 day transformation blueprint',
+    'Week by week action items for your face',
+    'Product and routine recommendations',
+    'Progress tracking with re-scans',
+  ];
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      {/* Glow Card */}
+      <View style={s.glowCard}>
+        <View style={s.glowCardGlow} />
+        {/* User header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <LinearGradient colors={[C.blue, C.blueLight]} style={s.avatar}>
+            <Text style={s.avatarText}>{user.name ? user.name[0].toUpperCase() : 'P'}</Text>
+          </LinearGradient>
+          <View>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: C.navy }}>{user.name || 'Your'}'s Glow Card</Text>
+            <Text style={{ fontSize: 12, color: C.textMuted, marginTop: 1 }}>Scanned just now</Text>
+          </View>
+        </View>
+
+        {/* Score */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, marginBottom: 18 }}>
+          <ScoreRing score={user.rating} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy, marginBottom: 6 }}>Your Rating</Text>
+            <Text style={{ fontSize: 12, color: C.textSecondary, lineHeight: 18 }}>
+              With the right plan, our users typically improve{' '}
+              <Text style={{ color: C.blue, fontWeight: '600' }}>+1.5 points</Text> in 60 days.
+            </Text>
+          </View>
+        </View>
+
+        {/* Categories */}
+        <View style={{ gap: 8 }}>
+          {user.categories.map((cat, i) => {
+            const CatIcon = cat.IconComponent;
+            return (
+              <View key={i} style={s.catRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <CatIcon />
+                  <Text style={{ fontSize: 13, color: C.navy, fontWeight: '500' }}>{cat.name}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy }}>{cat.score.toFixed(1)}</Text>
+                  <View style={s.blurredPotential}>
+                    <Text style={{ fontSize: 11, color: C.blue, fontWeight: '600' }}>{cat.potential}</Text>
+                  </View>
+                  <IconLock />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Unlock list */}
+      <View style={{ paddingHorizontal: 4, marginTop: 16, marginBottom: 20 }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy, marginBottom: 10 }}>What you'll unlock</Text>
+        {UNLOCK_ITEMS.map((item, i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <LinearGradient colors={[C.blue, C.blueLight]} style={s.checkBubble}>
+              <IconSmallCheck />
+            </LinearGradient>
+            <Text style={{ fontSize: 13, color: C.textSecondary, lineHeight: 18, flex: 1 }}>{item}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* CTA */}
+      <Pressable style={s.ctaBtn} onPress={onNext}>
+        <Text style={s.ctaBtnText}>Unlock My Blueprint</Text>
+      </Pressable>
+      <Text style={s.ctaSub}>See how to reach your full potential</Text>
+    </ScrollView>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCREEN 2 — 60 Day Transformation Timeline
+// ══════════════════════════════════════════════════════════════════════════
+
+const PHASES = [
+  { weeks: 'Week 1 to 2', title: 'Skin Foundation', desc: 'Targeted skincare routine based on your scan' },
+  { weeks: 'Week 3 to 4', title: 'Structure & Definition', desc: 'Facial exercises and grooming upgrades' },
+  { weeks: 'Week 5 to 6', title: 'Style & Presence', desc: 'Hair, brows and personal style optimization' },
+  { weeks: 'Week 7 to 8', title: 'Final Polish and Re-scan', desc: 'Refinements and measure your transformation' },
+];
+
+function Screen2({
+  rating,
+  onNext,
+}: {
+  rating: number;
+  onNext: () => void;
+}) {
+  const projected = Math.min(10, rating + 1.5).toFixed(1);
+  const gain = (Number(projected) - rating).toFixed(1);
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <View style={{ alignItems: 'center', marginBottom: 20 }}>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.navy, letterSpacing: -0.3 }}>Your 60 Day Transformation</Text>
+        <Text style={{ fontSize: 14, color: C.textSecondary, marginTop: 6 }}>A step by step plan built from your scan</Text>
+      </View>
+
+      {/* Score projection */}
+      <View style={s.projectionBar}>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={s.projLabel}>NOW</Text>
+          <Text style={s.projScore}>{rating.toFixed(1)}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View style={{ width: 40, height: 2, backgroundColor: C.blue, borderRadius: 1, opacity: 0.3 }} />
+          <IconArrowRight />
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[s.projLabel, { color: C.blue }]}>DAY 60</Text>
+          <Text style={[s.projScore, { color: C.blue }]}>{projected}</Text>
+        </View>
+        <View style={s.gainBadge}>
+          <Text style={s.gainText}>+{gain}</Text>
+        </View>
+      </View>
+
+      {/* Timeline */}
+      <View style={{ paddingLeft: 20, marginTop: 20 }}>
+        <View style={s.timelineLine} />
+        {PHASES.map((phase, i) => {
+          const PhaseIcon = PHASE_ICONS[i];
+          return (
+            <View key={i} style={{ flexDirection: 'row', marginBottom: i < PHASES.length - 1 ? 16 : 0, paddingLeft: 20, position: 'relative' }}>
+              <View style={[s.timelineDot, i === 0 && s.timelineDotActive]} />
+              <View style={s.timelineCard}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={s.timelineWeek}>{phase.weeks}</Text>
+                  <PhaseIcon />
+                </View>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: C.navy, marginBottom: 3 }}>{phase.title}</Text>
+                <Text style={{ fontSize: 12, color: C.textMuted, lineHeight: 17 }}>{phase.desc}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* CTA */}
+      <View style={{ marginTop: 24 }}>
+        <Pressable style={s.ctaBtn} onPress={onNext}>
+          <Text style={s.ctaBtnText}>Get My Plan</Text>
+        </Pressable>
+        <Text style={s.ctaSub}>Tailored to your unique scan results</Text>
+      </View>
+    </ScrollView>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCREEN 3 — Pricing
+// ══════════════════════════════════════════════════════════════════════════
+
+const INCLUDED = [
+  { label: 'Full scan breakdown and improvement areas', Icon: IconSearch },
+  { label: '60 day personalized transformation plan', Icon: IconClipboard },
+  { label: 'Weekly action items tailored to you', Icon: IconCheckCircle },
+  { label: 'Product and routine recommendations', Icon: IconLightbulb },
+  { label: 'Re-scan to track your progress', Icon: IconTrendUp },
+];
+
+function Screen3({
+  selected,
+  onSelect,
+  onPurchase,
+}: {
+  selected: 'weekly' | 'lifetime';
+  onSelect: (p: 'weekly' | 'lifetime') => void;
+  onPurchase: () => void;
+}) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <View style={{ alignItems: 'center', marginBottom: 20 }}>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.navy, letterSpacing: -0.3 }}>Choose Your Plan</Text>
+        <Text style={{ fontSize: 14, color: C.textSecondary, marginTop: 6 }}>Invest in your glow up</Text>
+      </View>
+
+      {/* Weekly card */}
+      <Pressable
+        style={[s.planCard, selected === 'weekly' && s.planCardActive]}
+        onPress={() => onSelect('weekly')}
+      >
+        <View style={[s.radioOuter, selected === 'weekly' && { borderWidth: 0 }]}>
+          {selected === 'weekly' && <IconCheck />}
+        </View>
+        <View style={{ flex: 1, marginLeft: 14 }}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: C.navy }}>Weekly</Text>
+          <Text style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>Auto renews · Cancel anytime</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: C.navy }}>$4.99</Text>
+          <Text style={{ fontSize: 11, color: C.textMuted }}>/week</Text>
+        </View>
+      </Pressable>
+
+      {/* Lifetime card */}
+      <Pressable
+        style={[s.planCard, selected === 'lifetime' && s.planCardActive, { marginTop: 12, overflow: 'hidden' }]}
+        onPress={() => onSelect('lifetime')}
+      >
+        <View style={s.bestValueBadge}>
+          <Text style={s.bestValueText}>BEST VALUE</Text>
+        </View>
+        <View style={[s.radioOuter, selected === 'lifetime' && { borderWidth: 0 }]}>
+          {selected === 'lifetime' && <IconCheck />}
+        </View>
+        <View style={{ flex: 1, marginLeft: 14 }}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: C.navy }}>60 Day Blueprint</Text>
+          {/* This text only shows when lifetime is selected */}
+          {selected === 'lifetime' && (
+            <Animated.Text entering={FadeIn.duration(250)} style={{ fontSize: 12, color: C.blue, fontWeight: '600', marginTop: 2 }}>
+              Only $0.50/day
+            </Animated.Text>
+          )}
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: C.navy }}>$29.99</Text>
+          <Text style={{ fontSize: 11, color: C.textMuted }}>one time</Text>
+        </View>
+      </Pressable>
+
+      {/* Included list */}
+      <View style={s.includedBox}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy, marginBottom: 10 }}>What's included</Text>
+        {INCLUDED.map((item, i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <item.Icon />
+            <Text style={{ fontSize: 13, color: C.textSecondary, flex: 1 }}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* CTA */}
+      <Pressable style={s.ctaBtn} onPress={onPurchase}>
+        <Text style={s.ctaBtnText}>
+          {selected === 'lifetime' ? 'Get My 60 Day Blueprint · $29.99' : 'Start My Transformation · $4.99/wk'}
+        </Text>
+      </Pressable>
+
+      {/* Footer */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
+        <IconShield />
+        <Text style={{ fontSize: 11, color: C.textMuted }}>Secure payment</Text>
+        <Text style={{ fontSize: 11, color: '#D1D5DB' }}>·</Text>
+        <Text style={{ fontSize: 11, color: C.textMuted }}>Cancel anytime</Text>
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12 }}>
+        {[1, 2, 3, 4, 5].map((i) => <IconStarFilled key={i} />)}
+        <Text style={{ fontSize: 12, color: C.textSecondary, marginLeft: 4 }}>Loved by 10,000+ users</Text>
+      </View>
+    </ScrollView>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN PAYWALL COMPONENT
+// ══════════════════════════════════════════════════════════════════════════
 
 export default function PaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [plan, setPlan] = useState<'weekly' | 'lifetime'>('lifetime');
   const [userName, setUserName] = useState('');
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
 
@@ -75,11 +559,7 @@ export default function PaywallScreen() {
 
   const goBack = () => {
     if (step === 1) router.back();
-    else setStep((s) => s - 1);
-  };
-
-  const skip = () => {
-    router.push('/results-full');
+    else { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep((s) => s - 1); }
   };
 
   const advance = () => {
@@ -87,294 +567,61 @@ export default function PaywallScreen() {
     setStep((s) => s + 1);
   };
 
-  const top2 = result?.featureScores ? getTop2Features(result.featureScores) : [];
-  const glowScore = result?.glowScore ?? 0;
+  const purchase = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // TODO: Wire RevenueCat here
+    router.push('/results-full');
+  };
+
+  const rating = result?.glowScore ?? 0;
+  const categories = result?.featureScores ? getTopCategories(result.featureScores) : [];
 
   return (
-    <View style={styles.root}>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       <StatusBar style="dark" />
       <LinearGradient
-        colors={[C.backgroundGradientTop, C.backgroundGradientBottom]}
+        colors={[C.gradTop, C.gradBottom]}
         start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.5 }}
+        end={{ x: 0.5, y: 0.4 }}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Nav bar */}
-      <View style={[styles.nav, { paddingTop: insets.top + 12 }]}>
-        <Pressable onPress={goBack} hitSlop={12}>
-          <Text style={styles.navBack}>←</Text>
+      {/* Nav: Back + Dots (NO Skip) */}
+      <View style={[s.nav, { paddingTop: insets.top + 8 }]}>
+        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, step === 1 && { opacity: 0 }]}>
+          <IconChevronLeft />
         </Pressable>
-        <Pressable onPress={skip} hitSlop={12}>
-          <Text style={styles.navSkip}>Skip</Text>
-        </Pressable>
+        <Dots current={step - 1} />
+        <View style={{ width: 36 }} />
       </View>
 
-      {/* Step content — keyed by step so Reanimated re-mounts */}
-      {step === 1 && (
-        <Animated.View
-          key="step1"
-          entering={SlideInRight.duration(300)}
-          exiting={SlideOutLeft.duration(300)}
-          style={styles.stepContainer}
-        >
-          <Step1
-            userName={userName}
-            glowScore={glowScore}
-            top2={top2}
-            onContinue={advance}
-          />
-        </Animated.View>
-      )}
-
-      {step === 2 && (
-        <Animated.View
-          key="step2"
-          entering={SlideInRight.duration(300)}
-          exiting={SlideOutLeft.duration(300)}
-          style={styles.stepContainer}
-        >
-          <Step2 onContinue={advance} />
-        </Animated.View>
-      )}
-
-      {step === 3 && (
-        <Animated.View
-          key="step3"
-          entering={SlideInRight.duration(300)}
-          exiting={SlideOutLeft.duration(300)}
-          style={styles.stepContainer}
-        >
-          <Step3
-            selectedPlan={selectedPlan}
-            onSelectPlan={setSelectedPlan}
-            onContinue={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/results-full');
-            }}
-          />
-        </Animated.View>
-      )}
-    </View>
-  );
-}
-
-/* ──────────────────────────── Screen 1 ──────────────────────────── */
-
-function Step1({
-  userName,
-  glowScore,
-  top2,
-  onContinue,
-}: {
-  userName: string;
-  glowScore: number;
-  top2: { name: string; score: number }[];
-  onContinue: () => void;
-}) {
-  return (
-    <View style={styles.step1}>
-      {/* Headline */}
-      <View style={styles.headline}>
-        <Text style={styles.headlineText}>We want you to try</Text>
-        <Text style={styles.headlineAccent}>Peakd for free</Text>
-      </View>
-
-      {/* Phone mockup */}
-      <View style={styles.phoneShadow}>
-        <View style={styles.phone}>
-          {/* Fake status bar */}
-          <View style={styles.fakeStatusBar}>
-            <Text style={styles.fakeTime}>9:41</Text>
-            <Text style={styles.fakeIcons}>●●● ▊</Text>
-          </View>
-
-          {/* Greeting */}
-          <View style={styles.phoneGreeting}>
-            <View style={styles.miniAvatar}>
-              <Text style={styles.miniAvatarText}>
-                {userName ? userName.charAt(0).toUpperCase() : 'P'}
-              </Text>
-            </View>
-            <Text style={styles.phoneHello}>
-              Hello, {userName || 'there'}!
-            </Text>
-          </View>
-
-          {/* Glow Score */}
-          <Text style={styles.phoneScoreLabel}>Glow Score</Text>
-          <Text style={styles.phoneScoreValue}>{glowScore.toFixed(1)}</Text>
-          <Text style={styles.phoneScoreDenom}>/10</Text>
-
-          {/* Top features */}
-          <View style={styles.phoneFeatures}>
-            {top2.map((f) => (
-              <View key={f.name} style={styles.phoneFeatureChip}>
-                <Text style={styles.phoneFeatureName}>{f.name}</Text>
-                <Text style={styles.phoneFeatureScore}>
-                  {f.score.toFixed(1)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* CTA */}
-      <View style={styles.ctaArea}>
-        <Pressable style={styles.ctaButton} onPress={onContinue}>
-          <Text style={styles.ctaButtonText}>Try for free</Text>
-        </Pressable>
-        <Text style={styles.reassurance}>No payment due now</Text>
+      {/* Step content */}
+      <View style={{ flex: 1, paddingHorizontal: 20 }}>
+        {step === 1 && (
+          <Animated.View key="s1" entering={SlideInRight.duration(300)} exiting={SlideOutLeft.duration(300)} style={{ flex: 1 }}>
+            <Screen1 user={{ name: userName, rating, categories }} onNext={advance} />
+          </Animated.View>
+        )}
+        {step === 2 && (
+          <Animated.View key="s2" entering={SlideInRight.duration(300)} exiting={SlideOutLeft.duration(300)} style={{ flex: 1 }}>
+            <Screen2 rating={rating} onNext={advance} />
+          </Animated.View>
+        )}
+        {step === 3 && (
+          <Animated.View key="s3" entering={SlideInRight.duration(300)} exiting={SlideOutLeft.duration(300)} style={{ flex: 1 }}>
+            <Screen3 selected={plan} onSelect={setPlan} onPurchase={purchase} />
+          </Animated.View>
+        )}
       </View>
     </View>
   );
 }
 
-/* ──────────────────────────── Screen 2 ──────────────────────────── */
+// ══════════════════════════════════════════════════════════════════════════
+// STYLES
+// ══════════════════════════════════════════════════════════════════════════
 
-function Step2({ onContinue }: { onContinue: () => void }) {
-  return (
-    <View style={styles.step2}>
-      {/* Bell */}
-      <View style={styles.bellWrapper}>
-        <View style={styles.bellCircle}>
-          <Text style={styles.bellEmoji}>🔔</Text>
-        </View>
-        <View style={styles.bellBadge}>
-          <Text style={styles.bellBadgeText}>!</Text>
-        </View>
-      </View>
-
-      <Text style={styles.step2Headline}>
-        We'll send you a reminder before your free trial ends.
-      </Text>
-
-      {/* CTA */}
-      <View style={styles.ctaArea}>
-        <Pressable style={styles.ctaButton} onPress={onContinue}>
-          <Text style={styles.ctaButtonText}>Sounds great!</Text>
-        </Pressable>
-        <Text style={styles.reassurance}>No payment due now</Text>
-      </View>
-    </View>
-  );
-}
-
-/* ──────────────────────────── Screen 3 ──────────────────────────── */
-
-const TIMELINE = [
-  {
-    emoji: '🔓',
-    title: 'Today: Get full access',
-    subtitle:
-      'See all your scores, your full plan, and start improving right away.',
-  },
-  {
-    emoji: '🔔',
-    title: "Day 5: We'll remind you",
-    subtitle:
-      "You'll get a heads up before your trial ends so you can decide.",
-  },
-  {
-    emoji: '⭐',
-    title: 'Day 7: Full membership',
-    subtitle:
-      "You'll be charged if you choose to keep going. Cancel anytime.",
-  },
-];
-
-function Step3({
-  selectedPlan,
-  onSelectPlan,
-  onContinue,
-}: {
-  selectedPlan: 'monthly' | 'yearly';
-  onSelectPlan: (p: 'monthly' | 'yearly') => void;
-  onContinue: () => void;
-}) {
-  return (
-    <View style={styles.step3}>
-      <Text style={styles.step3Headline}>How your free trial works</Text>
-
-      {/* Timeline */}
-      <View style={styles.timeline}>
-        {TIMELINE.map((item, i) => (
-          <View key={item.title} style={[styles.timelineRow, i > 0 && { marginTop: 24 }]}>
-            <View style={styles.timelineIcon}>
-              <Text style={styles.timelineEmoji}>{item.emoji}</Text>
-            </View>
-            <View style={styles.timelineText}>
-              <Text style={styles.timelineTitle}>{item.title}</Text>
-              <Text style={styles.timelineSub}>{item.subtitle}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Plan toggle */}
-      <View style={styles.planRow}>
-        {/* Monthly */}
-        <Pressable
-          style={[
-            styles.planCard,
-            selectedPlan === 'monthly' && styles.planCardSelected,
-          ]}
-          onPress={() => onSelectPlan('monthly')}
-        >
-          <Text style={styles.planLabel}>Monthly</Text>
-          <View style={styles.planPriceRow}>
-            <Text style={styles.planPriceBig}>$40</Text>
-            <Text style={styles.planPriceUnit}>/month</Text>
-          </View>
-          <Text style={styles.planTrial}>7-days free trial</Text>
-        </Pressable>
-
-        {/* Yearly */}
-        <Pressable
-          style={[
-            styles.planCard,
-            selectedPlan === 'yearly' && styles.planCardSelected,
-          ]}
-          onPress={() => onSelectPlan('yearly')}
-        >
-          {selectedPlan === 'yearly' && (
-            <View style={styles.checkBadge}>
-              <Text style={styles.checkBadgeText}>✓</Text>
-            </View>
-          )}
-          <Text style={styles.planLabel}>Yearly</Text>
-          <View style={styles.planPriceRow}>
-            <Text style={styles.planPriceBig}>$400</Text>
-            <Text style={styles.planPriceUnit}>/year</Text>
-          </View>
-          <Text style={styles.planTrial}>7-days free trial</Text>
-        </Pressable>
-      </View>
-
-      {/* CTA */}
-      <View style={styles.ctaArea}>
-        <Pressable style={styles.ctaButton} onPress={onContinue}>
-          <Text style={styles.ctaButtonText}>Start 7-day free trial</Text>
-        </Pressable>
-        <Text style={styles.finePrint}>
-          7-day free trial then $20/month billed yearly.
-        </Text>
-        <Text style={styles.finePrint2}>Cancel anytime with just a tap.</Text>
-      </View>
-    </View>
-  );
-}
-
-/* ──────────────────────────── Styles ──────────────────────────── */
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: C.background,
-  },
-
-  /* Nav */
+const s = StyleSheet.create({
   nav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -383,343 +630,236 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     zIndex: 10,
   },
-  navBack: {
-    fontSize: 24,
-    color: C.text,
-  },
-  navSkip: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: C.text,
-  },
-
-  /* Step container */
-  stepContainer: {
-    flex: 1,
-  },
-
-  /* ─── Step 1 ─── */
-  step1: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 32,
-  },
-  headline: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  headlineText: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: C.text,
-    textAlign: 'center',
-  },
-  headlineAccent: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: C.accent,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-
-  /* Phone mockup */
-  phoneShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 24,
-    shadowOpacity: 0.12,
-    elevation: 12,
-  },
-  phone: {
-    width: 260,
-    aspectRatio: 0.55,
-    borderRadius: 28,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    overflow: 'hidden',
-    paddingHorizontal: 18,
-    paddingTop: 12,
-  },
-  fakeStatusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  fakeTime: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.text,
-  },
-  fakeIcons: {
-    fontSize: 11,
-    color: C.textMuted,
-    letterSpacing: 2,
-  },
-  phoneGreeting: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  miniAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: C.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  miniAvatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  phoneHello: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.text,
-  },
-  phoneScoreLabel: {
-    fontSize: 12,
-    color: C.textSecondary,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  phoneScoreValue: {
-    fontSize: 44,
-    fontWeight: '800',
-    color: C.text,
-    textAlign: 'center',
-  },
-  phoneScoreDenom: {
-    fontSize: 16,
-    color: C.textMuted,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  phoneFeatures: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  phoneFeatureChip: {
-    backgroundColor: C.iconBackground,
+  backBtn: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: '#F0F2F5',
     alignItems: 'center',
-    minWidth: 80,
-  },
-  phoneFeatureName: {
-    fontSize: 11,
-    color: C.accent,
-    fontWeight: '600',
-  },
-  phoneFeatureScore: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: C.text,
-    marginTop: 2,
+    justifyContent: 'center',
   },
 
-  /* ─── Step 2 ─── */
-  step2: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingBottom: 32,
-  },
-  bellWrapper: {
-    width: 100,
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellEmoji: {
-    fontSize: 44,
-  },
-  bellBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellBadgeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  step2Headline: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: C.text,
-    textAlign: 'center',
-    marginTop: 32,
-    lineHeight: 30,
-  },
-
-  /* ─── Step 3 ─── */
-  step3: {
-    flex: 1,
-    paddingBottom: 32,
-  },
-  step3Headline: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: C.text,
-    marginTop: 16,
-    paddingHorizontal: 24,
-    lineHeight: 32,
-  },
-
-  /* Timeline */
-  timeline: {
-    paddingHorizontal: 24,
-    marginTop: 28,
-  },
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  timelineIcon: {
-    width: 40,
-    height: 40,
+  // Glow Card
+  glowCard: {
     borderRadius: 20,
-    backgroundColor: C.iconBackground,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  timelineEmoji: {
-    fontSize: 18,
-  },
-  timelineText: {
-    flex: 1,
-  },
-  timelineTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.text,
-  },
-  timelineSub: {
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 20,
-    marginTop: 2,
-  },
-
-  /* Plan cards */
-  planRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  planCard: {
-    flex: 1,
-    backgroundColor: C.cardBackground,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: C.cardBorder,
-    padding: 16,
+    padding: 20,
+    marginBottom: 0,
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: 'rgba(230,237,255,0.8)',
+    shadowColor: '#4A6DA7',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    overflow: 'hidden',
     position: 'relative',
   },
-  planCardSelected: {
-    borderColor: C.selectedBorder,
-  },
-  planLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: C.text,
-  },
-  planPriceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginTop: 6,
-  },
-  planPriceBig: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: C.text,
-  },
-  planPriceUnit: {
-    fontSize: 14,
-    color: C.textSecondary,
-    marginLeft: 2,
-  },
-  planTrial: {
-    fontSize: 12,
-    color: C.textMuted,
-    marginTop: 4,
-  },
-  checkBadge: {
+  glowCardGlow: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(74,144,217,0.12)',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: C.white,
+  },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(230,237,255,0.6)',
+  },
+  blurredPotential: {
+    backgroundColor: C.blueBg,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    opacity: 0.35,
+  },
+  checkBubble: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Projection bar
+  projectionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: C.blueBgSolid,
+    borderWidth: 1,
+    borderColor: 'rgba(74,144,217,0.1)',
+  },
+  projLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  projScore: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: C.navy,
+  },
+  gainBadge: {
+    backgroundColor: C.successBg,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 4,
+  },
+  gainText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.success,
+  },
+
+  // Timeline
+  timelineLine: {
+    position: 'absolute',
+    left: 9,
+    top: 8,
+    bottom: 8,
+    width: 2,
+    backgroundColor: C.border,
+    borderRadius: 1,
+  },
+  timelineDot: {
+    position: 'absolute',
+    left: -15.5,
+    top: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+    borderWidth: 2,
+    borderColor: C.white,
+  },
+  timelineDotActive: {
+    backgroundColor: C.blue,
+    borderWidth: 3,
+    borderColor: 'rgba(74,144,217,0.2)',
+  },
+  timelineCard: {
+    flex: 1,
+    backgroundColor: C.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: C.cardBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  timelineWeek: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.blue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+
+  // Plan cards
+  planCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: C.cardBg,
+    borderWidth: 2,
+    borderColor: C.border,
+    position: 'relative',
+  },
+  planCardActive: {
+    borderColor: C.blue,
+    backgroundColor: C.blueBgSolid,
+  },
+  radioOuter: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: C.selectedBorder,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkBadgeText: {
-    fontSize: 13,
+  bestValueBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+    backgroundColor: C.blue,
+  },
+  bestValueText: {
+    fontSize: 9,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: C.white,
+    letterSpacing: 0.6,
   },
 
-  /* Shared CTA area */
-  ctaArea: {
-    width: '100%',
-    paddingHorizontal: 24,
-    marginTop: 'auto',
+  // Included box
+  includedBox: {
+    backgroundColor: C.cardBg,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: C.cardBorder,
   },
-  ctaButton: {
-    backgroundColor: C.buttonBackground,
-    borderRadius: 14,
+
+  // CTA
+  ctaBtn: {
+    backgroundColor: C.navy,
+    borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
+    shadowColor: C.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  ctaButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: C.buttonText,
-    textAlign: 'center',
+  ctaBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: C.white,
   },
-  reassurance: {
-    fontSize: 13,
-    color: C.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  finePrint: {
+  ctaSub: {
     fontSize: 12,
     color: C.textMuted,
     textAlign: 'center',
-    marginTop: 8,
-  },
-  finePrint2: {
-    fontSize: 12,
-    color: C.textMuted,
-    textAlign: 'center',
-    marginTop: 2,
+    marginTop: 10,
   },
 });
