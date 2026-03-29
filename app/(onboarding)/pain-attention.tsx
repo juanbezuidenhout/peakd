@@ -216,7 +216,7 @@ export default function PainAttentionScreen() {
             {Array.from({ length: 10 }).map((_, i) => {
               const isTop = i < 2;
               const isTransition = i === 2;
-              const color = isTop || isTransition ? '#C084FC' : '#444444';
+              const color = isTop || isTransition ? Colors.primary : Colors.textSecondary;
               const opacity = isTransition ? 0.6 : 1;
               return (
                 <FemaleIcon
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   labelAccent: {
-    color: '#C084FC',
+    color: Colors.primary,
   },
 
   spacer: { flex: 1 },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   infoBody: {
     fontSize: 15,

@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   radioCheck: {
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     fontWeight: '700',
     marginTop: -1,
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 20,
     padding: 28,
     alignItems: 'center',
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginBottom: 16,
   },
   modalBody: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   modalAcceptText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   modalCancelText: {
     fontSize: 14,

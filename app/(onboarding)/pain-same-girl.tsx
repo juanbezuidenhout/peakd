@@ -233,15 +233,15 @@ export default function PainSameGirlScreen() {
             <Animated.View style={[styles.statsColumn, leftStatsStyle]}>
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>Likes</Text>
-                <CountingNumber sharedValue={leftLikes} color="#FFFFFF" />
+                <CountingNumber sharedValue={leftLikes} color={Colors.textPrimary} />
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>Matches</Text>
-                <Text style={[styles.statValue, { color: '#FFFFFF' }]}>0</Text>
+                <Text style={[styles.statValue, { color: Colors.textPrimary }]}>0</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>Messages</Text>
-                <Text style={[styles.statValue, { color: '#FFFFFF' }]}>0</Text>
+                <Text style={[styles.statValue, { color: Colors.textPrimary }]}>0</Text>
               </View>
             </Animated.View>
           </View>
@@ -344,17 +344,17 @@ const styles = StyleSheet.create({
 
   profileCard: {
     width: '100%',
-    backgroundColor: '#161616',
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: Colors.border,
     padding: 12,
     alignItems: 'center',
   },
   profileName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginTop: 8,
   },
 
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#222222',
+    backgroundColor: Colors.surfaceElevated,
   },
   avatarGlow: {
     borderWidth: 2,
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   },
 
   pillMuted: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: Colors.surface,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   sameLabel: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: Colors.background,
     paddingHorizontal: 12,
     paddingVertical: 4,
     fontSize: 12.5,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   infoBody: {
     fontSize: 15,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },

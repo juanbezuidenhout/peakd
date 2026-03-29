@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginTop: 12,
     textAlign: 'center',
   },
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   glowScoreBig: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   glowScoreDenom: {
     fontSize: 18,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   top3Score: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     textAlign: 'center',
   },
   watermark: {
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginTop: 32,
     marginHorizontal: 24,
   },
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   featureName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   featureScore: {
     fontSize: 15,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   recTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   recMetaRow: {
     flexDirection: 'row',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   categoryPill: {
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    backgroundColor: Colors.primaryBg,
     borderRadius: 100,
     paddingHorizontal: 8,
     paddingVertical: 3,

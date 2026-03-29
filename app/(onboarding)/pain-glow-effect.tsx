@@ -190,7 +190,7 @@ export default function PainGlowEffectScreen() {
   }));
 
   const glowStyle = useAnimatedStyle(() => ({
-    shadowColor: '#7C3AED',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: glowPulse.value * 0.12,
     shadowRadius: 24 + glowPulse.value * 12,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   centreTitle: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
   closeCircle: {
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   notifTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   notifBody: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   infoBody: {
     fontSize: 15,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },

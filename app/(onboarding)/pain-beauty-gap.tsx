@@ -204,7 +204,7 @@ export default function PainBeautyGapScreen() {
                       y1={y}
                       x2={CHART_W - CHART_PAD_RIGHT}
                       y2={y}
-                      stroke="#1A1A1A"
+                      stroke={Colors.border}
                       strokeWidth={1}
                     />
                     <SvgText
@@ -324,7 +324,7 @@ export default function PainBeautyGapScreen() {
                   y={gapMidY - 9}
                   width={56}
                   height={18}
-                  fill="#0A0A0A"
+                  fill={Colors.background}
                   rx={4}
                 />
                 <SvgText
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     textAlign: 'center',
     paddingHorizontal: 24,
   },
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   infoBody: {
     fontSize: 15,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },
