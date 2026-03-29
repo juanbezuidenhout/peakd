@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -6,8 +6,10 @@ import Animated, {
   FadeInUp,
   useSharedValue,
   useAnimatedProps,
+  useAnimatedStyle,
   withTiming,
   withDelay,
+  withSequence,
   Easing,
   useDerivedValue,
   runOnJS,
@@ -19,7 +21,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { Colors } from '@/constants/colors';
 import { getItem, KEYS } from '@/lib/storage';
-import type { FaceAnalysisResult } from '@/lib/anthropic';
+import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -28,11 +30,33 @@ const RING_STROKE = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+const FEATURE_NAMES: Record<string, string> = {
+  skinQuality: 'Skin Quality',
+  facialStructure: 'Facial Structure',
+  eyes: 'Eyes',
+  nose: 'Nose',
+  lipsAndMouth: 'Lips & Mouth',
+  eyebrows: 'Eyebrows',
+  hair: 'Hair',
+  overallHarmony: 'Overall Harmony',
+};
+
 function getScoreLabel(score: number): { text: string; color: string } {
-  if (score >= 8.0) return { text: 'Exceptional', color: Colors.success };
-  if (score >= 6.5) return { text: 'Above Average', color: Colors.gold };
-  if (score >= 5.0) return { text: 'Room to Glow', color: Colors.textSecondary };
-  return { text: 'Early Journey', color: Colors.textSecondary };
+  if (score >= 8.0) return { text: 'Amazing', color: Colors.success };
+  if (score >= 6.5) return { text: 'Looking good', color: Colors.gold };
+  if (score >= 5.0) return { text: 'Room to grow', color: Colors.textSecondary };
+  return { text: 'Just getting started', color: Colors.textSecondary };
+}
+
+function getSecondOpportunity(featureScores: FeatureScores) {
+  const entries = Object.entries(featureScores) as [string, { score: number; summary: string }][];
+  const sorted = [...entries].sort((a, b) => a[1].score - b[1].score);
+  const second = sorted[1];
+  if (!second) return null;
+  return {
+    feature: FEATURE_NAMES[second[0]] ?? second[0],
+    insight: second[1].summary,
+  };
 }
 
 export default function ResultsScreen() {
@@ -43,6 +67,9 @@ export default function ResultsScreen() {
   const [ringDone, setRingDone] = useState(false);
 
   const progress = useSharedValue(0);
+  const scoreScale = useSharedValue(1);
+  const glowPulse = useSharedValue(0.4);
+  const hapticFired = useRef({ 25: false, 50: false, 75: false });
 
   useEffect(() => {
     (async () => {
@@ -52,8 +79,16 @@ export default function ResultsScreen() {
     })();
   }, []);
 
+  const fireHapticTick = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const fireStartHaptic = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
   const handleRingComplete = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setRingDone(true);
   }, []);
 
@@ -62,6 +97,21 @@ export default function ResultsScreen() {
   }, []);
 
   useDerivedValue(() => {
+    const pct = result ? (progress.value / (result.glowScore || 1)) * 100 : 0;
+
+    if (pct >= 25 && !hapticFired.current[25]) {
+      hapticFired.current[25] = true;
+      runOnJS(fireHapticTick)();
+    }
+    if (pct >= 50 && !hapticFired.current[50]) {
+      hapticFired.current[50] = true;
+      runOnJS(fireHapticTick)();
+    }
+    if (pct >= 75 && !hapticFired.current[75]) {
+      hapticFired.current[75] = true;
+      runOnJS(fireHapticTick)();
+    }
+
     runOnJS(updateDisplay)(progress.value);
   });
 
@@ -69,21 +119,41 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     if (!loading && result) {
+      setTimeout(() => fireStartHaptic(), 500);
+
       progress.value = withDelay(
         500,
         withTiming(
           result.glowScore,
           { duration: 2000, easing: Easing.out(Easing.cubic) },
           (finished) => {
-            if (finished) runOnJS(handleRingComplete)();
+            if (finished) {
+              runOnJS(handleRingComplete)();
+              scoreScale.value = withSequence(
+                withTiming(1.15, { duration: 150 }),
+                withTiming(1.0, { duration: 250 }),
+              );
+              glowPulse.value = withSequence(
+                withTiming(0.8, { duration: 300 }),
+                withTiming(0.4, { duration: 300 }),
+              );
+            }
           },
         ),
       );
     }
-  }, [loading, result, progress, handleRingComplete]);
+  }, [loading, result, progress, handleRingComplete, scoreScale, glowPulse, fireStartHaptic]);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: RING_CIRCUMFERENCE * (1 - progress.value / 10),
+  }));
+
+  const scoreScaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scoreScale.value }],
+  }));
+
+  const ringGlowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: glowPulse.value,
   }));
 
   if (loading) {
@@ -98,6 +168,9 @@ export default function ResultsScreen() {
   const archetype = result?.archetype;
   const topStrength = result?.topStrength;
   const topOpportunity = result?.topOpportunity;
+  const secondOpportunity = result?.featureScores
+    ? getSecondOpportunity(result.featureScores)
+    : null;
 
   return (
     <SafeScreen>
@@ -107,7 +180,7 @@ export default function ResultsScreen() {
       >
         {/* Section 1 — Glow Score Reveal */}
         <View style={styles.heroSection}>
-          <View style={styles.ringGlow}>
+          <Animated.View style={[styles.ringGlow, ringGlowStyle]}>
             <Svg width={RING_SIZE} height={RING_SIZE}>
               <Circle
                 cx={RING_SIZE / 2}
@@ -131,11 +204,11 @@ export default function ResultsScreen() {
                 origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
               />
             </Svg>
-            <View style={styles.scoreOverlay}>
+            <Animated.View style={[styles.scoreOverlay, scoreScaleStyle]}>
               <Text style={styles.scoreNumber}>{displayScore}</Text>
               <Text style={styles.scoreDenominator}>/10</Text>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
 
           <Text style={[styles.scoreLabel, { color: scoreLabel.color }]}>
             {scoreLabel.text}
@@ -147,6 +220,9 @@ export default function ResultsScreen() {
           <Animated.View
             entering={FadeIn.delay(500).duration(400)}
             style={styles.archetypeCard}
+            onLayout={() =>
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }
           >
             <Text style={styles.cardLabel}>YOUR ARCHETYPE</Text>
             <Text style={styles.archetypeName}>{archetype.name}</Text>
@@ -154,28 +230,34 @@ export default function ResultsScreen() {
           </Animated.View>
         )}
 
-        {/* Section 3 — Top Strength */}
+        {/* Section 3 — What you're doing right */}
         {ringDone && topStrength && (
           <Animated.View
             entering={FadeInUp.delay(700).duration(400)}
             style={[styles.highlightCard, styles.strengthBorder]}
+            onLayout={() =>
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }
           >
             <Text style={[styles.highlightLabel, { color: Colors.success }]}>
-              YOUR TOP STRENGTH
+              WHAT YOU'RE DOING RIGHT
             </Text>
             <Text style={styles.highlightFeature}>{topStrength.feature}</Text>
             <Text style={styles.highlightInsight}>{topStrength.insight}</Text>
           </Animated.View>
         )}
 
-        {/* Section 4 — Top Opportunity */}
+        {/* Section 4 — First opportunity */}
         {ringDone && topOpportunity && (
           <Animated.View
             entering={FadeInUp.delay(900).duration(400)}
             style={[styles.highlightCard, styles.opportunityBorder]}
+            onLayout={() =>
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }
           >
             <Text style={[styles.highlightLabel, { color: Colors.warning }]}>
-              YOUR #1 OPPORTUNITY
+              YOUR BIGGEST AREA TO IMPROVE
             </Text>
             <Text style={styles.highlightFeature}>
               {topOpportunity.feature}
@@ -186,26 +268,44 @@ export default function ResultsScreen() {
           </Animated.View>
         )}
 
-        {/* Section 5 — CTA */}
+        {/* Section 5 — Second opportunity */}
+        {ringDone && secondOpportunity && (
+          <Animated.View
+            entering={FadeInUp.delay(1100).duration(400)}
+            style={[styles.highlightCard, styles.opportunityBorder]}
+            onLayout={() =>
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }
+          >
+            <Text style={[styles.highlightLabel, { color: Colors.warning }]}>
+              ANOTHER THING HOLDING YOU BACK
+            </Text>
+            <Text style={styles.highlightFeature}>
+              {secondOpportunity.feature}
+            </Text>
+            <Text style={styles.highlightInsight}>
+              {secondOpportunity.insight}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Section 6 — CTA */}
         {ringDone && (
           <Animated.View
-            entering={FadeIn.delay(1100).duration(400)}
+            entering={FadeIn.delay(1300).duration(400)}
             style={styles.ctaSection}
           >
             <Text style={styles.ctaHeading}>
-              See your full beauty blueprint
+              See exactly how to improve
             </Text>
             <Text style={styles.ctaSubtext}>
-              All 8 feature scores {'\u2022'} 5 personalized recommendations{' '}
-              {'\u2022'} Your shareable Glow Card
+              Your step-by-step plan is ready. Tailored to your face, your
+              features, your goals.
             </Text>
             <PrimaryButton
-              label="Unlock Full Results \u2192"
+              label="Show me my plan →"
               onPress={() => router.push('/paywall')}
             />
-            <Text style={styles.socialProof}>
-              Join 500,000+ women on their glow journey
-            </Text>
           </Animated.View>
         )}
       </ScrollView>
@@ -333,11 +433,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 20,
     marginBottom: 24,
-  },
-  socialProof: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    marginTop: 16,
   },
 });
