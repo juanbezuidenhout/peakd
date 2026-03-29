@@ -15,7 +15,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { setUserGlowLevel } from '@/lib/storage';
 
-const CYAN = '#22D3EE';
+const CYAN = Colors.primary;
 
 function DumbbellIcon() {
   return (
@@ -124,7 +124,7 @@ function GlowCard({
 
   const cardAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    borderColor: borderProgress.value > 0.5 ? CYAN : '#2A2A2A',
+    borderColor: borderProgress.value > 0.5 ? CYAN : Colors.border,
     ...(borderProgress.value > 0.5 && Platform.OS === 'ios'
       ? {
           shadowColor: CYAN,
@@ -322,10 +322,10 @@ const styles = StyleSheet.create({
   card: {
     width: '48%',
     height: 160,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#2A2A2A',
+    borderColor: Colors.border,
     padding: 20,
   },
   cardTopRow: {
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#2A2A2A',
+    borderColor: Colors.border,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
@@ -363,11 +363,11 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   cardSubtitle: {
     fontSize: 12.5,
-    color: '#888888',
+    color: Colors.textSecondary,
     marginTop: 3,
   },
   spacer: {

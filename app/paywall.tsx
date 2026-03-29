@@ -522,8 +522,12 @@ function Screen3({
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
         <IconShield />
         <Text style={{ fontSize: 11, color: C.textMuted }}>Secure payment</Text>
-        <Text style={{ fontSize: 11, color: '#D1D5DB' }}>·</Text>
-        <Text style={{ fontSize: 11, color: C.textMuted }}>Cancel anytime</Text>
+        {selected === 'weekly' && (
+          <>
+            <Text style={{ fontSize: 11, color: '#D1D5DB' }}>·</Text>
+            <Text style={{ fontSize: 11, color: C.textMuted }}>Cancel anytime</Text>
+          </>
+        )}
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12 }}>

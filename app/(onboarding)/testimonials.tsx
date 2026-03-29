@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   avatarSmallText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.white,
   },
   avatarCountText: {
     fontSize: 13,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.white,
   },
   nameBlock: {
     marginLeft: 12,

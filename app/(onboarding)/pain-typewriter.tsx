@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   text: {
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     fontSize: 22,
     fontWeight: '400',
     lineHeight: 34,

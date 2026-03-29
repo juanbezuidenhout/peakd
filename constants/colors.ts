@@ -1,25 +1,38 @@
 export const Colors = {
-  background: '#0A0A0A',
-  surface: '#161616',
-  surfaceElevated: '#1E1E1E',
-  border: '#2A2A2A',
-
-  primary: '#7C3AED',
-  primaryLight: '#9B4DFF',
-  primaryGradientStart: '#6D28D9',
-  primaryGradientEnd: '#A855F7',
-  accent: '#C084FC',
-
-  textPrimary: '#FFFFFF',
-  textSecondary: '#888888',
-  textMuted: '#444444',
-
-  success: '#22C55E',
+  // ── Backgrounds ──────────────────────────────────────────────────────────
+  background: '#FFFFFF',
+  backgroundGradientTop: '#EDF2FF',
+  backgroundGradientBottom: '#FFFFFF',
+  surface: '#FAFBFC',
+  surfaceElevated: '#F0F4FF',
+  // ── Borders ───────────────────────────────────────────────────────────────
+  border: '#E8EDF3',
+  borderLight: '#F0F2F5',
+  // ── Primary accent: Blue ──────────────────────────────────────────────────
+  primary: '#4A90D9',
+  primaryLight: '#7BB3F0',
+  primaryGradientStart: '#4A90D9',
+  primaryGradientEnd: '#7BB3F0',
+  primaryBg: 'rgba(74,144,217,0.08)',
+  primaryBgSolid: '#F0F4FF',
+  // ── Navy (buttons, headings) ──────────────────────────────────────────────
+  navy: '#1A1A2E',
+  accent: '#7BB3F0',
+  // ── Text ──────────────────────────────────────────────────────────────────
+  textPrimary: '#1A1A2E',
+  textSecondary: '#6B7280',
+  textMuted: '#9CA3AF',
+  // ── Semantic ──────────────────────────────────────────────────────────────
+  success: '#34C759',
+  successBg: 'rgba(52,199,89,0.1)',
   warning: '#F59E0B',
   error: '#EF4444',
-
-  gold: '#F59E0B',
-  scoreHigh: '#22C55E',
-  scoreMid: '#F59E0B',
-  scoreLow: '#EF4444',
+  gold: '#FFB800',
+  // ── Score colours ─────────────────────────────────────────────────────────
+  scoreHigh: '#34C759',
+  scoreMid: '#4A90D9',
+  scoreLow: '#FF6B6B',
+  // ── Misc ──────────────────────────────────────────────────────────────────
+  white: '#FFFFFF',
+  lock: '#B0B8C9',
 } as const;

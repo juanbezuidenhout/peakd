@@ -239,14 +239,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2A2A2E',
+    backgroundColor: Colors.surfaceElevated,
   },
   institutionAvatarContainer: {
     width: 44,
     height: 44,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.white,
   },
   avatarTextInstitution: {
     fontSize: 20,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   quote: {
     fontSize: 14,
-    color: '#CCCCCC',
+    color: Colors.textSecondary,
     lineHeight: 21,
   },
   source: {

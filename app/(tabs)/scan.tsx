@@ -306,7 +306,7 @@ const iconStyles = StyleSheet.create({
     position: 'absolute',
     width: 18,
     height: 18,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    borderColor: Colors.primary,
   },
   topLeft: {
     top: 0,
@@ -341,7 +341,7 @@ const iconStyles = StyleSheet.create({
     height: 56,
     borderRadius: 21,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: Colors.border,
   },
 });
 
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#fff',
+    color: Colors.white,
   },
   photoRow: {
     flex: 1,

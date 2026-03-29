@@ -28,7 +28,7 @@ const MOTIVATIONAL_MESSAGES = [
   'But you chose to be here.',
   'Now it\'s time to glow up.',
   'Your beauty blueprint is being built...',
-  'Your plan is ready. ✨',
+  'Your plan is ready.',
 ];
 
 function getMessage(percent: number, name: string): string {
@@ -230,7 +230,7 @@ export default function ScanProcessingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

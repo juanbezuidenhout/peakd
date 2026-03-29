@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 16,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: Colors.white,
   },
   chatBubbleTail: {
     position: 'absolute',
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: Colors.white,
     transform: [{ rotate: '45deg' }],
   },
   heroText: {
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   categoryInitial: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.white,
     letterSpacing: 0.5,
   },
   categoryName: {
@@ -642,7 +642,7 @@ const chatStyles = StyleSheet.create({
   },
   aiBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: Colors.surfaceElevated,
   },
   userBubble: {
     alignSelf: 'flex-end',
@@ -654,7 +654,7 @@ const chatStyles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   userText: {
-    color: '#FFFFFF',
+    color: Colors.white,
   },
   typingRow: {
     flexDirection: 'row',
@@ -680,7 +680,7 @@ const chatStyles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: Colors.surface,
     borderRadius: 24,
     minHeight: 48,
     maxHeight: 120,
@@ -710,7 +710,7 @@ const chatStyles = StyleSheet.create({
     borderBottomWidth: 10,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
+    borderBottomColor: Colors.white,
     marginTop: -2,
   },
 });

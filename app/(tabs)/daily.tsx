@@ -478,7 +478,7 @@ const checkboxStyles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   check: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 14,
     fontWeight: '700',
     marginTop: -1,
@@ -554,7 +554,7 @@ const cardStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: 16,
-    backgroundColor: 'rgba(10,10,10,0.55)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },

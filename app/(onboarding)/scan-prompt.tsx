@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "60%",
     height: 1,
-    backgroundColor: "rgba(124,58,237,0.3)",
+    backgroundColor: Colors.primaryBg,
   },
   sweepLine: {
     position: "absolute",

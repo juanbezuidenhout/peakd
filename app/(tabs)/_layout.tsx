@@ -135,7 +135,7 @@ function TabBarButton({
       onLongPress={onLongPress}
     >
       <View style={styles.iconContainer}>
-        {Icon && <Icon size={21} color="#FFFFFF" />}
+        {Icon && <Icon size={21} color={Colors.navy} />}
         {showBadge && <View style={styles.badge} />}
       </View>
       <Text style={styles.tabLabel}>{label}</Text>
@@ -187,8 +187,8 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {/* Top highlight — glass refraction */}
         <LinearGradient
           colors={[
-            "rgba(255,255,255,0.09)",
-            "rgba(255,255,255,0.03)",
+            "rgba(255,255,255,0.6)",
+            "rgba(255,255,255,0.2)",
             "transparent",
           ]}
           locations={[0, 0.3, 0.6]}
@@ -197,7 +197,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         {/* Bottom subtle edge light */}
         <LinearGradient
-          colors={["transparent", "rgba(255,255,255,0.02)"]}
+          colors={["transparent", "rgba(255,255,255,0.1)"]}
           style={styles.bottomEdge}
         />
 
@@ -221,8 +221,8 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               >
                 <LinearGradient
                   colors={[
-                    "rgba(124, 58, 237, 0.32)",
-                    "rgba(155, 77, 255, 0.14)",
+                    Colors.primaryGradientStart,
+                    Colors.primaryGradientEnd,
                   ]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -301,15 +301,15 @@ const styles = StyleSheet.create({
     borderRadius: BAR_RADIUS,
     overflow: "hidden",
     borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.10)",
-    shadowColor: "#000",
+    borderColor: Colors.border,
+    shadowColor: Colors.navy,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 16,
   },
   glassBase: {
-    backgroundColor: "rgba(22, 22, 24, 0.95)",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
   },
   topHighlight: {
     position: "absolute",
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: "42%",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderTopLeftRadius: INDICATOR_RADIUS,
     borderTopRightRadius: INDICATOR_RADIUS,
   },
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: INDICATOR_RADIUS,
     borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.13)",
+    borderColor: Colors.primaryLight,
   },
   tabButton: {
     alignItems: "center",
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: Colors.navy,
     letterSpacing: 0.3,
   },
   badge: {
@@ -380,6 +380,6 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: Colors.primary,
     borderWidth: 1.5,
-    borderColor: "rgba(22, 22, 24, 0.95)",
+    borderColor: Colors.background,
   },
 });

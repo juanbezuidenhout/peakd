@@ -76,7 +76,7 @@ function BarRow({
   }));
 
   const isAccent = type === 'accent';
-  const barColor = type === 'white' ? '#FFFFFF' : '#555555';
+  const barColor = type === 'white' ? Colors.borderLight : Colors.textMuted;
 
   return (
     <View style={styles.barRow}>

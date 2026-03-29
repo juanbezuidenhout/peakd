@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pillTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   pillTextInactive: {
     color: Colors.textSecondary,

@@ -391,7 +391,7 @@ function TraitRow({
       <Text
         style={[
           styles.traitIcon,
-          { color: positive ? '#22C55E' : '#EF4444' },
+          { color: positive ? Colors.success : Colors.error },
         ]}
       >
         {positive ? '✓' : '✗'}
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   traitLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
   },
   infoCard: {
     backgroundColor: Colors.surfaceElevated,
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   infoBody: {
@@ -644,15 +644,15 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: Colors.navy,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     marginTop: 12,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

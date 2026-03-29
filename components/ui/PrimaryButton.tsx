@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -97,18 +97,13 @@ export function PrimaryButton({
           disabled && styles.disabled,
         ]}
       >
-        <LinearGradient
-          colors={[Colors.primaryGradientStart, Colors.primaryGradientEnd]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.gradient}
-        >
+        <View style={styles.inner}>
           {loading ? (
             <WaveformLoader />
           ) : (
             <Text style={styles.label}>{label}</Text>
           )}
-        </LinearGradient>
+        </View>
       </Animated.View>
     </GestureDetector>
   );
@@ -118,18 +113,19 @@ const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
     height: 60,
-    borderRadius: 50,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: Colors.primary,
+    shadowColor: Colors.navy,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
   },
-  gradient: {
+  inner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Colors.navy,
   },
   label: {
     color: '#FFFFFF',

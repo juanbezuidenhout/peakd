@@ -16,13 +16,13 @@ interface ProgressBarProps {
 function Segment({ active, index }: { active: boolean; index: number }) {
   const opacity = useSharedValue(0);
   const backgroundColor = useSharedValue(
-    active ? Colors.textPrimary : Colors.border,
+    active ? Colors.primary : Colors.border,
   );
 
   useEffect(() => {
     opacity.value = withDelay(index * 80, withTiming(1, { duration: 300 }));
     backgroundColor.value = withTiming(
-      active ? Colors.textPrimary : Colors.border,
+      active ? Colors.primary : Colors.border,
       { duration: 300 },
     );
   }, [active, opacity, backgroundColor, index]);

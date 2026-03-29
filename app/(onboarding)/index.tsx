@@ -46,19 +46,19 @@ export default function HeroScreen() {
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[0] }]}>
           <Image source={BEFORE_IMAGE} style={styles.slideImage} resizeMode="cover" />
         </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[1], backgroundColor: '#0A0A0A' }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[1], backgroundColor: Colors.background }]}>
           <Text style={styles.glowLabel}>YOUR GLOW SCORE</Text>
           <Text style={styles.glowNumber}>6.2</Text>
           <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
           <Text style={styles.glowSub}>Enhancement zones identified</Text>
         </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[2], backgroundColor: '#0A0A0A' }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[2], backgroundColor: Colors.background }]}>
           <Svg width={260} height={260} viewBox="0 0 260 260">
-            <Circle cx={130} cy={130} r={110} stroke="#2A2A2A" strokeWidth={8} fill="none" />
+            <Circle cx={130} cy={130} r={110} stroke={Colors.border} strokeWidth={8} fill="none" />
             <Circle cx={130} cy={130} r={110} stroke={Colors.primary} strokeWidth={8} fill="none" strokeDasharray="518 691" strokeDashoffset="173" strokeLinecap="round" transform="rotate(-90 130 130)" />
           </Svg>
           <View style={styles.countdownTextContainer}>
-            <Text style={styles.countdownNumber}>30</Text>
+            <Text style={styles.countdownNumber}>60</Text>
             <Text style={styles.countdownLabel}>DAYS UNTIL</Text>
             <Text style={styles.countdownAccent}>YOUR PEAK</Text>
           </View>
@@ -66,7 +66,7 @@ export default function HeroScreen() {
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[3] }]}>
           <Image source={AFTER_IMAGE} style={styles.slideImage} resizeMode="cover" />
         </Animated.View>
-        <LinearGradient colors={['transparent', '#0A0A0A']} style={styles.topGradient} />
+        <LinearGradient colors={['transparent', Colors.background]} style={styles.topGradient} />
         <View style={styles.logoRow}>
           <Text style={styles.logoPeak}>peak</Text>
           <Text style={styles.logoD}>d</Text>
@@ -86,7 +86,7 @@ export default function HeroScreen() {
           </ReAnimated.View>
           <ReAnimated.View entering={FadeInUp.delay(450).duration(500)}>
             <Text style={styles.subtext}>
-              Your beauty archetype, glow score, and 30-day protocol. Built by AI in 60 seconds.
+              Your beauty archetype, glow score, and 60-day protocol. Built by AI in 60 seconds.
             </Text>
           </ReAnimated.View>
         </View>
@@ -105,25 +105,25 @@ export default function HeroScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  topZone: { width: '100%', height: SCREEN_HEIGHT * 0.58, overflow: 'hidden', backgroundColor: '#0A0A0A' },
+  topZone: { width: '100%', height: SCREEN_HEIGHT * 0.58, overflow: 'hidden', backgroundColor: Colors.background },
   slideImage: { width: '100%', height: '100%' },
   slideCenter: { justifyContent: 'center', alignItems: 'center' },
   topGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 },
   logoRow: { position: 'absolute', top: 52, left: 20, flexDirection: 'row' },
-  logoPeak: { fontWeight: '800', fontSize: 22, color: '#FFFFFF' },
+  logoPeak: { fontWeight: '800', fontSize: 22, color: Colors.navy },
   logoD: { fontWeight: '800', fontSize: 22, color: Colors.primary },
-  glowLabel: { color: '#C084FC', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 },
-  glowNumber: { color: '#FFFFFF', fontSize: 80, fontWeight: '900', lineHeight: 80 },
-  progressTrack: { width: '65%', height: 6, backgroundColor: '#2A2A2A', borderRadius: 3, marginTop: 20, marginBottom: 12 },
+  glowLabel: { color: Colors.primary, fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 },
+  glowNumber: { color: Colors.navy, fontSize: 80, fontWeight: '900', lineHeight: 80 },
+  progressTrack: { width: '65%', height: 6, backgroundColor: Colors.border, borderRadius: 3, marginTop: 20, marginBottom: 12 },
   progressFill: { width: '80%', height: 6, backgroundColor: Colors.primary, borderRadius: 3 },
-  glowSub: { color: '#888888', fontSize: 13 },
+  glowSub: { color: Colors.textSecondary, fontSize: 13 },
   countdownTextContainer: { position: 'absolute', alignItems: 'center' },
-  countdownNumber: { color: '#FFFFFF', fontSize: 64, fontWeight: '900', lineHeight: 64 },
-  countdownLabel: { color: '#888888', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
-  countdownAccent: { color: '#C084FC', fontSize: 16, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  countdownNumber: { color: Colors.navy, fontSize: 64, fontWeight: '900', lineHeight: 64 },
+  countdownLabel: { color: Colors.textSecondary, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
+  countdownAccent: { color: Colors.primary, fontSize: 16, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
   bottom: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
   label: { fontSize: 11, fontWeight: '700', letterSpacing: 2.5, color: Colors.primary, textTransform: 'uppercase', marginBottom: 10 },
-  headline: { fontSize: 38, fontWeight: '900', color: '#FFFFFF', lineHeight: 44, letterSpacing: -0.5, marginBottom: 12 },
+  headline: { fontSize: 38, fontWeight: '900', color: Colors.navy, lineHeight: 44, letterSpacing: -0.5, marginBottom: 12 },
   headlineAccent: { fontSize: 38, fontWeight: '900', color: Colors.accent, lineHeight: 44, letterSpacing: -0.5 },
   subtext: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22, marginBottom: 28 },
   socialProof: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', marginTop: 14 },
