@@ -10,11 +10,16 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TOP_ZONE_HEIGHT = SCREEN_HEIGHT * 0.58;
 
+const IMAGE_URLS = [
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80',
+  'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&q=80',
+];
+
 const SLIDES = [
-  { type: 'image' as const, uri: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80' },
+  { type: 'image' as const, uri: IMAGE_URLS[0] },
   { type: 'view' as const, id: 'glow-score' },
   { type: 'view' as const, id: 'countdown' },
-  { type: 'image' as const, uri: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&q=80' },
+  { type: 'image' as const, uri: IMAGE_URLS[1] },
 ];
 
 const CIRCLE_RADIUS = 120;
@@ -76,10 +81,19 @@ function CountdownSlide() {
 export default function HeroScreen() {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [imagesReady, setImagesReady] = useState(false);
   const fadeAnims = useRef(SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    Promise.all(IMAGE_URLS.map((url) => Image.prefetch(url)))
+      .catch(() => {})
+      .finally(() => setImagesReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!imagesReady) return;
+
     intervalRef.current = setInterval(() => {
       setActiveIndex((prev) => {
         const next = (prev + 1) % SLIDES.length;
@@ -94,7 +108,7 @@ export default function HeroScreen() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fadeAnims]);
+  }, [imagesReady, fadeAnims]);
 
   return (
     <View style={styles.container}>
