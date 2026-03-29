@@ -53,6 +53,7 @@ export interface FaceAnalysisResult {
   topOpportunity: FeatureHighlight;
   recommendations: Recommendation[];
   personalNote: string;
+  uniqueDetail: string;
 }
  
 export interface AnalysisResponse {

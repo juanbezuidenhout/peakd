@@ -215,10 +215,24 @@ export default function ResultsScreen() {
           </Text>
         </View>
 
+        {/* Section 1.5 — First thing we noticed */}
+        {ringDone && result?.uniqueDetail ? (
+          <Animated.View
+            entering={FadeIn.delay(300).duration(400)}
+            style={styles.uniqueDetailCard}
+            onLayout={() =>
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }
+          >
+            <Text style={styles.uniqueDetailLabel}>FIRST THING WE NOTICED</Text>
+            <Text style={styles.uniqueDetailText}>{result.uniqueDetail}</Text>
+          </Animated.View>
+        ) : null}
+
         {/* Section 2 — Archetype */}
         {ringDone && archetype && (
           <Animated.View
-            entering={FadeIn.delay(500).duration(400)}
+            entering={FadeIn.delay(700).duration(400)}
             style={styles.archetypeCard}
             onLayout={() =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -233,7 +247,7 @@ export default function ResultsScreen() {
         {/* Section 3 — What you're doing right */}
         {ringDone && topStrength && (
           <Animated.View
-            entering={FadeInUp.delay(700).duration(400)}
+            entering={FadeInUp.delay(900).duration(400)}
             style={[styles.highlightCard, styles.strengthBorder]}
             onLayout={() =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -250,7 +264,7 @@ export default function ResultsScreen() {
         {/* Section 4 — First opportunity */}
         {ringDone && topOpportunity && (
           <Animated.View
-            entering={FadeInUp.delay(900).duration(400)}
+            entering={FadeInUp.delay(1100).duration(400)}
             style={[styles.highlightCard, styles.opportunityBorder]}
             onLayout={() =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -271,7 +285,7 @@ export default function ResultsScreen() {
         {/* Section 5 — Second opportunity */}
         {ringDone && secondOpportunity && (
           <Animated.View
-            entering={FadeInUp.delay(1100).duration(400)}
+            entering={FadeInUp.delay(1300).duration(400)}
             style={[styles.highlightCard, styles.opportunityBorder]}
             onLayout={() =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -292,7 +306,7 @@ export default function ResultsScreen() {
         {/* Section 6 — CTA */}
         {ringDone && (
           <Animated.View
-            entering={FadeIn.delay(1300).duration(400)}
+            entering={FadeIn.delay(1500).duration(400)}
             style={styles.ctaSection}
           >
             <Text style={styles.ctaHeading}>
@@ -353,6 +367,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 1,
+  },
+
+  uniqueDetailCard: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 24,
+    marginTop: 24,
+  },
+  uniqueDetailLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.accent,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+  },
+  uniqueDetailText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    lineHeight: 24,
+    marginTop: 8,
   },
 
   archetypeCard: {
