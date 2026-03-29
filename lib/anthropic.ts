@@ -121,6 +121,7 @@ export type ProgressStage =
 export async function analyzeFace(
   imageUri: string,
   onProgress?: (stage: ProgressStage) => void,
+  sideImageUri?: string | null,
 ): Promise<AnalysisResponse> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error('Supabase environment variables not configured.');
@@ -128,7 +129,12 @@ export async function analyzeFace(
  
   onProgress?.('preparing');
   const base64 = await imageToBase64(imageUri);
- 
+
+  let sideBase64: string | undefined;
+  if (sideImageUri) {
+    sideBase64 = await imageToBase64(sideImageUri);
+  }
+
   onProgress?.('uploading');
   const userContext = await loadUserContext();
  
@@ -143,6 +149,8 @@ export async function analyzeFace(
     body: JSON.stringify({
       imageBase64: base64,
       mediaType: 'image/jpeg',
+      sideImageBase64: sideBase64,
+      sideMediaType: sideBase64 ? 'image/jpeg' : undefined,
       ...userContext,
     }),
   });
@@ -175,12 +183,13 @@ export async function analyzeFaceWithRetry(
   imageUri: string,
   onProgress?: (stage: ProgressStage) => void,
   maxRetries = 2,
+  sideImageUri?: string | null,
 ): Promise<AnalysisResponse> {
   let lastError: Error | null = null;
  
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await analyzeFace(imageUri, onProgress);
+      return await analyzeFace(imageUri, onProgress, sideImageUri);
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (attempt < maxRetries) {
