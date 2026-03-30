@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

@@ -4,7 +4,7 @@ import { LogBox } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { isOnboardingComplete } from "@/lib/storage";
+import { isOnboardingComplete, hasCompletedPurchase } from "@/lib/storage";
 import { useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 
@@ -18,10 +18,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     (async () => {
-      const complete = await isOnboardingComplete();
+      const paid = await hasCompletedPurchase();
+      const onboarded = await isOnboardingComplete();
       setReady(true);
-      if (complete) {
+      if (paid) {
         router.replace("/(tabs)/coach");
+      } else if (onboarded) {
+        router.replace("/(tabs)/scan");
       }
     })();
   }, []);
@@ -36,7 +39,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, animation: "fade", gestureEnabled: false }}>
         <Stack.Screen name="(onboarding)" options={{ animation: "none" }} />
         <Stack.Screen name="(tabs)" />

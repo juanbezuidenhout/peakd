@@ -43,7 +43,8 @@
         {
           "photosPermission": "Allow Peakd to access your photos for selfie upload."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

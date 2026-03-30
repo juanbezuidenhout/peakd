@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     fontSize: 17,
     fontWeight: '500',
   },

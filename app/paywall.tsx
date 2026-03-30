@@ -18,7 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Path, Rect, Line } from 'react-native-svg';
-import { getItem, KEYS } from '@/lib/storage';
+import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -571,9 +571,23 @@ export default function PaywallScreen() {
     setStep((s) => s + 1);
   };
 
-  const purchase = () => {
+  const purchase = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // TODO: Wire RevenueCat here
+    // TODO: Wire RevenueCat here. Call setCompletedPurchase() ONLY after
+    // RevenueCat confirms a successful transaction. Example:
+    //
+    // try {
+    //   const purchaserInfo = await Purchases.purchasePackage(selectedPackage);
+    //   if (purchaserInfo.customerInfo.entitlements.active["pro"]) {
+    //     await setCompletedPurchase();
+    //     router.push('/results-full');
+    //   }
+    // } catch (e) {
+    //   // Handle error, do NOT set purchase flag
+    // }
+    //
+    // For now (testing), set it immediately:
+    await setCompletedPurchase();
     router.push('/results-full');
   };
 

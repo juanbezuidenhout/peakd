@@ -17,7 +17,7 @@ export const Colors = {
   primaryBgSolid: '#F0F4FF',
   // ── Navy (buttons, headings) ──────────────────────────────────────────────
   navy: '#1A1A2E',
-  accent: '#7BB3F0',
+  accent: '#4A90D9',
   // ── Text ──────────────────────────────────────────────────────────────────
   textPrimary: '#1A1A2E',
   textSecondary: '#6B7280',

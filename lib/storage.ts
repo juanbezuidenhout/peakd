@@ -10,6 +10,7 @@ const KEYS = {
   AUTH_TOKEN: "peakd_auth_token",
   DAILY_STREAK: "peakd_daily_streak",
   IS_PRO: "peakd_is_pro",
+  HAS_COMPLETED_PURCHASE: "peakd_has_completed_purchase",
   USER_NAME: "peakd_user_name",
   USER_AGE: "peakd_user_age",
   USER_HEIGHT: "peakd_user_height",
@@ -172,6 +173,14 @@ export async function incrementDailyStreak(): Promise<number> {
 
 export async function getIsPro(): Promise<boolean> {
   return (await getItem<boolean>(KEYS.IS_PRO)) ?? false;
+}
+
+export async function hasCompletedPurchase(): Promise<boolean> {
+  return (await getItem<boolean>(KEYS.HAS_COMPLETED_PURCHASE)) ?? false;
+}
+
+export async function setCompletedPurchase(): Promise<void> {
+  await setItem(KEYS.HAS_COMPLETED_PURCHASE, true);
 }
 
 export { KEYS };

@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -18,9 +19,9 @@ import { SafeScreen } from '@/components/layout/SafeScreen';
 
 const BARS = [
   { label: 'Dating', pct: 80, type: 'accent' },
-  { label: 'Popularity', pct: 65, type: 'white' },
-  { label: 'Career Oppt.', pct: 35, type: 'grey' },
-  { label: 'Income', pct: 30, type: 'grey' },
+  { label: 'Popularity', pct: 65, type: 'dark' },
+  { label: 'Career Oppt.', pct: 35, type: 'muted' },
+  { label: 'Income', pct: 30, type: 'muted' },
 ] as const;
 
 type BarType = (typeof BARS)[number]['type'];
@@ -28,8 +29,6 @@ type BarType = (typeof BARS)[number]['type'];
 const BAR_ANIM_DURATION = 800;
 const BAR_STAGGER = 150;
 const TOTAL_BAR_ANIM = (BARS.length - 1) * BAR_STAGGER + BAR_ANIM_DURATION;
-
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 function AccentBarFill({
   progress,
@@ -77,7 +76,7 @@ function BarRow({
   }));
 
   const isAccent = type === 'accent';
-  const barColor = type === 'white' ? '#FFFFFF' : '#555555';
+  const barColor = type === 'dark' ? Colors.navy : Colors.textMuted;
 
   return (
     <View style={styles.barRow}>
@@ -94,7 +93,7 @@ function BarRow({
       <Text
         style={[
           styles.barPct,
-          { color: isAccent ? '#22D3EE' : '#FFFFFF' },
+          { color: isAccent ? '#06B6D4' : Colors.textPrimary },
         ]}
       >
         {pct}%
@@ -169,12 +168,25 @@ export default function PainDatingScreen() {
           ))}
         </View>
 
-        <Animated.View style={[styles.infoCard, cardAnimStyle]}>
-          <Text style={styles.infoTitle}>The Brutal Truth</Text>
-          <Text style={styles.infoBody}>
-            99% of people don't realize how much attractiveness impacts their
-            lives, especially for dating
-          </Text>
+        <Animated.View style={[styles.glassOuter, cardAnimStyle]}>
+          <BlurView
+            intensity={Platform.OS === 'ios' ? 60 : 30}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['#EDF2FF', '#F0F4FF', '#EBF0FC']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.glassContent}>
+            <Text style={styles.infoTitle}>The Brutal Truth</Text>
+            <Text style={styles.infoBody}>
+              99% of people don't realize how much attractiveness impacts their
+              lives, especially for dating
+            </Text>
+          </View>
         </Animated.View>
 
         <View style={{ flex: 1 }} />
@@ -213,7 +225,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.navy,
     textAlign: 'center',
     lineHeight: 36,
   },
@@ -228,13 +240,13 @@ const styles = StyleSheet.create({
   barLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     width: 110,
   },
   barTrack: {
     flex: 1,
     height: 14,
-    backgroundColor: 'transparent',
+    backgroundColor: '#E4E9F0',
     borderRadius: 7,
     overflow: 'visible',
   },
@@ -261,16 +273,25 @@ const styles = StyleSheet.create({
     width: 48,
     textAlign: 'right',
   },
-  infoCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 16,
-    padding: 20,
+  glassOuter: {
+    borderRadius: 20,
     marginTop: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E6F0',
+    shadowColor: '#4A90D9',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  glassContent: {
+    padding: 22,
   },
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.navy,
     marginBottom: 8,
   },
   infoBody: {
@@ -281,14 +302,14 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

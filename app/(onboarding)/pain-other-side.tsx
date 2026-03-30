@@ -26,11 +26,11 @@ import Animated, {
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 
-const ICON_SIZE = 44;
+const ICON_SIZE = 38;
 
 function InstagramIcon({ gradientId = 'igBg' }: { gradientId?: string }) {
   return (
-    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 44 44">
+    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 38 38">
       <Defs>
         <LinearGradient id={gradientId} x1="0.9" y1="0" x2="0.1" y2="1">
           <Stop offset="0%" stopColor="#515BD4" />
@@ -40,27 +40,27 @@ function InstagramIcon({ gradientId = 'igBg' }: { gradientId?: string }) {
           <Stop offset="100%" stopColor="#FEDA77" />
         </LinearGradient>
       </Defs>
-      <Rect x={0} y={0} width={44} height={44} rx={10} fill={`url(#${gradientId})`} />
+      <Rect x={0} y={0} width={38} height={38} rx={9} fill={`url(#${gradientId})`} />
       <Rect
-        x={10} y={10} width={24} height={24} rx={7}
-        fill="none" stroke="#FFFFFF" strokeWidth={2.2}
+        x={8.5} y={8.5} width={21} height={21} rx={6}
+        fill="none" stroke="#FFFFFF" strokeWidth={2}
       />
-      <Circle cx={22} cy={22} r={5.5} fill="none" stroke="#FFFFFF" strokeWidth={2.2} />
-      <Circle cx={31.5} cy={12.5} r={1.8} fill="#FFFFFF" />
+      <Circle cx={19} cy={19} r={4.8} fill="none" stroke="#FFFFFF" strokeWidth={2} />
+      <Circle cx={27} cy={11} r={1.6} fill="#FFFFFF" />
     </Svg>
   );
 }
 
 function HingeIcon() {
   return (
-    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 44 44">
-      <Rect x={0} y={0} width={44} height={44} rx={10} fill="#FFFFFF" />
-      <Path d="M14 11 V33" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
-      <Path d="M30 11 V27" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
-      <Path d="M14 22 H30" stroke="#333333" strokeWidth={4.5} strokeLinecap="round" />
+    <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 38 38">
+      <Rect x={0} y={0} width={38} height={38} rx={9} fill="#1A1A1A" />
+      <Path d="M12 9.5 V28.5" stroke="#FFFFFF" strokeWidth={3.8} strokeLinecap="round" />
+      <Path d="M26 9.5 V23.5" stroke="#FFFFFF" strokeWidth={3.8} strokeLinecap="round" />
+      <Path d="M12 19 H26" stroke="#FFFFFF" strokeWidth={3.8} strokeLinecap="round" />
       <Path
-        d="M30 27 C30 31 27 34 23 34"
-        stroke="#333333" strokeWidth={4.5} strokeLinecap="round" fill="none"
+        d="M26 23.5 C26 27 23.5 29.5 20 29.5"
+        stroke="#FFFFFF" strokeWidth={3.8} strokeLinecap="round" fill="none"
       />
     </Svg>
   );
@@ -72,35 +72,30 @@ const NOTIFICATIONS = [
     title: 'james_h',
     body: "You: Hey! How's your week going?",
     time: 'Read 2d ago',
-    isReadReceipt: true,
   },
   {
     icon: 'hinge' as const,
     title: 'Hinge',
     body: 'Alex unmatched with you',
     time: 'Yesterday',
-    isReadReceipt: false,
   },
   {
     icon: 'instagram' as const,
     title: 'Instagram',
     body: 'No new likes this week',
     time: '3d ago',
-    isReadReceipt: false,
   },
   {
     icon: 'instagram' as const,
     title: 'mike.c',
     body: 'You: Would love to grab coffee sometime!',
     time: 'Seen',
-    isReadReceipt: true,
   },
   {
     icon: 'instagram' as const,
     title: 'Instagram',
     body: '3 followers unfollowed this week',
     time: 'Today',
-    isReadReceipt: false,
   },
 ];
 
@@ -126,21 +121,16 @@ function NotificationItem({
         )}
       </View>
       <View style={styles.notifTextCol}>
-        <Text style={styles.notifTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
+        <View style={styles.notifTopRow}>
+          <Text style={styles.notifTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.notifTime}>{item.time}</Text>
+        </View>
         <Text style={styles.notifBody} numberOfLines={2}>
           {item.body}
         </Text>
       </View>
-      <Text
-        style={[
-          styles.notifTime,
-          item.isReadReceipt && styles.notifTimeItalic,
-        ]}
-      >
-        {item.time}
-      </Text>
     </Animated.View>
   );
 }
@@ -217,14 +207,16 @@ export default function PainOtherSideScreen() {
         <Animated.View style={[styles.notifCentre, centreStyle]}>
           <View style={styles.centreHeader}>
             <Text style={styles.centreTitle}>Notification Centre</Text>
-            <View style={styles.closeCircle}>
-              <Text style={styles.closeX}>×</Text>
+            <View style={styles.clearPill}>
+              <Text style={styles.clearLabel}>×</Text>
             </View>
           </View>
 
-          {NOTIFICATIONS.map((item, i) => (
-            <NotificationItem key={i} item={item} index={i} />
-          ))}
+          <View style={styles.notifStack}>
+            {NOTIFICATIONS.map((item, i) => (
+              <NotificationItem key={i} item={item} index={i} />
+            ))}
+          </View>
         </Animated.View>
 
         <View style={{ flex: 1 }} />
@@ -243,7 +235,7 @@ export default function PainOtherSideScreen() {
             style={styles.ctaButton}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/(onboarding)/pain-same-girl');
+              router.push('/(onboarding)/pain-attention');
             }}
           >
             <Text style={styles.ctaLabel}>Next</Text>
@@ -272,84 +264,88 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headline: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#8E8E93',
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
   notifCentre: {
-    paddingHorizontal: 2,
+    paddingHorizontal: 0,
   },
   centreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
-    paddingHorizontal: 2,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   centreTitle: {
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: -0.5,
+    color: '#1C1C1E',
+    letterSpacing: -0.3,
   },
-  closeCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  clearPill: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(120, 120, 128, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeX: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.55)',
+  clearLabel: {
+    fontSize: 16,
+    color: '#8E8E93',
     fontWeight: '600',
     marginTop: -1,
   },
+  notifStack: {
+    opacity: 0.75,
+  },
   notifCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(44, 44, 52, 0.72)',
-    borderRadius: 16,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-    padding: 12,
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(120, 120, 128, 0.12)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     marginBottom: 8,
   },
   notifIconWrap: {
     width: ICON_SIZE,
     height: ICON_SIZE,
-    borderRadius: ICON_SIZE * 0.22,
+    borderRadius: 9,
     overflow: 'hidden',
     marginRight: 12,
   },
   notifTextCol: {
     flex: 1,
-    marginRight: 8,
+  },
+  notifTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
   },
   notifTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 2,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    flexShrink: 1,
   },
   notifBody: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.55)',
-    lineHeight: 18,
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#1C1C1E',
+    lineHeight: 20,
   },
   notifTime: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.3)',
-    alignSelf: 'flex-start',
-    marginTop: 2,
-  },
-  notifTimeItalic: {
-    fontStyle: 'italic',
-    color: 'rgba(255, 255, 255, 0.25)',
+    fontWeight: '400',
+    color: '#8E8E93',
+    marginLeft: 8,
   },
   infoCard: {
     backgroundColor: Colors.surfaceElevated,
@@ -370,7 +366,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -378,7 +374,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: Colors.textPrimary,
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

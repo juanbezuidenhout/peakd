@@ -52,8 +52,8 @@ function Dot({ index, progressValue }: { index: number; progressValue: SharedVal
 
     return {
       width: interpolate(clamped, [0, 1], [6, 24]),
-      opacity: interpolate(clamped, [0, 1], [0.3, 1]),
-      backgroundColor: clamped > 0.5 ? Colors.primary : Colors.border,
+      opacity: interpolate(clamped, [0, 1], [0.4, 1]),
+      backgroundColor: clamped > 0.5 ? Colors.primary : Colors.textMuted,
     };
   });
 
@@ -78,7 +78,7 @@ function CarouselCard({
     const opacity = interpolate(
       animationValue.value,
       [-1, 0, 1],
-      [0.4, 1, 0.4],
+      [0.6, 1, 0.6],
       Extrapolation.CLAMP,
     );
 
@@ -115,7 +115,7 @@ function CarouselCard({
     );
 
     return {
-      borderColor: progress > 0.5 ? Colors.primary : Colors.border,
+      borderColor: progress > 0.5 ? Colors.primary : '#D1D9E6',
     };
   });
 
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   backChevron: {
     fontSize: 28,
-    color: Colors.textSecondary,
+    color: Colors.navy,
   },
   progressWrap: {
     paddingTop: 20,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 34,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.navy,
     lineHeight: 40,
     marginBottom: 8,
   },
@@ -255,8 +255,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
-    borderWidth: 2,
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   cardImageWrap: {
     flex: 1,
@@ -270,13 +275,15 @@ const styles = StyleSheet.create({
   cardInfo: {
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.white,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
   cardName: {
     fontSize: 17,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: Colors.navy,
   },
   dotsRow: {
     flexDirection: 'row',

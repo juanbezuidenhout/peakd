@@ -11,12 +11,12 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Path, Circle } from "react-native-svg";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { getItem, KEYS } from "@/lib/storage";
+import { getItem, KEYS, hasCompletedPurchase } from "@/lib/storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 export const unstable_settings = {
-  initialRouteName: "coach",
+  initialRouteName: "scan",
 };
 
 function ScanIcon({ size, color }: { size: number; color: string }) {
@@ -277,9 +277,18 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  const [hasPaid, setHasPaid] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const paid = await hasCompletedPurchase();
+      setHasPaid(paid);
+    })();
+  }, []);
+
   return (
     <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={(props) => hasPaid ? <CustomTabBar {...props} /> : null}
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="scan" options={{ title: "scan" }} />

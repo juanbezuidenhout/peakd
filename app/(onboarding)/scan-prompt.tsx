@@ -106,12 +106,12 @@ const styles = StyleSheet.create({
   },
   backChevron: {
     fontSize: 28,
-    color: Colors.textSecondary,
+    color: Colors.navy,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: Colors.textPrimary,
+    color: Colors.navy,
   },
   subtitle: {
     marginTop: 8,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "60%",
     height: 1,
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: "rgba(74,144,217,0.25)",
   },
   sweepLine: {
     position: "absolute",
@@ -165,16 +165,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pill: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.primaryBgSolid,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.primary,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   pillText: {
     fontSize: 13,
-    color: Colors.textPrimary,
+    color: Colors.navy,
+    fontWeight: "500",
   },
   bottom: {
     paddingBottom: 24,

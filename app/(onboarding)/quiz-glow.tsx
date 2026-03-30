@@ -20,11 +20,11 @@ const CYAN = Colors.primary;
 function DumbbellIcon() {
   return (
     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Rect x={2} y={9} width={4} height={6} rx={1} fill="#fff" />
-      <Rect x={18} y={9} width={4} height={6} rx={1} fill="#fff" />
-      <Rect x={5} y={10.5} width={3} height={3} rx={0.5} fill="#fff" />
-      <Rect x={16} y={10.5} width={3} height={3} rx={0.5} fill="#fff" />
-      <Rect x={8} y={11} width={8} height={2} rx={0.5} fill="#fff" />
+      <Rect x={2} y={9} width={4} height={6} rx={1} fill={Colors.navy} />
+      <Rect x={18} y={9} width={4} height={6} rx={1} fill={Colors.navy} />
+      <Rect x={5} y={10.5} width={3} height={3} rx={0.5} fill={Colors.navy} />
+      <Rect x={16} y={10.5} width={3} height={3} rx={0.5} fill={Colors.navy} />
+      <Rect x={8} y={11} width={8} height={2} rx={0.5} fill={Colors.navy} />
     </Svg>
   );
 }
@@ -34,7 +34,7 @@ function DropletIcon() {
     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
       <Path
         d="M12 2.5c0 0-7 8.5-7 13a7 7 0 0 0 14 0c0-4.5-7-13-7-13z"
-        fill="#fff"
+        fill={Colors.navy}
       />
     </Svg>
   );
@@ -42,7 +42,7 @@ function DropletIcon() {
 
 function ScissorsIcon() {
   return (
-    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke={Colors.navy} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <Circle cx={6} cy={6} r={3} />
       <Circle cx={6} cy={18} r={3} />
       <Line x1={20} y1={4} x2={8.12} y2={15.88} />
@@ -54,7 +54,7 @@ function ScissorsIcon() {
 
 function HammerIcon() {
   return (
-    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke={Colors.navy} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M6 15l4-4" />
       <Path d="M2 21l4.5-4.5" />
       <Path d="M11 10l1.5-1.5" />
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: 14,
-    color: '#888888',
+    color: Colors.textSecondary,
     lineHeight: 22,
     marginBottom: 0,
   },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   radioCheck: {
     fontSize: 13,
-    color: Colors.textPrimary,
+    color: Colors.white,
     fontWeight: '700',
     marginTop: -1,
   },
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   modalBody: {
     fontSize: 13.5,
     lineHeight: 20,
-    color: '#AAAAAA',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#3A3A3A',
+    borderColor: Colors.border,
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 12,
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 14,
-    color: '#888888',
+    color: Colors.textSecondary,
     paddingVertical: 4,
   },
 });

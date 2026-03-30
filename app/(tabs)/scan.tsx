@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { hasCompletedPurchase } from '@/lib/storage';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   FadeIn,
@@ -45,6 +46,7 @@ function FaceOutlineIcon() {
 
 export default function ScanScreen() {
   const router = useRouter();
+  const [hasPaid, setHasPaid] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [sideImageUri, setSideImageUri] = useState<string | null>(null);
   const [captureStep, setCaptureStep] = useState<'front' | 'side' | 'ready'>(
@@ -52,6 +54,13 @@ export default function ScanScreen() {
   );
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const paid = await hasCompletedPurchase();
+      setHasPaid(paid);
+    })();
+  }, []);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -144,12 +153,14 @@ export default function ScanScreen() {
     <SafeScreen>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Scan</Text>
-        <Pressable
-          onPress={() => router.push('/(tabs)/extras')}
-          hitSlop={12}
-        >
-          <Text style={styles.gearIcon}>⚙️</Text>
-        </Pressable>
+        {hasPaid && (
+          <Pressable
+            onPress={() => router.push('/(tabs)/extras')}
+            hitSlop={12}
+          >
+            <Text style={styles.gearIcon}>⚙️</Text>
+          </Pressable>
+        )}
       </View>
 
       {captureStep === 'front' && (

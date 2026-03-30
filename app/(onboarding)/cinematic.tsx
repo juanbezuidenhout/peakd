@@ -1,15 +1,6 @@
 import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, {
-  Path,
-  Ellipse,
-  Line,
-  G,
-  Defs,
-  RadialGradient,
-  Stop,
-} from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -24,347 +15,7 @@ import { SafeScreen } from '@/components/layout/SafeScreen';
 const POSITIVE_TRAITS = ['intelligent', 'kind', 'rich'] as const;
 const NEGATIVE_TRAITS = ['intelligent', 'kind', 'rich'] as const;
 
-const FIGURE_W = 140;
-const FIGURE_H = 180;
 const ANIM_BASE = 200;
-
-function LeftFigure() {
-  return (
-    <Svg width={FIGURE_W} height={FIGURE_H} viewBox="0 0 140 180">
-      <Defs>
-        <RadialGradient id="haloGlow" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor="#F5D060" stopOpacity={0.5} />
-          <Stop offset="100%" stopColor="#F5D060" stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-
-      <Ellipse cx={70} cy={18} rx={32} ry={10} fill="url(#haloGlow)" />
-      <Ellipse
-        cx={70}
-        cy={18}
-        rx={26}
-        ry={8}
-        fill="none"
-        stroke="#F5D060"
-        strokeWidth={2.2}
-        transform="rotate(-8, 70, 18)"
-      />
-
-      <Path
-        d="M44 52 C42 36, 54 26, 70 26 C86 26, 98 36, 96 52"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M44 52 C42 68, 38 90, 37 112 C36 122, 38 132, 42 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M96 52 C98 68, 102 90, 103 112 C104 122, 102 132, 98 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M47 56 C45 70, 44 86, 46 100"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-      <Path
-        d="M93 56 C95 70, 96 86, 94 100"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-
-      <Path
-        d="M52 54 C52 42, 58 36, 70 36 C82 36, 88 42, 88 54
-           L88 72 C88 88, 82 97, 70 99 C58 97, 52 88, 52 72 Z"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M55 56 C58 53, 63 53, 66 56"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M74 56 C77 53, 82 53, 85 56"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M55 62 C58 59, 63 59, 66 62 C63 64.5, 58 64.5, 55 62"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.4}
-        strokeLinecap="round"
-      />
-      <Ellipse cx={60.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
-      <Path
-        d="M54 61.5 C57 58, 64 57.5, 67 60.5"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M74 62 C77 59, 82 59, 85 62 C82 64.5, 77 64.5, 74 62"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.4}
-        strokeLinecap="round"
-      />
-      <Ellipse cx={79.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
-      <Path
-        d="M73 60.5 C76 57.5, 83 58, 86 61.5"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M70 68 C69 73, 68 77, 67 79"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M65 81 C67 82.5, 73 82.5, 75 81"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M63 88 C65 86, 68 85.5, 70 87 C72 85.5, 75 86, 77 88"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.3}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M63 88 C66 92, 74 92, 77 88"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.3}
-        strokeLinecap="round"
-      />
-
-      <Line x1={65} y1={99} x2={63} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-      <Line x1={75} y1={99} x2={77} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-
-      <Path
-        d="M63 118 C57 120, 38 128, 28 140
-           M77 118 C83 120, 102 128, 112 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M46 132 C56 129, 63 128, 70 128 C77 128, 84 129, 94 132"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={0.9}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-    </Svg>
-  );
-}
-
-function RightFigure() {
-  return (
-    <Svg width={FIGURE_W} height={FIGURE_H} viewBox="0 0 140 180">
-      <G>
-        <Path
-          d="M48 36 L42 12 C42 12, 46 20, 52 28 Z"
-          fill="#EF5350"
-          stroke="#EF5350"
-          strokeWidth={1}
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M92 36 L98 12 C98 12, 94 20, 88 28 Z"
-          fill="#EF5350"
-          stroke="#EF5350"
-          strokeWidth={1}
-          strokeLinejoin="round"
-        />
-      </G>
-
-      <Path
-        d="M44 52 C42 36, 54 26, 70 26 C86 26, 98 36, 96 52"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M44 52 C42 68, 38 90, 37 112 C36 122, 38 132, 42 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M96 52 C98 68, 102 90, 103 112 C104 122, 102 132, 98 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M47 56 C45 70, 44 86, 46 100"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-      <Path
-        d="M93 56 C95 70, 96 86, 94 100"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-
-      <Path
-        d="M52 54 C52 42, 58 36, 70 36 C82 36, 88 42, 88 54
-           L88 72 C88 88, 82 97, 70 99 C58 97, 52 88, 52 72 Z"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M55 56 C58 53, 63 53, 66 56"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M74 56 C77 53, 82 53, 85 56"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M55 62 C58 59, 63 59, 66 62 C63 64.5, 58 64.5, 55 62"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.4}
-        strokeLinecap="round"
-      />
-      <Ellipse cx={60.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
-      <Path
-        d="M54 61.5 C57 58, 64 57.5, 67 60.5"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M74 62 C77 59, 82 59, 85 62 C82 64.5, 77 64.5, 74 62"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.4}
-        strokeLinecap="round"
-      />
-      <Ellipse cx={79.5} cy={61.8} rx={1.5} ry={1.8} fill="#FFFFFF" />
-      <Path
-        d="M73 60.5 C76 57.5, 83 58, 86 61.5"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M70 68 C69 73, 68 77, 67 79"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.1}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M65 81 C67 82.5, 73 82.5, 75 81"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M63 91 C65 89, 68 88.5, 70 89.5 C72 88.5, 75 89, 77 91"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.3}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M63 91 C66 88, 74 88, 77 91"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.3}
-        strokeLinecap="round"
-      />
-
-      <Line x1={65} y1={99} x2={63} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-      <Line x1={75} y1={99} x2={77} y2={118} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-
-      <Path
-        d="M63 118 C57 120, 38 128, 28 140
-           M77 118 C83 120, 102 128, 112 140"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-
-      <Path
-        d="M46 132 C56 129, 63 128, 70 128 C77 128, 84 129, 94 132"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth={0.9}
-        strokeLinecap="round"
-        opacity={0.4}
-      />
-    </Svg>
-  );
-}
 
 function TraitRow({
   label,
@@ -405,10 +56,7 @@ export default function CinematicScreen() {
   const router = useRouter();
 
   const headerOpacity = useSharedValue(0);
-  const leftScale = useSharedValue(0.8);
-  const leftOpacity = useSharedValue(0);
-  const rightScale = useSharedValue(0.8);
-  const rightOpacity = useSharedValue(0);
+  const photosOpacity = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(12);
 
@@ -418,22 +66,9 @@ export default function CinematicScreen() {
       easing: Easing.out(Easing.ease),
     });
 
-    leftOpacity.value = withDelay(
+    photosOpacity.value = withDelay(
       ANIM_BASE,
       withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) }),
-    );
-    leftScale.value = withDelay(
-      ANIM_BASE,
-      withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }),
-    );
-
-    rightOpacity.value = withDelay(
-      ANIM_BASE + 200,
-      withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) }),
-    );
-    rightScale.value = withDelay(
-      ANIM_BASE + 200,
-      withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) }),
     );
 
     const traitsEnd = ANIM_BASE + 800 + POSITIVE_TRAITS.length * 100 + 200;
@@ -452,14 +87,8 @@ export default function CinematicScreen() {
     opacity: headerOpacity.value,
   }));
 
-  const leftStyle = useAnimatedStyle(() => ({
-    opacity: leftOpacity.value,
-    transform: [{ scale: leftScale.value }],
-  }));
-
-  const rightStyle = useAnimatedStyle(() => ({
-    opacity: rightOpacity.value,
-    transform: [{ scale: rightScale.value }],
+  const photosStyle = useAnimatedStyle(() => ({
+    opacity: photosOpacity.value,
   }));
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -486,16 +115,26 @@ export default function CinematicScreen() {
             <Text style={styles.headline}>THE HALO EFFECT</Text>
             <Text style={styles.subtext}>
               A cognitive bias where we subconsciously assume someone's positive
-              qualities — like intelligence or kindness — based on their physical
+              qualities, like intelligence or kindness, based on their physical
               appearance
             </Text>
           </Animated.View>
 
+          <Animated.View style={[styles.faceRow, photosStyle]}>
+            <Image
+              source={require('../../assets/images/halo-angel.png')}
+              style={styles.faceImage}
+              resizeMode="contain"
+            />
+            <Image
+              source={require('../../assets/images/halo-plain.png')}
+              style={styles.faceImage}
+              resizeMode="contain"
+            />
+          </Animated.View>
+
           <View style={styles.figuresRow}>
             <View style={styles.figureColumn}>
-              <Animated.View style={[styles.figureWrap, leftStyle]}>
-                <LeftFigure />
-              </Animated.View>
               <View style={styles.traitList}>
                 {POSITIVE_TRAITS.map((t, i) => (
                   <TraitRow
@@ -509,9 +148,6 @@ export default function CinematicScreen() {
             </View>
 
             <View style={styles.figureColumn}>
-              <Animated.View style={[styles.figureWrap, rightStyle]}>
-                <RightFigure />
-              </Animated.View>
               <View style={styles.traitList}>
                 {NEGATIVE_TRAITS.map((t, i) => (
                   <TraitRow
@@ -588,6 +224,17 @@ const styles = StyleSheet.create({
     marginTop: 12,
     maxWidth: '85%',
   },
+  faceRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginVertical: 8,
+    gap: 8,
+  },
+  faceImage: {
+    width: '46%',
+    height: 180,
+  },
   figuresRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -597,12 +244,6 @@ const styles = StyleSheet.create({
   },
   figureColumn: {
     alignItems: 'center',
-  },
-  figureWrap: {
-    width: FIGURE_W,
-    height: FIGURE_H,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   traitList: {
     marginTop: 12,

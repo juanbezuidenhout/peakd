@@ -17,7 +17,7 @@ interface WaveformLoaderProps {
 }
 
 export function WaveformLoader({
-  color = '#FFFFFF',
+  color = Colors.textPrimary,
   size = 'small',
 }: WaveformLoaderProps) {
   const bar1 = useSharedValue(0.4);

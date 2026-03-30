@@ -75,7 +75,7 @@ function AnimatedBar({
     shadowRadius: interpolate(glowPulse.value, [0, 1], [8, 20]),
   }));
 
-  const color = isAccent ? '#22D3EE' : '#FFFFFF';
+  const color = isAccent ? '#06B6D4' : Colors.textSecondary;
 
   return (
     <View style={styles.barCol}>
@@ -176,7 +176,7 @@ export default function PainChatScreen() {
                 styles.xLabel,
                 {
                   color:
-                    i === DECILES.length - 1 ? '#22D3EE' : '#FFFFFF',
+                    i === DECILES.length - 1 ? '#06B6D4' : Colors.textMuted,
                 },
               ]}
             >
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   yAxisLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 32,
@@ -235,14 +235,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: Colors.border,
   },
   dashedLine: {
     position: 'absolute',
     left: 0,
     right: 0,
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: Colors.textMuted,
     borderStyle: 'dashed',
   },
   annotationWrap: {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   annotationText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.navy,
   },
   barsRow: {
     position: 'absolute',
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   whiteBar: {
     width: '62%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#C8D1DC',
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   xAxisTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.navy,
     textTransform: 'uppercase',
     letterSpacing: 2,
     textAlign: 'center',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.navy,
     marginBottom: 8,
   },
   infoBody: {
@@ -329,14 +329,14 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

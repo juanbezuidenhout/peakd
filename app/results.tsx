@@ -77,6 +77,45 @@ function getScoreLabel(score: number): string {
   return 'Just getting started';
 }
 
+const PERCENTILE_TABLE: [number, number][] = [
+  [10.0, 1],
+  [9.0, 2],
+  [8.5, 5],
+  [8.0, 10],
+  [7.5, 15],
+  [7.0, 22],
+  [6.5, 30],
+  [6.0, 40],
+  [5.5, 50],
+  [5.0, 60],
+  [4.5, 70],
+  [4.0, 78],
+  [3.5, 85],
+  [3.0, 90],
+  [2.0, 96],
+  [1.0, 99],
+];
+
+function getPercentile(score: number): number {
+  const clamped = Math.max(1, Math.min(10, score));
+  for (let i = 0; i < PERCENTILE_TABLE.length - 1; i++) {
+    const [hiScore, hiPct] = PERCENTILE_TABLE[i];
+    const [loScore, loPct] = PERCENTILE_TABLE[i + 1];
+    if (clamped >= loScore) {
+      const t = (clamped - loScore) / (hiScore - loScore);
+      return Math.round(loPct + t * (hiPct - loPct));
+    }
+  }
+  return 99;
+}
+
+function getScoreDotColor(score: number): string {
+  if (score >= 8.0) return BENTO.green;
+  if (score >= 6.5) return BENTO.accentBlue;
+  if (score >= 5.0) return BENTO.amber;
+  return BENTO.amber;
+}
+
 function getTop3Features(featureScores: FeatureScores) {
   return (Object.entries(featureScores) as [string, { score: number; summary: string }][])
     .sort((a, b) => b[1].score - a[1].score)
@@ -236,6 +275,8 @@ export default function ResultsScreen() {
   }
 
   const scoreLabel = getScoreLabel(result.glowScore);
+  const percentile = getPercentile(result.glowScore);
+  const dotColor = getScoreDotColor(result.glowScore);
   const archetype = result.archetype;
   const top3 = getTop3Features(result.featureScores);
 
@@ -294,7 +335,7 @@ export default function ResultsScreen() {
           style={styles.statusRow}
         >
           <View style={styles.statusPill}>
-            <View style={styles.statusDot} />
+            <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
             <Text style={styles.statusPillText}>{scoreLabel}</Text>
           </View>
 
@@ -312,7 +353,7 @@ export default function ResultsScreen() {
                   opacity={0.8}
                 />
               </Svg>
-              <Text style={styles.topBadgeText}>Top 42%</Text>
+              <Text style={styles.topBadgeText}>Top {percentile}%</Text>
             </LinearGradient>
           </Animated.View>
         </Animated.View>
@@ -529,7 +570,6 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: BENTO.amber,
   },
   statusPillText: {
     fontSize: 11,

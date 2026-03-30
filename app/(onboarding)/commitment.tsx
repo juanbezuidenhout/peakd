@@ -121,7 +121,7 @@ export default function CommitmentScreen() {
             <SvgText
               x={10}
               y={CHART_TOP + CHART_H / 2}
-              fill={Colors.textMuted}
+              fill={Colors.textSecondary}
               fontSize={10}
               textAnchor="middle"
               rotation={-90}
@@ -157,7 +157,7 @@ export default function CommitmentScreen() {
             <AnimatedPath
               d={withoutD}
               translateX={Y_LABEL_WIDTH}
-              stroke={Colors.border}
+              stroke={Colors.textMuted}
               strokeWidth={2}
               fill="none"
               strokeDasharray={`${withoutLen}, 6, 4`}
@@ -168,7 +168,7 @@ export default function CommitmentScreen() {
             <SvgText
               x={Y_LABEL_WIDTH}
               y={CHART_TOP + CHART_H + 16}
-              fill={Colors.textMuted}
+              fill={Colors.textSecondary}
               fontSize={10}
               textAnchor="start"
             >
@@ -177,7 +177,7 @@ export default function CommitmentScreen() {
             <SvgText
               x={Y_LABEL_WIDTH + innerW}
               y={CHART_TOP + CHART_H + 16}
-              fill={Colors.textMuted}
+              fill={Colors.textSecondary}
               fontSize={10}
               textAnchor="end"
             >
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     marginBottom: 12,
   },
   legendRow: {
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     height: 0,
     borderTopWidth: 2,
     borderStyle: 'dashed',
-    borderColor: Colors.border,
+    borderColor: Colors.textMuted,
   },
   legendTextPrimary: {
     fontSize: 12,
@@ -293,11 +293,11 @@ const styles = StyleSheet.create({
   },
   legendTextMuted: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
   },
   caption: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     fontStyle: 'italic',
     marginTop: 12,
     textAlign: 'center',

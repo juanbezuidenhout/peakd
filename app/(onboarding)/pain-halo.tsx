@@ -76,7 +76,7 @@ function BarRow({
   }));
 
   const isAccent = type === 'accent';
-  const barColor = type === 'white' ? Colors.borderLight : Colors.textMuted;
+  const barColor = type === 'white' ? Colors.navy : Colors.textMuted;
 
   return (
     <View style={styles.barRow}>
@@ -93,7 +93,7 @@ function BarRow({
       <Text
         style={[
           styles.barPct,
-          { color: isAccent ? '#22D3EE' : '#FFFFFF' },
+          { color: isAccent ? '#06B6D4' : Colors.textPrimary },
         ]}
       >
         {pct}%
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.navy,
     textAlign: 'center',
     textTransform: 'uppercase',
     lineHeight: 36,
@@ -233,13 +233,13 @@ const styles = StyleSheet.create({
   barLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     width: 110,
   },
   barTrack: {
     flex: 1,
     height: 14,
-    backgroundColor: 'transparent',
+    backgroundColor: '#E4E9F0',
     borderRadius: 7,
     overflow: 'visible',
   },
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.navy,
     marginBottom: 8,
   },
   infoBody: {
@@ -292,14 +292,14 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   ctaLabel: {
-    color: '#000000',
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

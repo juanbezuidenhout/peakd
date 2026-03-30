@@ -320,7 +320,7 @@ export default function PainBeautyGapScreen() {
                   strokeDasharray="3, 3"
                 />
                 <Rect
-                  x={lastDemandPt.x - 28}
+                  x={lastDemandPt.x - 44}
                   y={gapMidY - 9}
                   width={56}
                   height={18}
@@ -328,7 +328,7 @@ export default function PainBeautyGapScreen() {
                   rx={4}
                 />
                 <SvgText
-                  x={lastDemandPt.x}
+                  x={lastDemandPt.x - 16}
                   y={gapMidY + 4}
                   fill="#666666"
                   fontSize={10}
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.navy,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   ctaLabel: {
-    color: Colors.textPrimary,
+    color: Colors.white,
     fontSize: 17,
     fontWeight: '700',
   },

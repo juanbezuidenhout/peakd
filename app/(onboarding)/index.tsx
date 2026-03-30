@@ -39,6 +39,9 @@ export default function HeroScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  const darkBgOpacity = Animated.add(fadeAnims[0], fadeAnims[3]);
+  const lightBgOpacity = Animated.add(fadeAnims[1], fadeAnims[2]);
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -68,8 +71,14 @@ export default function HeroScreen() {
         </Animated.View>
         <LinearGradient colors={['transparent', Colors.background]} style={styles.topGradient} />
         <View style={styles.logoRow}>
-          <Text style={styles.logoPeak}>peak</Text>
-          <Text style={styles.logoD}>d</Text>
+          <Animated.View style={[styles.logoInner, { opacity: lightBgOpacity }]}>
+            <Text style={styles.logoPeak}>peak</Text>
+            <Text style={styles.logoD}>d</Text>
+          </Animated.View>
+          <Animated.View style={[styles.logoInner, { position: 'absolute' }, { opacity: darkBgOpacity }]}>
+            <Text style={styles.logoPeakLight}>peak</Text>
+            <Text style={styles.logoD}>d</Text>
+          </Animated.View>
         </View>
       </View>
       <View style={styles.bottom}>
@@ -109,9 +118,12 @@ const styles = StyleSheet.create({
   slideImage: { width: '100%', height: '100%' },
   slideCenter: { justifyContent: 'center', alignItems: 'center' },
   topGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 },
-  logoRow: { position: 'absolute', top: 52, left: 20, flexDirection: 'row' },
+  logoRow: { position: 'absolute', top: 52, left: 20 },
+  logoInner: { flexDirection: 'row' },
   logoPeak: { fontWeight: '800', fontSize: 22, color: Colors.navy },
   logoD: { fontWeight: '800', fontSize: 22, color: Colors.primary },
+  logoPeakLight: { fontWeight: '800', fontSize: 22, color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
+  logoDLight: { fontWeight: '800', fontSize: 22, color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
   glowLabel: { color: Colors.primary, fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 },
   glowNumber: { color: Colors.navy, fontSize: 80, fontWeight: '900', lineHeight: 80 },
   progressTrack: { width: '65%', height: 6, backgroundColor: Colors.border, borderRadius: 3, marginTop: 20, marginBottom: 12 },
