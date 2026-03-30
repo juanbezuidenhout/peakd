@@ -3,14 +3,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
+  SharedValue,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withSequence,
   withRepeat,
   withTiming,
+  interpolateColor,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { analyzeFaceWithRetry, FaceAnalysisResult } from '@/lib/anthropic';
 import { getPendingImageUri, getPendingSideImageUri } from '@/lib/scan-data';
@@ -29,6 +33,8 @@ const CYCLING_TEXTS = [
 
 const UNLOCK_DELAYS = [800, 3000, 5200, 7400, 9600, 11800];
 const SPRING_CONFIG = { damping: 18, stiffness: 200 };
+
+const AnimatedSafeAreaView = Animated.createAnimatedComponent(SafeAreaView);
 
 // ---------------------------------------------------------------------------
 // Shimmer bar (cards 1–5 only, after unlock)
@@ -71,10 +77,12 @@ function AnalysisCard({
   category,
   index,
   unlocked,
+  explosionScale,
 }: {
   category: string;
   index: number;
   unlocked: boolean;
+  explosionScale: SharedValue<number>;
 }) {
   const progress = useSharedValue(0);
 
@@ -88,7 +96,7 @@ function AnalysisCard({
     opacity: 0.45 + progress.value * 0.55,
     transform: [
       { translateY: (1 - progress.value) * 6 },
-      { scale: 0.97 + progress.value * 0.03 },
+      { scale: (0.97 + progress.value * 0.03) * explosionScale.value },
     ],
   }));
 
@@ -134,12 +142,15 @@ export default function AnalyzingScreen() {
     scanId: string | null;
   } | null>(null);
   const [apiDone, setApiDone] = useState(false);
+  const buildUpStartedRef = useRef(false);
+  const flashProgress = useSharedValue(0);
+  const explosionScale = useSharedValue(1);
 
-  // ── Card unlock sequence ───────────────────────────────────────────────
+  // ── Card unlock sequence (with per-card haptic) ────────────────────────
   useEffect(() => {
     const timers = UNLOCK_DELAYS.map((delay, i) =>
       setTimeout(() => {
-        // HAPTICS: see Prompt 1B
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setUnlockedCount(i + 1);
       }, delay),
     );
@@ -178,13 +189,60 @@ export default function AnalyzingScreen() {
     })();
   }, []);
 
-  // TRANSITION: navigate to results after haptic explosion — see Prompt 1B
-  // Will use: router, apiDone, apiResultRef, unlockedCount
+  // ── Haptic build-up + screen flash + transition ────────────────────────
+  useEffect(() => {
+    if (!apiDone || unlockedCount < 6 || buildUpStartedRef.current) return;
+    buildUpStartedRef.current = true;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const { Light, Medium, Heavy } = Haptics.ImpactFeedbackStyle;
+
+    // Phase 1 — Gentle pulse
+    timers.push(setTimeout(() => Haptics.impactAsync(Light), 0));
+    timers.push(setTimeout(() => Haptics.impactAsync(Light), 200));
+    timers.push(setTimeout(() => Haptics.impactAsync(Light), 400));
+    timers.push(setTimeout(() => Haptics.impactAsync(Light), 600));
+
+    // Phase 2 — Escalating
+    timers.push(setTimeout(() => Haptics.impactAsync(Medium), 700));
+    timers.push(setTimeout(() => Haptics.impactAsync(Medium), 900));
+    timers.push(setTimeout(() => Haptics.impactAsync(Medium), 1100));
+    timers.push(setTimeout(() => Haptics.impactAsync(Heavy), 1300));
+
+    // Phase 3 — Rapid fire and explosion
+    timers.push(setTimeout(() => Haptics.impactAsync(Heavy), 1400));
+    timers.push(setTimeout(() => Haptics.impactAsync(Heavy), 1500));
+    timers.push(setTimeout(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      flashProgress.value = withSequence(
+        withTiming(1, { duration: 80 }),
+        withTiming(0, { duration: 220 }),
+      );
+      explosionScale.value = withSequence(
+        withTiming(1.025, { duration: 80 }),
+        withSpring(1.0, { damping: 12, stiffness: 300 }),
+      );
+    }, 1600));
+
+    // Navigate to results (data already persisted to storage)
+    timers.push(setTimeout(() => router.replace('/results'), 1800));
+
+    return () => timers.forEach(clearTimeout);
+  }, [apiDone, unlockedCount, flashProgress, explosionScale, router]);
+
+  // ── Animated flash style for root container ────────────────────────────
+  const flashStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      flashProgress.value,
+      [0, 1],
+      ['#F8FAFE', '#FFFFFF'],
+    ),
+  }));
 
   const cyclingText = unlockedCount > 0 ? CYCLING_TEXTS[unlockedCount - 1] : '';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <AnimatedSafeAreaView style={[styles.container, flashStyle]}>
       {/* ── Top section ─────────────────────────────────────────────────── */}
       <View style={styles.topSection}>
         <Text style={styles.label}>ANALYSING YOUR FACE</Text>
@@ -210,10 +268,11 @@ export default function AnalyzingScreen() {
             category={cat}
             index={i}
             unlocked={i < unlockedCount}
+            explosionScale={explosionScale}
           />
         ))}
       </View>
-    </SafeAreaView>
+    </AnimatedSafeAreaView>
   );
 }
 
