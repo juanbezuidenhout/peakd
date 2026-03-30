@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle as SvgCircle, Path } from 'react-native-svg';
+import Svg, { Circle as SvgCircle, Path, Rect } from 'react-native-svg';
 import { getUserName, getItem, setItem, KEYS } from '@/lib/storage';
 import type { FaceAnalysisResult } from '@/lib/anthropic';
 
@@ -37,6 +37,39 @@ function SettingsIcon() {
         d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
         stroke="#8B9BB5"
         strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Rect x={2} y={5} width={20} height={15} rx={3} stroke="#1A6FE0" strokeWidth={1.5} />
+      <Rect x={8} y={2} width={8} height={4} rx={1.5} stroke="#1A6FE0" strokeWidth={1.5} />
+      <SvgCircle cx={12} cy={13} r={4} stroke="#1A6FE0" strokeWidth={1.5} />
+    </Svg>
+  );
+}
+
+function CheckCircleIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <SvgCircle cx={12} cy={12} r={10} stroke="#A855F7" strokeWidth={1.5} />
+      <Path d="M8 12.5l2.5 2.5L16 9.5" stroke="#A855F7" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function ChatBubbleIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2z"
+        stroke="#EC4899"
+        strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -145,9 +178,7 @@ export default function HomeScreen() {
           <Pressable
             style={styles.settingsBtn}
             hitSlop={12}
-            onPress={() => {
-              // TODO: navigate to settings
-            }}
+            onPress={() => router.push('/settings')}
           >
             <SettingsIcon />
           </Pressable>
@@ -205,6 +236,54 @@ export default function HomeScreen() {
                   <ProgressArc progress={planProgress} day={planDay} />
                 </View>
               </View>
+            </Pressable>
+          </Animated.View>
+        </View>
+
+        {/* ── Your Tools Label ────────────────────────────── */}
+        <Text style={styles.sectionLabel}>YOUR TOOLS</Text>
+
+        {/* ── Tool Cards ──────────────────────────────────── */}
+        <View style={styles.toolCards}>
+          {/* Card A — New Scan */}
+          <Animated.View entering={FadeInDown.delay(550).duration(400)}>
+            <Pressable style={styles.toolCard} onPress={() => router.push('/(tabs)/scan')}>
+              <View style={[styles.toolIconCircle, { backgroundColor: 'rgba(26,111,224,0.08)' }]}>
+                <CameraIcon />
+              </View>
+              <View style={styles.toolTextWrap}>
+                <Text style={styles.toolTitle}>New Scan</Text>
+                <Text style={styles.toolSubtitle}>Retake your facial analysis</Text>
+              </View>
+              <Text style={styles.toolChevron}>›</Text>
+            </Pressable>
+          </Animated.View>
+
+          {/* Card B — Daily Tasks */}
+          <Animated.View entering={FadeInDown.delay(650).duration(400)}>
+            <Pressable style={styles.toolCard} onPress={() => router.push('/(tabs)/daily')}>
+              <View style={[styles.toolIconCircle, { backgroundColor: 'rgba(168,85,247,0.08)' }]}>
+                <CheckCircleIcon />
+              </View>
+              <View style={styles.toolTextWrap}>
+                <Text style={styles.toolTitle}>Daily Tasks</Text>
+                <Text style={styles.toolSubtitle}>Today's personalised routine</Text>
+              </View>
+              <Text style={styles.toolChevron}>›</Text>
+            </Pressable>
+          </Animated.View>
+
+          {/* Card C — AI Coach */}
+          <Animated.View entering={FadeInDown.delay(750).duration(400)}>
+            <Pressable style={styles.toolCard} onPress={() => router.push('/(tabs)/coach')}>
+              <View style={[styles.toolIconCircle, { backgroundColor: 'rgba(236,72,153,0.08)' }]}>
+                <ChatBubbleIcon />
+              </View>
+              <View style={styles.toolTextWrap}>
+                <Text style={styles.toolTitle}>AI Coach</Text>
+                <Text style={styles.toolSubtitle}>Ask anything about your results</Text>
+              </View>
+              <Text style={styles.toolChevron}>›</Text>
             </Pressable>
           </Animated.View>
         </View>
@@ -360,5 +439,52 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 14,
     right: 14,
+  },
+
+  /* ── Tool Cards ──────────────────────────────────────── */
+  toolCards: {
+    paddingHorizontal: 20,
+    marginTop: 16,
+    gap: 12,
+  },
+  toolCard: {
+    height: 72,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E2E9F2',
+    shadowColor: '#1A73E8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  toolIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toolTextWrap: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  toolTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A2E',
+  },
+  toolSubtitle: {
+    fontSize: 12,
+    color: '#8B9BB5',
+    marginTop: 2,
+  },
+  toolChevron: {
+    fontSize: 18,
+    color: '#C8D3E0',
   },
 });

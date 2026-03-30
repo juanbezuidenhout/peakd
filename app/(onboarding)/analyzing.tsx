@@ -203,6 +203,16 @@ export default function AnalyzingScreen() {
   const dot2Style = useAnimatedStyle(() => ({ opacity: dot2Opacity.value }));
   const dot3Style = useAnimatedStyle(() => ({ opacity: dot3Opacity.value }));
 
+  // ── Stop scan line & dots when analysis complete ────────────────────────
+  useEffect(() => {
+    if (unlockedCount >= 6 && apiDone) {
+      scanLineY.value = withTiming(screenHeight * 0.42, { duration: 300 });
+      dot1Opacity.value = withTiming(0, { duration: 200 });
+      dot2Opacity.value = withTiming(0, { duration: 200 });
+      dot3Opacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [unlockedCount, apiDone, scanLineY, dot1Opacity, dot2Opacity, dot3Opacity]);
+
   // ── Card unlock sequence (with per-card haptic) ────────────────────────
   useEffect(() => {
     const timers = UNLOCK_DELAYS.map((delay, i) =>
@@ -299,7 +309,7 @@ export default function AnalyzingScreen() {
     backgroundColor: interpolateColor(
       flashProgress.value,
       [0, 1],
-      ['#0D1F3C', '#1A3A6B'],
+      ['#0D1F3C', '#FFFFFF'],
     ),
   }));
 
