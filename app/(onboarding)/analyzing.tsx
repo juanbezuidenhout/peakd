@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -10,15 +10,19 @@ import Animated, {
   withSequence,
   withRepeat,
   withTiming,
+  withDelay,
   interpolateColor,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle } from 'react-native-svg';
 import { analyzeFaceWithRetry, FaceAnalysisResult } from '@/lib/anthropic';
 import { getPendingImageUri, getPendingSideImageUri } from '@/lib/scan-data';
 import { setItem, getItem, KEYS } from '@/lib/storage';
+
+const screenHeight = Dimensions.get('window').height;
 
 const CATEGORIES = ['Eyes', 'Skin', 'Structure', 'Symmetry', 'Jawline', 'Archetype'];
 
@@ -59,7 +63,7 @@ function ShimmerBar() {
     <View style={styles.shimmerContainer}>
       <Animated.View style={[styles.shimmerGradient, animatedStyle]}>
         <LinearGradient
-          colors={['#E8F0FE', '#C5D8FA', '#E8F0FE']}
+          colors={['#E8F0FE', '#B8D0F8', '#E8F0FE']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -145,6 +149,59 @@ export default function AnalyzingScreen() {
   const buildUpStartedRef = useRef(false);
   const flashProgress = useSharedValue(0);
   const explosionScale = useSharedValue(1);
+
+  // ── Header zone animations ────────────────────────────────────────────
+  const scanLineY = useSharedValue(0);
+  const circleRotation = useSharedValue(0);
+  const dot1Opacity = useSharedValue(0.3);
+  const dot2Opacity = useSharedValue(0.3);
+  const dot3Opacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    scanLineY.value = withRepeat(
+      withTiming(screenHeight * 0.42, { duration: 2200 }),
+      -1,
+      false,
+    );
+    circleRotation.value = withRepeat(
+      withTiming(360, { duration: 4000 }),
+      -1,
+      false,
+    );
+    dot1Opacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 300 }), withTiming(0.3, { duration: 300 })),
+      -1,
+      true,
+    );
+    dot2Opacity.value = withDelay(
+      200,
+      withRepeat(
+        withSequence(withTiming(1, { duration: 300 }), withTiming(0.3, { duration: 300 })),
+        -1,
+        true,
+      ),
+    );
+    dot3Opacity.value = withDelay(
+      400,
+      withRepeat(
+        withSequence(withTiming(1, { duration: 300 }), withTiming(0.3, { duration: 300 })),
+        -1,
+        true,
+      ),
+    );
+  }, [scanLineY, circleRotation, dot1Opacity, dot2Opacity, dot3Opacity]);
+
+  const scanLineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanLineY.value }],
+  }));
+
+  const circleRotationStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${circleRotation.value}deg` }],
+  }));
+
+  const dot1Style = useAnimatedStyle(() => ({ opacity: dot1Opacity.value }));
+  const dot2Style = useAnimatedStyle(() => ({ opacity: dot2Opacity.value }));
+  const dot3Style = useAnimatedStyle(() => ({ opacity: dot3Opacity.value }));
 
   // ── Card unlock sequence (with per-card haptic) ────────────────────────
   useEffect(() => {
@@ -235,7 +292,7 @@ export default function AnalyzingScreen() {
     backgroundColor: interpolateColor(
       flashProgress.value,
       [0, 1],
-      ['#F8FAFE', '#FFFFFF'],
+      ['#0D1F3C', '#1A3A6B'],
     ),
   }));
 
@@ -243,16 +300,37 @@ export default function AnalyzingScreen() {
 
   return (
     <AnimatedSafeAreaView style={[styles.container, flashStyle]}>
-      {/* ── Top section ─────────────────────────────────────────────────── */}
-      <View style={styles.topSection}>
-        <Text style={styles.label}>ANALYSING YOUR FACE</Text>
-        <View style={styles.subtitleContainer}>
+      {/* ── Zone 1: Header ─────────────────────────────────────────────── */}
+      <View style={styles.headerZone}>
+        <Animated.View style={[styles.scanLine, scanLineStyle]} />
+
+        <Animated.View style={circleRotationStyle}>
+          <Svg width={90} height={90}>
+            <Circle
+              cx={45}
+              cy={45}
+              r={38}
+              stroke="rgba(74,144,217,0.5)"
+              strokeWidth={1.5}
+              fill="none"
+              strokeDasharray="6 4"
+            />
+          </Svg>
+        </Animated.View>
+
+        <View style={styles.dotsRow}>
+          <Animated.View style={[styles.dot, dot1Style]} />
+          <Animated.View style={[styles.dot, dot2Style]} />
+          <Animated.View style={[styles.dot, dot3Style]} />
+        </View>
+
+        <View style={styles.cyclingTextContainer}>
           {unlockedCount > 0 && (
             <Animated.Text
               key={`subtitle-${unlockedCount}`}
               entering={FadeIn.duration(150)}
               exiting={FadeOut.duration(150)}
-              style={styles.subtitle}
+              style={styles.cyclingText}
             >
               {cyclingText}
             </Animated.Text>
@@ -260,8 +338,8 @@ export default function AnalyzingScreen() {
         </View>
       </View>
 
-      {/* ── Card list ───────────────────────────────────────────────────── */}
-      <View style={styles.cardList}>
+      {/* ── Zone 2: Cards ──────────────────────────────────────────────── */}
+      <View style={styles.cardsZone}>
         {CATEGORIES.map((cat, i) => (
           <AnalysisCard
             key={cat}
@@ -283,39 +361,66 @@ export default function AnalyzingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFE',
+    backgroundColor: '#0D1F3C',
   },
-  topSection: {
+  headerZone: {
+    backgroundColor: '#0D1F3C',
+    height: screenHeight * 0.42,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
     alignItems: 'center',
-    marginTop: 48,
+    justifyContent: 'center',
   },
-  label: {
-    fontSize: 10,
-    letterSpacing: 2,
-    fontWeight: '600',
-    color: '#8B9BB5',
+  scanLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 1,
+    width: '100%',
+    backgroundColor: 'rgba(74, 144, 217, 0.4)',
   },
-  subtitleContainer: {
-    height: 24,
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 28,
+    gap: 8,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4A90D9',
+  },
+  cyclingTextContainer: {
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 20,
   },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1A1A2E',
+  cyclingText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    paddingHorizontal: 32,
+    letterSpacing: -0.3,
     position: 'absolute',
   },
-  cardList: {
+  cardsZone: {
+    backgroundColor: '#F8FAFE',
     flex: 1,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    marginTop: -28,
+    paddingTop: 24,
+    paddingHorizontal: 16,
     justifyContent: 'center',
-    paddingHorizontal: 20,
     gap: 10,
   },
   card: {
-    height: 58,
-    borderRadius: 14,
+    height: 62,
+    borderRadius: 16,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,19 +430,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardLocked: {
-    backgroundColor: 'rgba(26, 115, 232, 0.04)',
+    backgroundColor: 'rgba(26, 43, 74, 0.04)',
+    borderColor: '#E2E9F2',
   },
   cardUnlocked: {
     backgroundColor: '#FFFFFF',
+    borderColor: '#E2E9F2',
   },
   accentBar: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
+    width: 4,
     borderRadius: 3,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#1A6FE0',
   },
   categoryName: {
     fontSize: 14,
