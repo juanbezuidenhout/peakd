@@ -274,7 +274,7 @@ function Screen1({
   onNext: () => void;
 }) {
   const UNLOCK_ITEMS = [
-    'Personalized 60 day transformation blueprint',
+    'Personalized 90 day transformation blueprint',
     'Week by week action items for your face',
     'Product and routine recommendations',
     'Progress tracking with re-scans',
@@ -303,7 +303,7 @@ function Screen1({
             <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy, marginBottom: 6 }}>Your Rating</Text>
             <Text style={{ fontSize: 12, color: C.textSecondary, lineHeight: 18 }}>
               With the right plan, our users typically improve{' '}
-              <Text style={{ color: C.blue, fontWeight: '600' }}>+1.5 points</Text> in 60 days.
+              <Text style={{ color: C.blue, fontWeight: '600' }}>+1.5 points</Text> in 90 days.
             </Text>
           </View>
         </View>
@@ -354,7 +354,7 @@ function Screen1({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// SCREEN 2 — 60 Day Transformation Timeline
+// SCREEN 2 — 90 Day Transformation Timeline
 // ══════════════════════════════════════════════════════════════════════════
 
 const PHASES = [
@@ -377,7 +377,7 @@ function Screen2({
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={{ alignItems: 'center', marginBottom: 20 }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: C.navy, letterSpacing: -0.3 }}>Your 60 Day Transformation</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.navy, letterSpacing: -0.3 }}>Your 90 Day Transformation</Text>
         <Text style={{ fontSize: 14, color: C.textSecondary, marginTop: 6 }}>A step by step plan built from your scan</Text>
       </View>
 
@@ -392,7 +392,7 @@ function Screen2({
           <IconArrowRight />
         </View>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[s.projLabel, { color: C.blue }]}>DAY 60</Text>
+          <Text style={[s.projLabel, { color: C.blue }]}>DAY 90</Text>
           <Text style={[s.projScore, { color: C.blue }]}>{projected}</Text>
         </View>
         <View style={s.gainBadge}>
