@@ -10,7 +10,11 @@ import {
 import Animated, {
   SlideInRight,
   SlideOutLeft,
-  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -432,23 +436,46 @@ function Screen2({
 // SCREEN 3 — Pricing
 // ══════════════════════════════════════════════════════════════════════════
 
-const INCLUDED = [
-  { label: 'Full scan breakdown and improvement areas', Icon: IconSearch },
-  { label: '60 day personalized transformation plan', Icon: IconClipboard },
-  { label: 'Weekly action items tailored to you', Icon: IconCheckCircle },
-  { label: 'Product and routine recommendations', Icon: IconLightbulb },
-  { label: 'Re-scan to track your progress', Icon: IconTrendUp },
-];
-
 function Screen3({
-  selected,
-  onSelect,
   onPurchase,
 }: {
-  selected: 'weekly' | 'lifetime';
-  onSelect: (p: 'weekly' | 'lifetime') => void;
   onPurchase: () => void;
 }) {
+  const [pricingMode, setPricingMode] = useState<'onetime' | 'monthly'>('onetime');
+
+  const TOGGLE_WIDTH = SCREEN_WIDTH - 40;
+  const PILL_WIDTH = (TOGGLE_WIDTH - 6) / 2;
+
+  const pillTranslateX = useSharedValue(0);
+  const cardOpacity = useSharedValue(1);
+
+  const pillAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: pillTranslateX.value }],
+  }));
+
+  const cardContentAnimStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+  }));
+
+  const switchMode = (mode: 'onetime' | 'monthly') => {
+    if (mode === pricingMode) return;
+    pillTranslateX.value = withSpring(mode === 'monthly' ? PILL_WIDTH : 0, {
+      damping: 20,
+      stiffness: 250,
+    });
+    cardOpacity.value = withSequence(
+      withTiming(0, { duration: 150 }),
+      withTiming(1, { duration: 150 }),
+    );
+    setTimeout(() => setPricingMode(mode), 150);
+  };
+
+  const isOneTime = pricingMode === 'onetime';
+
+  const features = isOneTime
+    ? ['Full 12-point facial analysis', 'Week-by-week action plan', 'Personalised to your archetype']
+    : ['Unlimited re-scans', 'New 90-day plan each cycle', 'Progress tracking over time'];
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={{ alignItems: 'center', marginBottom: 20 }}>
@@ -456,78 +483,87 @@ function Screen3({
         <Text style={{ fontSize: 14, color: C.textSecondary, marginTop: 6 }}>Invest in your glow up</Text>
       </View>
 
-      {/* Weekly card */}
-      <Pressable
-        style={[s.planCard, selected === 'weekly' && s.planCardActive]}
-        onPress={() => onSelect('weekly')}
-      >
-        <View style={[s.radioOuter, selected === 'weekly' && { borderWidth: 0 }]}>
-          {selected === 'weekly' && <IconCheck />}
-        </View>
-        <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: C.navy }}>Weekly</Text>
-          <Text style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>Auto renews · Cancel anytime</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: C.navy }}>$4.99</Text>
-          <Text style={{ fontSize: 11, color: C.textMuted }}>/week</Text>
-        </View>
-      </Pressable>
+      {/* Pricing Toggle */}
+      <View style={{
+        height: 44,
+        backgroundColor: 'rgba(26,115,232,0.06)',
+        borderRadius: 22,
+        padding: 3,
+        flexDirection: 'row',
+        marginBottom: 20,
+      }}>
+        <Animated.View style={[{
+          position: 'absolute',
+          top: 3,
+          left: 3,
+          width: PILL_WIDTH,
+          height: 38,
+          backgroundColor: C.white,
+          borderRadius: 20,
+          shadowColor: '#1A73E8',
+          shadowOpacity: 0.12,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
+        }, pillAnimStyle]} />
+        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('onetime')}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: isOneTime ? '#1A1A2E' : '#8B9BB5' }}>One-Time</Text>
+        </Pressable>
+        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('monthly')}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: !isOneTime ? '#1A1A2E' : '#8B9BB5' }}>Monthly</Text>
+        </Pressable>
+      </View>
 
-      {/* Lifetime card */}
-      <Pressable
-        style={[s.planCard, selected === 'lifetime' && s.planCardActive, { marginTop: 12, overflow: 'hidden' }]}
-        onPress={() => onSelect('lifetime')}
-      >
-        <View style={s.bestValueBadge}>
-          <Text style={s.bestValueText}>BEST VALUE</Text>
-        </View>
-        <View style={[s.radioOuter, selected === 'lifetime' && { borderWidth: 0 }]}>
-          {selected === 'lifetime' && <IconCheck />}
-        </View>
-        <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: C.navy }}>60 Day Blueprint</Text>
-          {/* This text only shows when lifetime is selected */}
-          {selected === 'lifetime' && (
-            <Animated.Text entering={FadeIn.duration(250)} style={{ fontSize: 12, color: C.blue, fontWeight: '600', marginTop: 2 }}>
-              Only $0.50/day
-            </Animated.Text>
-          )}
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: C.navy }}>$29.99</Text>
-          <Text style={{ fontSize: 11, color: C.textMuted }}>one time</Text>
-        </View>
-      </Pressable>
-
-      {/* Included list */}
-      <View style={s.includedBox}>
-        <Text style={{ fontSize: 13, fontWeight: '600', color: C.navy, marginBottom: 10 }}>What's included</Text>
-        {INCLUDED.map((item, i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <item.Icon />
-            <Text style={{ fontSize: 13, color: C.textSecondary, flex: 1 }}>{item.label}</Text>
+      {/* Pricing Card */}
+      <View style={[s.planCard, s.planCardActive, { flexDirection: 'column', alignItems: 'stretch' }]}>
+        <Animated.View style={cardContentAnimStyle}>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: C.navy, marginBottom: 4 }}>
+            {isOneTime ? '90-Day Transformation Plan' : 'Peakd Membership'}
+          </Text>
+          <Text style={{ fontSize: 13, color: C.textSecondary, marginBottom: 16 }}>
+            {isOneTime
+              ? 'Your complete personalised roadmap, built from your scan.'
+              : 'Unlimited scans, new plans, and progress tracking.'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 16 }}>
+            <Text style={{ fontSize: 32, fontWeight: '700', color: C.navy }}>
+              {isOneTime ? '$34.99' : '$9.99'}
+            </Text>
+            <Text style={{ fontSize: 13, color: C.textMuted, marginLeft: 6 }}>
+              {isOneTime ? 'one-time payment' : 'per month'}
+            </Text>
           </View>
-        ))}
+          {features.map((feat, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: i < features.length - 1 ? 10 : 0 }}>
+              <View style={{
+                width: 22, height: 22, borderRadius: 11,
+                backgroundColor: C.success, alignItems: 'center', justifyContent: 'center',
+              }}>
+                <IconSmallCheck />
+              </View>
+              <Text style={{ fontSize: 13, color: C.textSecondary, flex: 1 }}>{feat}</Text>
+            </View>
+          ))}
+        </Animated.View>
       </View>
 
       {/* CTA */}
-      <Pressable style={s.ctaBtn} onPress={onPurchase}>
-        <Text style={s.ctaBtnText}>
-          {selected === 'lifetime' ? 'Get My 60 Day Blueprint · $29.99' : 'Start My Transformation · $4.99/wk'}
+      <View style={{ marginTop: 20 }}>
+        <Pressable style={s.ctaBtn} onPress={onPurchase}>
+          {/* TODO: 'peakd_plan_onetime_3499' (one-time) / 'peakd_membership_monthly_999' (monthly) */}
+          <Text style={s.ctaBtnText}>
+            {isOneTime ? 'Start My Plan' : 'Start Free Trial'}
+          </Text>
+        </Pressable>
+        <Text style={{ fontSize: 10, color: '#8B9BB5', textAlign: 'center', marginTop: 10 }}>
+          Cancel anytime. Billed through Apple.
         </Text>
-      </Pressable>
+      </View>
 
       {/* Footer */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
         <IconShield />
         <Text style={{ fontSize: 11, color: C.textMuted }}>Secure payment</Text>
-        {selected === 'weekly' && (
-          <>
-            <Text style={{ fontSize: 11, color: '#D1D5DB' }}>·</Text>
-            <Text style={{ fontSize: 11, color: C.textMuted }}>Cancel anytime</Text>
-          </>
-        )}
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12 }}>
@@ -546,7 +582,6 @@ export default function PaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(1);
-  const [plan, setPlan] = useState<'weekly' | 'lifetime'>('lifetime');
   const [userName, setUserName] = useState('');
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
 
@@ -627,7 +662,7 @@ export default function PaywallScreen() {
         )}
         {step === 3 && (
           <Animated.View key="s3" entering={SlideInRight.duration(300)} exiting={SlideOutLeft.duration(300)} style={{ flex: 1 }}>
-            <Screen3 selected={plan} onSelect={setPlan} onPurchase={purchase} />
+            <Screen3 onPurchase={purchase} />
           </Animated.View>
         )}
       </View>
