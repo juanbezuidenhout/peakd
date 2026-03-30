@@ -48,10 +48,6 @@ export default function RootLayout() {
           options={{ animation: "slide_from_bottom", gestureEnabled: false }}
         />
         <Stack.Screen
-          name="analyzing"
-          options={{ animation: "slide_from_bottom", gestureEnabled: false }}
-        />
-        <Stack.Screen
           name="results"
           options={{ animation: "slide_from_right" }}
         />

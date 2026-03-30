@@ -144,7 +144,7 @@ export default function ScanScreen() {
     setPendingImageUri(imageUri);
     setPendingSideImageUri(sideImageUri);
     router.push({
-      pathname: '/analyzing',
+      pathname: '/(onboarding)/analyzing',
       params: { imageUri },
     });
   }, [imageUri, sideImageUri, router]);
