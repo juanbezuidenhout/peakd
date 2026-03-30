@@ -22,7 +22,7 @@ export default function RootLayout() {
       const onboarded = await isOnboardingComplete();
       setReady(true);
       if (paid) {
-        router.replace("/(tabs)/coach");
+        router.replace("/(tabs)/home");
       } else if (onboarded) {
         router.replace("/(tabs)/scan");
       }

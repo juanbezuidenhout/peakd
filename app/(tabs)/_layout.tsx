@@ -16,8 +16,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 export const unstable_settings = {
-  initialRouteName: "scan",
+  initialRouteName: "home",
 };
+
+function HomeIcon({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function ScanIcon({ size, color }: { size: number; color: string }) {
   return (
@@ -73,6 +87,7 @@ function CoachIcon({ size, color }: { size: number; color: string }) {
 }
 
 const TAB_ICONS: Record<string, React.FC<{ size: number; color: string }>> = {
+  home: HomeIcon,
   scan: ScanIcon,
   extras: ExtrasIcon,
   daily: DailyIcon,
@@ -291,6 +306,7 @@ export default function TabsLayout() {
       tabBar={(props) => hasPaid ? <CustomTabBar {...props} /> : null}
       screenOptions={{ headerShown: false }}
     >
+      <Tabs.Screen name="home" options={{ title: "home" }} />
       <Tabs.Screen name="scan" options={{ title: "scan" }} />
       <Tabs.Screen name="extras" options={{ title: "extras" }} />
       <Tabs.Screen name="daily" options={{ title: "daily" }} />
