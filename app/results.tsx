@@ -18,7 +18,7 @@ import Animated, {
 import Svg, { Circle, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { SafeScreen } from '@/components/layout/SafeScreen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { getItem, KEYS } from '@/lib/storage';
@@ -219,19 +219,19 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <SafeScreen>
+      <SafeAreaView style={{ flex: 1, backgroundColor: BENTO.bg }}>
         <ScreenLoader />
-      </SafeScreen>
+      </SafeAreaView>
     );
   }
 
   if (!result) {
     return (
-      <SafeScreen>
+      <SafeAreaView style={{ flex: 1, backgroundColor: BENTO.bg }}>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No results found</Text>
         </View>
-      </SafeScreen>
+      </SafeAreaView>
     );
   }
 
@@ -240,7 +240,7 @@ export default function ResultsScreen() {
   const top3 = getTop3Features(result.featureScores);
 
   return (
-    <SafeScreen>
+    <SafeAreaView style={{ flex: 1, backgroundColor: BENTO.bg }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -437,7 +437,7 @@ export default function ResultsScreen() {
           />
         </Animated.View>
       </ScrollView>
-    </SafeScreen>
+    </SafeAreaView>
   );
 }
 
