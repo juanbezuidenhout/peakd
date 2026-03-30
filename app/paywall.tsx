@@ -615,7 +615,7 @@ export default function PaywallScreen() {
     //   const purchaserInfo = await Purchases.purchasePackage(selectedPackage);
     //   if (purchaserInfo.customerInfo.entitlements.active["pro"]) {
     //     await setCompletedPurchase();
-    //     router.push('/results-full');
+    //     router.replace('/(tabs)/home');
     //   }
     // } catch (e) {
     //   // Handle error, do NOT set purchase flag
@@ -623,7 +623,7 @@ export default function PaywallScreen() {
     //
     // For now (testing), set it immediately:
     await setCompletedPurchase();
-    router.push('/results-full');
+    router.replace('/(tabs)/home');
   };
 
   const rating = result?.glowScore ?? 0;

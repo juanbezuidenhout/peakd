@@ -241,8 +241,8 @@ export default function ResultsFullScreen() {
           style={styles.bottomActions}
         >
           <PrimaryButton
-            label="Start My 30-Day Protocol →"
-            onPress={() => console.log('Start protocol')}
+            label="Start My 90-Day Plan →"
+            onPress={() => router.replace('/(tabs)/home')}
           />
           <View style={{ marginTop: 12 }}>
             <SecondaryButton
