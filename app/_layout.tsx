@@ -55,6 +55,10 @@ export default function RootLayout() {
           name="paywall"
           options={{ animation: "slide_from_bottom", presentation: "modal" }}
         />
+        <Stack.Screen
+          name="settings"
+          options={{ animation: "slide_from_right", gestureEnabled: true }}
+        />
       </Stack>
     </GestureHandlerRootView>
   );

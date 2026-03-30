@@ -159,6 +159,8 @@ function TabBarButton({
 }
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  if (state.routes.length <= 1) return null;
+
   const insets = useSafeAreaInsets();
   const [hasScanResult, setHasScanResult] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
@@ -307,10 +309,6 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="home" options={{ title: "home" }} />
-      <Tabs.Screen name="scan" options={{ title: "scan" }} />
-      <Tabs.Screen name="extras" options={{ title: "extras" }} />
-      <Tabs.Screen name="daily" options={{ title: "daily" }} />
-      <Tabs.Screen name="coach" options={{ title: "coach" }} />
     </Tabs>
   );
 }
