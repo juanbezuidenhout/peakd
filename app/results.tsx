@@ -361,23 +361,25 @@ export default function ResultsScreen() {
         {/* ── Bento Grid ──────────────────────────────────────────── */}
         <View style={styles.bentoContainer}>
           {/* Card A – First Thing We Noticed (full width) */}
-          {result.uniqueDetail ? (
-            <Animated.View
-              entering={FadeInUp.delay(1300).duration(450).springify()}
-              style={styles.noticedCard}
-            >
-              <LinearGradient
-                colors={[BENTO.accentBarStart, BENTO.accentBarEnd]}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={styles.noticedBar}
-              />
-              <View style={styles.noticedContent}>
-                <Text style={styles.noticedLabel}>FIRST THING WE NOTICED</Text>
-                <Text style={styles.noticedText}>{result.uniqueDetail}</Text>
-              </View>
-            </Animated.View>
-          ) : null}
+          <Animated.View
+            entering={FadeInUp.delay(1300).duration(450).springify()}
+            style={styles.noticedCard}
+          >
+            <LinearGradient
+              colors={[BENTO.accentBarStart, BENTO.accentBarEnd]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.noticedBar}
+            />
+            <View style={styles.noticedContent}>
+              <Text style={styles.noticedLabel}>FIRST THING WE NOTICED</Text>
+              <Text style={styles.noticedText}>
+                {result.first_observation ??
+                  result.uniqueDetail ??
+                  'Your face has a natural quality that makes it distinctive — your analysis reveals what that is.'}
+              </Text>
+            </View>
+          </Animated.View>
 
           {/* Side-by-side row */}
           <View style={styles.bentoRow}>
@@ -410,6 +412,12 @@ export default function ResultsScreen() {
             >
               {top3.map((feature, index) => {
                 const colors = getFeatureColor(feature.score);
+                const insightMap: Record<string, string | undefined> = {
+                  eyes: result.eyes_insight,
+                  skinQuality: result.skin_insight,
+                  facialStructure: result.structure_insight,
+                };
+                const insight = insightMap[feature.key];
                 return (
                   <View key={feature.key} style={styles.miniScoreCard}>
                     <View style={styles.miniScoreHeader}>
@@ -427,23 +435,30 @@ export default function ResultsScreen() {
                         ]}
                       />
                     </View>
+                    {insight ? (
+                      <Text style={styles.miniScoreInsight}>{insight}</Text>
+                    ) : null}
                   </View>
                 );
               })}
             </Animated.View>
           </View>
 
-          {/* Card C – What You're Doing Right (full width) */}
+          {/* Card C – Your Strongest Feature (full width) */}
           {result.topStrength && (
             <Animated.View
               entering={FadeInUp.delay(1700).duration(450).springify()}
               style={[styles.insightCard, { borderLeftColor: BENTO.green }]}
             >
               <Text style={[styles.insightLabel, { color: BENTO.green }]}>
-                WHAT YOU'RE DOING RIGHT
+                YOUR STRONGEST FEATURE
               </Text>
-              <Text style={styles.insightFeature}>{result.topStrength.feature}</Text>
-              <Text style={styles.insightText}>{result.topStrength.insight}</Text>
+              <Text style={styles.insightFeature}>
+                {result.strongest_feature ?? result.topStrength.feature}
+              </Text>
+              <Text style={styles.insightText}>
+                {result.strongest_feature_insight ?? result.topStrength.insight}
+              </Text>
             </Animated.View>
           )}
 
@@ -722,6 +737,12 @@ const styles = StyleSheet.create({
   miniBarFill: {
     height: 3,
     borderRadius: 2,
+  },
+  miniScoreInsight: {
+    fontSize: 11.5,
+    color: '#8B9BB5',
+    lineHeight: 16,
+    marginTop: 5,
   },
 
   /* ── Insight Cards (Strength / Improvement) ───────────────────── */

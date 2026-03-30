@@ -54,6 +54,12 @@ export interface FaceAnalysisResult {
   recommendations: Recommendation[];
   personalNote: string;
   uniqueDetail: string;
+  first_observation?: string;
+  eyes_insight?: string;
+  skin_insight?: string;
+  structure_insight?: string;
+  strongest_feature?: string;
+  strongest_feature_insight?: string;
 }
  
 export interface AnalysisResponse {
