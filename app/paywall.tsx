@@ -472,15 +472,35 @@ function Screen3({
 
   const isOneTime = pricingMode === 'onetime';
 
-  const features = isOneTime
-    ? ['Full 12-point facial analysis', 'Week-by-week action plan', 'Personalised to your archetype']
-    : ['Unlimited re-scans', 'New 90-day plan each cycle', 'Progress tracking over time'];
+  const SHARED_FEATURES = [
+    'Full 12-point facial analysis',
+    'Week-by-week 90-day action plan',
+    'Personalised to your archetype',
+  ];
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={{ alignItems: 'center', marginBottom: 20 }}>
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.navy, letterSpacing: -0.3 }}>Choose Your Plan</Text>
         <Text style={{ fontSize: 14, color: C.textSecondary, marginTop: 6 }}>Invest in your glow up</Text>
+      </View>
+
+      {/* Shared Feature List */}
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ fontSize: 10, fontWeight: '600', color: '#8B9BB5', letterSpacing: 2, marginBottom: 12 }}>
+          EVERYTHING INCLUDED
+        </Text>
+        {SHARED_FEATURES.map((feat, i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: i < SHARED_FEATURES.length - 1 ? 10 : 0 }}>
+            <View style={{
+              width: 22, height: 22, borderRadius: 11,
+              backgroundColor: C.success, alignItems: 'center', justifyContent: 'center',
+            }}>
+              <IconSmallCheck />
+            </View>
+            <Text style={{ fontSize: 13, color: C.textSecondary, flex: 1 }}>{feat}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Pricing Toggle */}
@@ -506,8 +526,11 @@ function Screen3({
           shadowOffset: { width: 0, height: 2 },
           elevation: 2,
         }, pillAnimStyle]} />
-        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('onetime')}>
+        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }} onPress={() => switchMode('onetime')}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: isOneTime ? '#1A1A2E' : '#8B9BB5' }}>One-Time</Text>
+          <View style={{ backgroundColor: '#1A6FE0', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 8, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.5 }}>BEST VALUE</Text>
+          </View>
         </Pressable>
         <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('monthly')}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: !isOneTime ? '#1A1A2E' : '#8B9BB5' }}>Monthly</Text>
@@ -525,25 +548,17 @@ function Screen3({
               ? 'Your complete personalised roadmap, built from your scan.'
               : 'Unlimited scans, new plans, and progress tracking.'}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
             <Text style={{ fontSize: 32, fontWeight: '700', color: C.navy }}>
-              {isOneTime ? '$34.99' : '$9.99'}
+              {isOneTime ? '$24.99' : '$9.99'}
             </Text>
             <Text style={{ fontSize: 13, color: C.textMuted, marginLeft: 6 }}>
               {isOneTime ? 'one-time payment' : 'per month'}
             </Text>
           </View>
-          {features.map((feat, i) => (
-            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: i < features.length - 1 ? 10 : 0 }}>
-              <View style={{
-                width: 22, height: 22, borderRadius: 11,
-                backgroundColor: C.success, alignItems: 'center', justifyContent: 'center',
-              }}>
-                <IconSmallCheck />
-              </View>
-              <Text style={{ fontSize: 13, color: C.textSecondary, flex: 1 }}>{feat}</Text>
-            </View>
-          ))}
+          {!isOneTime && (
+            <Text style={{ fontSize: 11, color: '#8B9BB5', marginTop: 4 }}>$29.97 over 3 months</Text>
+          )}
         </Animated.View>
       </View>
 
