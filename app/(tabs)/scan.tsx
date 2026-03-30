@@ -17,6 +17,7 @@ import {
   setPendingBase64,
   setPendingImageUri,
   setPendingSideImageUri,
+  setPendingSideBase64,
 } from '@/lib/scan-data';
 
 function Toast({ message, visible }: { message: string; visible: boolean }) {
@@ -90,6 +91,7 @@ export default function ScanScreen() {
             if (captureStep === 'front') setCaptureStep('side');
           } else {
             setSideImageUri(asset.uri);
+            if (asset.base64) setPendingSideBase64(asset.base64);
             setCaptureStep('ready');
           }
         }
@@ -123,6 +125,7 @@ export default function ScanScreen() {
             if (captureStep === 'front') setCaptureStep('side');
           } else {
             setSideImageUri(asset.uri);
+            if (asset.base64) setPendingSideBase64(asset.base64);
             setCaptureStep('ready');
           }
         }

@@ -32,3 +32,11 @@ export function getPendingSideImageUri(): string | null {
 export function clearPendingSideImageUri() {
   _pendingSideImageUri = null;
 }
+
+let _pendingSideBase64: string | null = null;
+export function setPendingSideBase64(base64: string) {
+  _pendingSideBase64 = base64;
+}
+export function getPendingSideBase64(): string | null {
+  return _pendingSideBase64;
+}

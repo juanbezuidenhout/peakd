@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -19,7 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { analyzeFaceWithRetry, FaceAnalysisResult } from '@/lib/anthropic';
-import { getPendingImageUri, getPendingSideImageUri } from '@/lib/scan-data';
+import { consumePendingBase64, getPendingImageUri, getPendingSideImageUri, getPendingSideBase64 } from '@/lib/scan-data';
 import { setItem, getItem, KEYS } from '@/lib/storage';
 
 const screenHeight = Dimensions.get('window').height;
@@ -217,6 +217,8 @@ export default function AnalyzingScreen() {
   // ── Fire API call on mount ─────────────────────────────────────────────
   useEffect(() => {
     (async () => {
+      const preloadedBase64 = consumePendingBase64();
+      const preloadedSideBase64 = getPendingSideBase64();
       try {
         let uri = getPendingImageUri();
         if (!uri) {
@@ -229,7 +231,7 @@ export default function AnalyzingScreen() {
         }
 
         const sideUri = getPendingSideImageUri();
-        const response = await analyzeFaceWithRetry(uri, undefined, 2, sideUri);
+        const response = await analyzeFaceWithRetry(uri, undefined, 2, sideUri, preloadedBase64, preloadedSideBase64);
 
         await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
         if (response.scanId) await setItem('scan_id', response.scanId);
@@ -242,6 +244,11 @@ export default function AnalyzingScreen() {
         setApiDone(true);
       } catch (e) {
         console.error('[Analyzing] Error:', e instanceof Error ? e.message : e);
+        Alert.alert(
+          'Analysis Failed',
+          'We could not analyse your photo. Please go back and try again.',
+          [{ text: 'Go Back', onPress: () => router.back() }]
+        );
       }
     })();
   }, []);

@@ -129,16 +129,20 @@ export async function analyzeFace(
   imageUri: string,
   onProgress?: (stage: ProgressStage) => void,
   sideImageUri?: string | null,
+  preloadedBase64?: string | null,
+  preloadedSideBase64?: string | null,
 ): Promise<AnalysisResponse> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error('Supabase environment variables not configured.');
   }
  
   onProgress?.('preparing');
-  const base64 = await imageToBase64(imageUri);
+  const base64 = preloadedBase64 ?? await imageToBase64(imageUri);
 
   let sideBase64: string | undefined;
-  if (sideImageUri) {
+  if (preloadedSideBase64) {
+    sideBase64 = preloadedSideBase64;
+  } else if (sideImageUri) {
     sideBase64 = await imageToBase64(sideImageUri);
   }
 
@@ -191,12 +195,14 @@ export async function analyzeFaceWithRetry(
   onProgress?: (stage: ProgressStage) => void,
   maxRetries = 2,
   sideImageUri?: string | null,
+  preloadedBase64?: string | null,
+  preloadedSideBase64?: string | null,
 ): Promise<AnalysisResponse> {
   let lastError: Error | null = null;
  
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await analyzeFace(imageUri, onProgress, sideImageUri);
+      return await analyzeFace(imageUri, onProgress, sideImageUri, preloadedBase64, preloadedSideBase64);
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (attempt < maxRetries) {
