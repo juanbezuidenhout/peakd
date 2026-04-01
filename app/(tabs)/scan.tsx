@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { hasCompletedPurchase, setItem, KEYS, setCompletedPurchase } from '@/lib/storage';
+import { hasCompletedPurchase, setItem, removeItem, KEYS, setCompletedPurchase } from '@/lib/storage';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   FadeIn,
@@ -153,6 +153,8 @@ export default function ScanScreen() {
   }, [imageUri, sideImageUri, router]);
 
   const devSkipToResults = useCallback(async () => {
+    // Always clear purchase state so the Results screen correctly shows the paywall CTA
+    await removeItem(KEYS.HAS_COMPLETED_PURCHASE);
     const mockResult = {
       glowScore: 6.8,
       featureScores: {
