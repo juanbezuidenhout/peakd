@@ -34,6 +34,11 @@ import {
   incrementDailyStreak,
   getIsPro,
 } from '@/lib/storage';
+import {
+  getDailyTasks,
+  getPhaseName,
+  type DailyTask,
+} from '@/lib/daily-tasks';
 
 // ─── Category colors ───
 
@@ -43,39 +48,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   hair: '#14B8A6',
   lifestyle: '#22C55E',
 };
-
-// ─── Task data ───
-
-interface DailyTask {
-  id: string;
-  category: 'skincare' | 'makeup' | 'hair' | 'lifestyle';
-  title: string;
-  description: string;
-}
-
-const DAILY_TASKS: DailyTask[] = [
-  {
-    id: 'task_1',
-    category: 'skincare',
-    title: 'Morning Skincare Routine',
-    description:
-      'Cleanse, tone, and moisturize. Apply vitamin C serum before sunscreen for max protection.',
-  },
-  {
-    id: 'task_2',
-    category: 'makeup',
-    title: 'Brow Shape & Define',
-    description:
-      'Brush brows upward, fill sparse areas with light strokes. Set with clear gel for all-day hold.',
-  },
-  {
-    id: 'task_3',
-    category: 'lifestyle',
-    title: 'Hydration & Sleep Prep',
-    description:
-      'Drink 8 glasses of water today. Set a wind-down alarm 30 min before bed for better skin recovery.',
-  },
-];
 
 // ─── Confetti Particle ───
 
@@ -316,6 +288,8 @@ function TaskCard({
 
 export default function DailyScreen() {
   const router = useRouter();
+  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
+  const [planContext, setPlanContext] = useState({ day: 1, phaseName: 'Phase 1: Foundation' });
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [streak, setStreak] = useState(0);
   const [isPro, setIsPro] = useState(true);
@@ -325,7 +299,6 @@ export default function DailyScreen() {
 
   const completedCount = completedIds.length;
 
-  // ── Load persisted state ──
   const loadState = useCallback(async () => {
     const today = new Date().toISOString().slice(0, 10);
     if (today !== dateRef.current) {
@@ -334,16 +307,20 @@ export default function DailyScreen() {
       setAllDoneToday(false);
     }
 
-    const [saved, savedStreak, pro] = await Promise.all([
+    const [saved, savedStreak, pro, { tasks, planDay, phase }] = await Promise.all([
       getDailyCompleted(),
       getDailyStreak(),
       getIsPro(),
+      getDailyTasks(),
     ]);
+
+    setDailyTasks(tasks);
+    setPlanContext({ day: planDay, phaseName: getPhaseName(phase) });
 
     const today2 = new Date().toISOString().slice(0, 10);
     if (dateRef.current === today2) {
       setCompletedIds(saved);
-      if (saved.length === DAILY_TASKS.length) setAllDoneToday(true);
+      if (saved.length === tasks.length && tasks.length > 0) setAllDoneToday(true);
     }
     setStreak(savedStreak);
     setIsPro(pro);
@@ -353,7 +330,6 @@ export default function DailyScreen() {
     loadState();
   }, [loadState]);
 
-  // ── Midnight reset on app focus ──
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') loadState();
@@ -361,7 +337,6 @@ export default function DailyScreen() {
     return () => sub.remove();
   }, [loadState]);
 
-  // ── Toggle task ──
   const toggleTask = useCallback(
     async (taskId: string) => {
       const wasComplete = completedIds.includes(taskId);
@@ -376,7 +351,7 @@ export default function DailyScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
 
-      if (next.length === DAILY_TASKS.length && !allDoneToday) {
+      if (next.length === dailyTasks.length && !allDoneToday) {
         setAllDoneToday(true);
         setShowConfetti(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -385,7 +360,7 @@ export default function DailyScreen() {
         setTimeout(() => setShowConfetti(false), 2000);
       }
     },
-    [completedIds, allDoneToday],
+    [completedIds, allDoneToday, dailyTasks.length],
   );
 
   const handleShare = async () => {
@@ -431,19 +406,20 @@ export default function DailyScreen() {
           </Text>
           <View style={styles.donePill}>
             <Text style={styles.donePillText}>
-              {completedCount}/{DAILY_TASKS.length} done
+              {completedCount}/{dailyTasks.length} done
             </Text>
           </View>
         </Animated.View>
 
-        {/* Section title */}
-        <Animated.View entering={FadeInUp.delay(150).duration(500)}>
+        {/* Section title + phase */}
+        <Animated.View entering={FadeInUp.delay(150).duration(500)} style={styles.sectionTitleRow}>
           <Text style={styles.sectionTitle}>Your 3 Daily Tasks</Text>
+          <Text style={styles.phaseLabel}>{planContext.phaseName}</Text>
         </Animated.View>
 
         {/* Task cards */}
         <View style={styles.taskList}>
-          {DAILY_TASKS.map((task, index) => (
+          {dailyTasks.map((task, index) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -652,14 +628,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textSecondary,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 14,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginTop: 24,
-    marginBottom: 14,
+  },
+  phaseLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary,
   },
   taskList: {
     gap: 14,
