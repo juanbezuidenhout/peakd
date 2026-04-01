@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -59,6 +59,8 @@ export default function CinematicScreen() {
   const photosOpacity = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(12);
+  const buttonOpacity = useSharedValue(0);
+  const [buttonReady, setButtonReady] = useState(false);
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, {
@@ -72,15 +74,25 @@ export default function CinematicScreen() {
     );
 
     const traitsEnd = ANIM_BASE + 800 + POSITIVE_TRAITS.length * 100 + 200;
+    const cardDuration = 500;
+    const buttonDelay = traitsEnd + cardDuration + 200;
 
     cardOpacity.value = withDelay(
       traitsEnd,
-      withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) }),
+      withTiming(1, { duration: cardDuration, easing: Easing.out(Easing.ease) }),
     );
     cardTranslateY.value = withDelay(
       traitsEnd,
-      withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }),
+      withTiming(0, { duration: cardDuration, easing: Easing.out(Easing.cubic) }),
     );
+
+    buttonOpacity.value = withDelay(
+      buttonDelay,
+      withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
+    );
+
+    const timer = setTimeout(() => setButtonReady(true), buttonDelay);
+    return () => clearTimeout(timer);
   }, []);
 
   const headerStyle = useAnimatedStyle(() => ({
@@ -94,6 +106,10 @@ export default function CinematicScreen() {
   const cardStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
     transform: [{ translateY: cardTranslateY.value }],
+  }));
+
+  const buttonAnimStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
   }));
 
   const traitBaseDelay = ANIM_BASE + 800;
@@ -171,15 +187,20 @@ export default function CinematicScreen() {
           </Animated.View>
         </ScrollView>
 
-        <Pressable
-          style={styles.ctaButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push('/(onboarding)/pain-glow-effect');
-          }}
+        <Animated.View
+          style={buttonAnimStyle}
+          pointerEvents={buttonReady ? 'auto' : 'none'}
         >
-          <Text style={styles.ctaLabel}>Next</Text>
-        </Pressable>
+          <Pressable
+            style={styles.ctaButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/(onboarding)/pain-glow-effect');
+            }}
+          >
+            <Text style={styles.ctaLabel}>Next</Text>
+          </Pressable>
+        </Animated.View>
       </View>
     </SafeScreen>
   );

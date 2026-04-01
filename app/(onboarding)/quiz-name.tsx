@@ -25,10 +25,10 @@ export default function QuizNameScreen() {
         </View>
 
         <View style={styles.progressWrap}>
-          <ProgressBar current={1} total={8} />
+          <ProgressBar current={1} total={6} />
         </View>
 
-        <Text style={styles.stepLabel}>STEP 1 OF 8</Text>
+        <Text style={styles.stepLabel}>STEP 1 OF 6</Text>
         <Text style={styles.headline}>{"What's your\nname?"}</Text>
         <Text style={styles.subtext}>
           This will be used to personalise your experience.

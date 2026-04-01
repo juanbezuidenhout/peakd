@@ -35,4 +35,13 @@ export const Colors = {
   // ── Misc ──────────────────────────────────────────────────────────────────
   white: '#FFFFFF',
   lock: '#B0B8C9',
+  // ── Premium Light Mode (iOS 26 Liquid Glass) ─────────────────────────────
+  glassBackground: 'rgba(255,255,255,0.72)',
+  glassBorder: 'rgba(255,255,255,0.9)',
+  glassShadowTight: 'rgba(0,0,0,0.06)',
+  glassShadowDiffuse: 'rgba(0,0,0,0.05)',
+  pageBackground: '#f2f3f7',
+  textDeep: '#0a0a0a',
+  textMutedLight: 'rgba(0,0,0,0.45)',
+  pillBackground: 'rgba(255,255,255,0.75)',
 } as const;

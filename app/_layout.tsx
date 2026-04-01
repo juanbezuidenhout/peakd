@@ -57,7 +57,7 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="settings"
-          options={{ animation: "slide_from_right", gestureEnabled: true }}
+          options={{ animation: "slide_from_bottom", presentation: "modal", gestureEnabled: true }}
         />
       </Stack>
     </GestureHandlerRootView>

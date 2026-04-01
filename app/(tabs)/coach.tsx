@@ -1,716 +1,484 @@
-import { useEffect, useRef, useState } from 'react';
 import {
-  View,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
+import {
+  StyleSheet,
   Text,
+  View,
   ScrollView,
   Pressable,
-  StyleSheet,
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Modal,
+  ActivityIndicator,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
-  FadeInUp,
   FadeIn,
+  FadeInDown,
+  FadeInUp,
   useSharedValue,
   useAnimatedStyle,
+  withRepeat,
   withTiming,
-  withSpring,
+  withSequence,
+  withDelay,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeScreen } from '@/components/layout/SafeScreen';
-import { ErrorCard } from '@/components/ui/ErrorCard';
-import { Colors } from '@/constants/colors';
-import { getIsPro, getItem, KEYS } from '@/lib/storage';
-import { chatWithCoach, type ChatMessage } from '@/lib/openai';
+import Svg, { Path, Circle as SvgCircle, Rect } from 'react-native-svg';
+import {
+  getUserName,
+  getUserAge,
+  getUserHeight,
+  getUserWeight,
+  getItem,
+  KEYS,
+} from '@/lib/storage';
+import type { FaceAnalysisResult } from '@/lib/anthropic';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://dowdouiybyxrwtoysbne.supabase.co';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvd2RvdWl5Ynl4cnd0b3lzYm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MjEyOTcsImV4cCI6MjA5MDE5NzI5N30.2Tb0FsUOPGq9JHo0Uze7oI6E78mCeUEkNpuBttkqFMI';
+const COACH_EDGE_URL = `${SUPABASE_URL}/functions/v1/coach-chat`;
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  timestamp: Date;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  initial: string;
-  gradientColors: readonly [string, string];
-  prompt: string;
+interface UserContext {
+  name: string | null;
+  age: string | null;
+  height: string | null;
+  weight: string | null;
+  scanResult: FaceAnalysisResult | null;
 }
 
-const CATEGORIES: Category[] = [
-  {
-    id: 'overall',
-    name: 'Improve my overall look',
-    initial: 'OL',
-    gradientColors: ['#7C3AED', '#EC4899'],
-    prompt: 'I want to improve my overall look. What should I focus on first?',
-  },
-  {
-    id: 'skin',
-    name: 'Perfect my skin routine',
-    initial: 'SR',
-    gradientColors: ['#22C55E', '#14B8A6'],
-    prompt: 'Help me build the perfect skincare routine for my skin type.',
-  },
-  {
-    id: 'makeup',
-    name: 'Find my makeup style',
-    initial: 'MS',
-    gradientColors: ['#EC4899', '#F43F5E'],
-    prompt: 'Help me find the best makeup style for my face shape and features.',
-  },
-  {
-    id: 'hair',
-    name: 'Style my hair',
-    initial: 'SH',
-    gradientColors: ['#3B82F6', '#6366F1'],
-    prompt: 'What hairstyles would look best on me based on my face shape?',
-  },
-  {
-    id: 'femininity',
-    name: 'Boost my femininity',
-    initial: 'BF',
-    gradientColors: ['#8B5CF6', '#A855F7'],
-    prompt: 'How can I enhance my feminine features and overall energy?',
-  },
-];
+function BackIcon( ) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M15 18l-6-6 6-6" stroke="rgba(255,255,255,0.85)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
-const LOCKED_IDS_FREE = new Set(['makeup', 'hair', 'femininity']);
+function PlusIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 5v14M5 12h14" stroke="rgba(255,255,255,0.55)" strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
 
-const WELCOME_MESSAGE: Message = {
-  id: 'welcome',
-  role: 'assistant',
-  content:
-    "Hi! I'm your Peakd coach. I've analyzed your face and built your personal plan. What would you like to work on today?",
-};
+function SendIcon({ active }: { active: boolean }) {
+  const c = active ? '#fff' : 'rgba(255,255,255,0.35)';
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M22 2L11 13" stroke={c} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M22 2L15 22 11 13 2 9l20-7z" stroke={c} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
-const FALLBACK_RESPONSES: Record<string, string> = {
-  overall:
-    "Based on your features, I'd start with a consistent skincare routine and defining your brows. Those two changes create the biggest visual impact. Want me to break down a step by step plan?",
-  skin: "For your skin, I'd recommend double cleansing at night, a vitamin C serum in the morning, and SPF 50 daily. Consistency matters more than expensive products. Shall I personalize this further?",
-  makeup:
-    "Your face shape and features would look stunning with a soft, natural makeup look. Think cream blush, fluffy brows, and a lip tint that matches your natural lip color. Want specific product tips?",
-  hair: "Based on your face shape, face framing layers would beautifully highlight your features. A middle part with soft waves is very flattering too. Want me to suggest specific styles?",
-  femininity:
-    "Enhancing femininity starts with soft, rounded shapes. Think curved brows, rosy cheeks, and glossy lips. Pair that with good posture and graceful movement. Want a detailed daily plan?",
-  default:
-    "I'd love to help with that! Based on your features, I recommend starting with the basics: skincare, brow shaping, and finding your signature style. What area excites you most?",
-};
+function CoachBadgeIcon({ size = 18 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M2 17l10 5 10-5" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M2 12l10 5 10-5" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
-function CategoryCardAnimated({
-  cat,
-  index,
-  locked,
-  onPress,
-}: {
-  cat: Category;
-  index: number;
-  locked: boolean;
-  onPress: () => void;
-}) {
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+function SkinIcon() {
+  return (
+    <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+      <SvgCircle cx={12} cy={12} r={9} stroke="rgba(255,255,255,0.45)" strokeWidth={1.3} />
+      <Path d="M8.5 12c0-1.93 1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5" stroke="rgba(255,255,255,0.7)" strokeWidth={1.3} strokeLinecap="round" />
+      <SvgCircle cx={12} cy={12} r={1.8} fill="rgba(255,255,255,0.55)" />
+    </Svg>
+  );
+}
+
+function FaceFormIcon() {
+  return (
+    <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z" stroke="rgba(255,255,255,0.45)" strokeWidth={1.3} />
+      <Path d="M8.5 14.5s1 2 3.5 2 3.5-2 3.5-2" stroke="rgba(255,255,255,0.7)" strokeWidth={1.3} strokeLinecap="round" />
+      <SvgCircle cx={9} cy={10} r={1.2} fill="rgba(255,255,255,0.55)" />
+      <SvgCircle cx={15} cy={10} r={1.2} fill="rgba(255,255,255,0.55)" />
+    </Svg>
+  );
+}
+
+function EyesIcon() {
+  return (
+    <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+      <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="rgba(255,255,255,0.45)" strokeWidth={1.3} />
+      <SvgCircle cx={12} cy={12} r={3} stroke="rgba(255,255,255,0.7)" strokeWidth={1.3} />
+      <SvgCircle cx={12} cy={12} r={1.3} fill="rgba(255,255,255,0.55)" />
+    </Svg>
+  );
+}
+
+function RoutineIcon() {
+  return (
+    <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+      <Rect x={3} y={4} width={18} height={16} rx={3} stroke="rgba(255,255,255,0.45)" strokeWidth={1.3} />
+      <Path d="M8 2v4M16 2v4M3 10h18" stroke="rgba(255,255,255,0.45)" strokeWidth={1.3} strokeLinecap="round" />
+      <Path d="M8 14h4M8 17h6" stroke="rgba(255,255,255,0.7)" strokeWidth={1.3} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function TypingIndicator() {
+  const dot1 = useSharedValue(0.3);
+  const dot2 = useSharedValue(0.3);
+  const dot3 = useSharedValue(0.3);
+
+  useEffect(() => {
+    const pulse = (sv: typeof dot1, delayMs: number) => {
+      sv.value = withDelay(delayMs, withRepeat(withSequence(withTiming(1, { duration: 380 }), withTiming(0.3, { duration: 380 })), -1, false));
+    };
+    pulse(dot1, 0);
+    pulse(dot2, 150);
+    pulse(dot3, 300);
+  }, []);
+
+  const s1 = useAnimatedStyle(() => ({ opacity: dot1.value }));
+  const s2 = useAnimatedStyle(() => ({ opacity: dot2.value }));
+  const s3 = useAnimatedStyle(() => ({ opacity: dot3.value }));
 
   return (
-    <Animated.View
-      entering={FadeInUp.delay(250 + index * 80).duration(400)}
-    >
-      <AnimatedPressable
-        onPressIn={() => {
-          scale.value = withTiming(0.97, { duration: 100 });
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-        }}
-        onPress={onPress}
-        style={[
-          styles.categoryCard,
-          locked && styles.categoryCardLocked,
-          animStyle,
-        ]}
-      >
-        <LinearGradient
-          colors={cat.gradientColors as unknown as [string, string]}
-          style={styles.categoryIconWrap}
-        >
-          <Text style={styles.categoryInitial}>{cat.initial}</Text>
-        </LinearGradient>
-        <Text
-          style={[
-            styles.categoryName,
-            locked && styles.categoryNameLocked,
-          ]}
-        >
-          {cat.name}
+    <View style={styles.typingBubble}>
+      <Animated.View style={[styles.typingDot, s1]} />
+      <Animated.View style={[styles.typingDot, s2]} />
+      <Animated.View style={[styles.typingDot, s3]} />
+    </View>
+  );
+}
+
+function MessageBubble({ message }: { message: Message }) {
+  const isUser = message.role === 'user';
+  return (
+    <Animated.View entering={FadeInUp.duration(260)} style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowAI]}>
+      {!isUser && (
+        <View style={styles.aiBadge}>
+          <CoachBadgeIcon size={14} />
+        </View>
+      )}
+      <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAI]}>
+        <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAI]}>
+          {message.content}
         </Text>
-        {locked ? (
-          <View style={styles.lockBadge}>
-            <Text style={styles.lockText}>PRO</Text>
-          </View>
-        ) : (
-          <Text style={styles.chevron}>{'>'}</Text>
-        )}
-      </AnimatedPressable>
+      </View>
     </Animated.View>
   );
 }
 
+interface ActionCardProps {
+  icon: React.ReactNode;
+  label: string;
+  onPress: () => void;
+  delay: number;
+}
+
+function ActionCard({ icon, label, onPress, delay }: ActionCardProps) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).duration(320)} style={styles.actionCardWrapper}>
+      <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]} onPress={onPress}>
+        <View style={[styles.bracket, styles.bracketTL]} />
+        <View style={[styles.bracket, styles.bracketTR]} />
+        <View style={[styles.bracket, styles.bracketBL]} />
+        <View style={[styles.bracket, styles.bracketBR]} />
+        <View style={styles.actionCardIcon}>{icon}</View>
+        <Text style={styles.actionCardLabel}>{label}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function buildSystemPrompt(ctx: UserContext): string {
+  const r = ctx.scanResult;
+  const lines: string[] = [
+    `You are the Peakd AI Coach — a world-class, empathetic personal beauty and wellness coach embedded inside the Peakd app.`,
+    ``,
+    `Your role is to help users understand their facial analysis results, improve their appearance, build confidence, and develop sustainable routines. You are warm, direct, science-backed, and never generic. Every response should feel personally tailored to this specific user.`,
+    ``,
+    `## User Profile`,
+  ];
+  if (ctx.name) lines.push(`- Name: ${ctx.name}`);
+  if (ctx.age) lines.push(`- Age: ${ctx.age}`);
+  if (ctx.height) lines.push(`- Height: ${ctx.height}`);
+  if (ctx.weight) lines.push(`- Weight: ${ctx.weight}`);
+  if (r) {
+    lines.push(``, `## Facial Analysis Results`);
+    lines.push(`- Overall Glow Score: ${r.glowScore}/10`);
+    if (r.archetype?.name) lines.push(`- Archetype: ${r.archetype.name}`);
+    if (r.archetype?.description) lines.push(`- Archetype Description: ${r.archetype.description}`);
+    lines.push(``, `## Feature Scores`);
+    if (r.featureScores?.skinQuality) lines.push(`- Skin Quality: ${r.featureScores.skinQuality.score}/10 — ${r.featureScores.skinQuality.summary}`);
+    if (r.featureScores?.facialStructure) lines.push(`- Facial Structure: ${r.featureScores.facialStructure.score}/10 — ${r.featureScores.facialStructure.summary}`);
+    if (r.featureScores?.eyes) lines.push(`- Eyes: ${r.featureScores.eyes.score}/10 — ${r.featureScores.eyes.summary}`);
+    if (r.featureScores?.nose) lines.push(`- Nose: ${r.featureScores.nose.score}/10 — ${r.featureScores.nose.summary}`);
+    if (r.featureScores?.lipsAndMouth) lines.push(`- Lips & Mouth: ${r.featureScores.lipsAndMouth.score}/10 — ${r.featureScores.lipsAndMouth.summary}`);
+    if (r.featureScores?.eyebrows) lines.push(`- Eyebrows: ${r.featureScores.eyebrows.score}/10 — ${r.featureScores.eyebrows.summary}`);
+    if (r.featureScores?.hair) lines.push(`- Hair: ${r.featureScores.hair.score}/10 — ${r.featureScores.hair.summary}`);
+    if (r.featureScores?.overallHarmony) lines.push(`- Overall Harmony: ${r.featureScores.overallHarmony.score}/10 — ${r.featureScores.overallHarmony.summary}`);
+    if (r.topStrength) { lines.push(``, `## Top Strength`, `- Feature: ${r.topStrength.feature}`, `- Insight: ${r.topStrength.insight}`); }
+    if (r.topOpportunity) { lines.push(``, `## Top Opportunity`, `- Feature: ${r.topOpportunity.feature}`, `- Insight: ${r.topOpportunity.insight}`); }
+    if (r.recommendations?.length) {
+      lines.push(``, `## Personalised Recommendations`);
+      r.recommendations.slice(0, 5).forEach((rec, i) => { lines.push(`${i + 1}. ${rec.title} (${rec.category}, ${rec.timeframe}): ${rec.action}`); });
+    }
+    if (r.personalNote) lines.push(``, `## Personal Note`, r.personalNote);
+    if (r.uniqueDetail) lines.push(``, `## Unique Detail`, r.uniqueDetail);
+    if (r.first_observation) lines.push(``, `## First Observation`, r.first_observation);
+    if (r.eyes_insight) lines.push(``, `## Eyes Insight`, r.eyes_insight);
+    if (r.skin_insight) lines.push(``, `## Skin Insight`, r.skin_insight);
+    if (r.structure_insight) lines.push(``, `## Structure Insight`, r.structure_insight);
+    if (r.strongest_feature) lines.push(``, `## Strongest Feature`, `${r.strongest_feature}: ${r.strongest_feature_insight ?? ''}`);
+  } else {
+    lines.push(``, `## Facial Analysis Results`, `No scan results available yet. Encourage the user to complete their first scan.`);
+  }
+  lines.push(
+    ``, `## Coaching Guidelines`,
+    `- Always reference the user's actual scores, archetype, and insights when relevant.`,
+    `- Be specific: name exact products, ingredients, exercises, or techniques.`,
+    `- Prioritise actionable advice over general statements.`,
+    `- Frame improvements positively — focus on unlocking potential, not fixing flaws.`,
+    `- Keep responses concise (2–4 short paragraphs max) unless the user asks for a detailed plan.`,
+    `- Use the user's first name occasionally.`,
+    `- Never fabricate scan data. If a score is not available, say so naturally.`,
+  );
+  return lines.join('\n');
+}
+
 export default function CoachScreen() {
   const router = useRouter();
-  const [isPro, setIsPro] = useState(true);
-  const [chatVisible, setChatVisible] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [chatError, setChatError] = useState(false);
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const lastChatHistory = useRef<Message[]>([]);
+  const inputRef = useRef<TextInput>(null);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasStartedChat, setHasStartedChat] = useState(false);
+  const [userCtx, setUserCtx] = useState<UserContext>({ name: null, age: null, height: null, weight: null, scanResult: null });
 
   useEffect(() => {
     (async () => {
-      const pro = await getIsPro();
-      setIsPro(pro);
+      const [name, age, height, weight, scanResult] = await Promise.all([
+        getUserName(), getUserAge(), getUserHeight(), getUserWeight(),
+        getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT),
+      ]);
+      setUserCtx({ name, age, height, weight, scanResult: scanResult ?? null });
     })();
   }, []);
 
-  const fetchAIResponse = async (
-    chatHistory: Message[],
-    categoryId?: string,
-  ) => {
-    setIsLoading(true);
-    setChatError(false);
-    lastChatHistory.current = chatHistory;
+  const quickPromptsRow1 = [
+    "What's my actual skin type?",
+    "What's my hidden dating advantage?",
+    "Who do I naturally attract?",
+    "What are the best products for my skin?",
+    "What do I overestimate most?",
+  ];
+  const quickPromptsRow2 = [
+    "Why does my face look inconsistent?",
+    "How can I improve my Glow Score?",
+    "Build me a morning routine",
+    "What's my biggest strength?",
+    "How do I improve my jawline?",
+  ];
+
+  const actionCards = [
+    { icon: <SkinIcon />, label: 'Analyse my skin', prompt: 'Give me a deep analysis of my skin quality score and exactly what I should do to improve it.' },
+    { icon: <FaceFormIcon />, label: 'Face structure', prompt: 'Explain my facial structure score and what it means for my overall attractiveness and presence.' },
+    { icon: <EyesIcon />, label: 'Eye area tips', prompt: 'What can I do to improve the appearance of my eye area based on my specific scores and analysis?' },
+    { icon: <RoutineIcon />, label: 'Build my routine', prompt: 'Create a personalised daily routine to help me improve my Glow Score over the next 30 days. Be specific.' },
+  ];
+
+  const sendMessage = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || isTyping) return;
+    Keyboard.dismiss();
+    setInputText('');
+    setHasStartedChat(true);
+    const userMsg: Message = { id: `${Date.now()}-u`, role: 'user', content: trimmed, timestamp: new Date() };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
     try {
-      const scanResult = await getItem<string>(KEYS.SCAN_RESULT);
-      const apiMessages: ChatMessage[] = chatHistory
-        .filter((m) => m.id !== 'welcome')
-        .map((m) => ({ role: m.role, content: m.content }));
-
-      const response = await chatWithCoach(
-        apiMessages,
-        scanResult ? JSON.stringify(scanResult) : null,
-        '',
-      );
-
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now().toString(), role: 'assistant', content: response },
-      ]);
+      const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
+      const systemPrompt = buildSystemPrompt(userCtx);
+      let aiContent: string;
+      try {
+        const res = await fetch(COACH_EDGE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+          body: JSON.stringify({ systemPrompt, messages: history }),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data = await res.json();
+        aiContent = data?.reply ?? data?.content ?? data?.message ?? "I'm having trouble connecting right now.";
+      } catch {
+        const openaiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
+        if (!openaiKey) throw new Error('No AI backend available');
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: systemPrompt }, ...history], max_tokens: 600, temperature: 0.75 } ),
+        });
+        const data = await res.json();
+        aiContent = data?.choices?.[0]?.message?.content ?? "I'm having trouble connecting right now.";
+      }
+      setMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: 'assistant', content: aiContent, timestamp: new Date() }]);
     } catch {
-      const fallbackKey = categoryId ?? 'default';
-      const fallback =
-        FALLBACK_RESPONSES[fallbackKey] ?? FALLBACK_RESPONSES.default;
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now().toString(), role: 'assistant', content: fallback },
-      ]);
+      setMessages((prev) => [...prev, { id: `${Date.now()}-err`, role: 'assistant', content: "I couldn't connect right now. Check your connection and try again.", timestamp: new Date() }]);
     } finally {
-      setIsLoading(false);
+      setIsTyping(false);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
     }
-  };
+  }, [messages, isTyping, userCtx]);
 
-  const openChat = (initialPrompt?: string, categoryId?: string) => {
-    setActiveCategoryId(categoryId ?? null);
-
-    if (initialPrompt) {
-      const userMsg: Message = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: initialPrompt,
-      };
-      const initial = [WELCOME_MESSAGE, userMsg];
-      setMessages(initial);
-      setChatVisible(true);
-      setInput('');
-      fetchAIResponse(initial, categoryId);
-    } else {
-      setMessages([WELCOME_MESSAGE]);
-      setChatVisible(true);
-      setInput('');
-    }
-  };
-
-  const sendMessage = () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-    };
-    const updated = [...messages, userMsg];
-    setMessages(updated);
-    setInput('');
-    fetchAIResponse(updated, activeCategoryId ?? undefined);
-  };
+  function handleSend() { sendMessage(inputText); }
+  const canSend = inputText.trim().length > 0 && !isTyping;
 
   return (
-    <SafeScreen>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
-        {/* Header */}
-        <Animated.View
-          entering={FadeInUp.duration(500)}
-          style={styles.headerRow}
-        >
-          <Text style={styles.headerTitle}>Your Coach</Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/extras')}
-            hitSlop={12}
-          >
-            <View style={styles.gearButton}>
-              <View style={styles.gearDot} />
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        {/* Ask me anything hero card */}
-        <Animated.View entering={FadeInUp.delay(100).duration(500)}>
-          <Pressable onPress={() => openChat()} style={styles.heroCard}>
-            <View style={styles.heroAccent}>
-              <LinearGradient
-                colors={[
-                  Colors.primaryGradientStart,
-                  Colors.primaryGradientEnd,
-                ]}
-                style={StyleSheet.absoluteFill}
-              />
-            </View>
-            <LinearGradient
-              colors={[
-                Colors.primaryGradientStart,
-                Colors.primaryGradientEnd,
-              ]}
-              style={styles.heroIconWrap}
-            >
-              <View style={styles.chatBubbleIcon}>
-                <View style={styles.chatBubbleTail} />
-              </View>
-            </LinearGradient>
-            <Text style={styles.heroText}>Ask me anything</Text>
-            <Text style={styles.chevron}>{'>'}</Text>
-          </Pressable>
-        </Animated.View>
-
-        {/* Section title */}
-        <Animated.View entering={FadeInUp.delay(200).duration(500)}>
-          <Text style={styles.sectionTitle}>Learn how to...</Text>
-        </Animated.View>
-
-        {/* Category cards */}
-        <View style={styles.categoryList}>
-          {CATEGORIES.map((cat, index) => {
-            const locked = !isPro && LOCKED_IDS_FREE.has(cat.id);
-            return (
-              <CategoryCardAnimated
-                key={cat.id}
-                cat={cat}
-                index={index}
-                locked={locked}
-                onPress={() =>
-                  locked
-                    ? router.push('/paywall')
-                    : openChat(cat.prompt, cat.id)
-                }
-              />
-            );
-          })}
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      {/* Chat Modal */}
-      <Modal
-        visible={chatVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setChatVisible(false)}
-      >
-        <View style={chatStyles.container}>
-          {/* Header */}
-          <View style={chatStyles.header}>
-            <View style={chatStyles.handleBar} />
-            <View style={chatStyles.headerInner}>
-              <Text style={chatStyles.headerTitle}>Peakd Coach</Text>
-              <Pressable
-                onPress={() => setChatVisible(false)}
-                hitSlop={12}
-                style={chatStyles.closeBtn}
-              >
-                <Text style={chatStyles.closeIcon}>X</Text>
-              </Pressable>
-            </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+        <View style={styles.navBar}>
+          <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}><BackIcon /></Pressable>
+          <View style={styles.navCenter}>
+            <View style={styles.navIconBg}><CoachBadgeIcon size={16} /></View>
+            <Text style={styles.navTitle}>AI Coach</Text>
           </View>
-
-          {/* Body */}
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={chatStyles.body}
-            keyboardVerticalOffset={10}
-          >
-            <ScrollView
-              ref={scrollRef}
-              style={chatStyles.messageList}
-              contentContainerStyle={chatStyles.messageListContent}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() =>
-                scrollRef.current?.scrollToEnd({ animated: true })
-              }
-            >
-              {messages.map((msg, idx) => (
-                <Animated.View
-                  key={msg.id}
-                  entering={FadeIn.delay(idx === 0 ? 0 : 100).duration(300)}
-                  style={[
-                    chatStyles.bubble,
-                    msg.role === 'assistant'
-                      ? chatStyles.aiBubble
-                      : chatStyles.userBubble,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      chatStyles.bubbleText,
-                      msg.role === 'user' && chatStyles.userText,
-                    ]}
-                  >
-                    {msg.content}
-                  </Text>
-                </Animated.View>
-              ))}
-
-              {isLoading && (
-                <View style={[chatStyles.bubble, chatStyles.aiBubble]}>
-                  <View style={chatStyles.typingRow}>
-                    <View style={chatStyles.typingDot} />
-                    <View style={chatStyles.typingDot} />
-                    <View style={chatStyles.typingDot} />
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Input bar */}
-            <View style={chatStyles.inputBar}>
-              <TextInput
-                value={input}
-                onChangeText={setInput}
-                placeholder="Ask your coach..."
-                placeholderTextColor={Colors.textMuted}
-                style={chatStyles.textInput}
-                onSubmitEditing={sendMessage}
-                returnKeyType="send"
-                multiline
-              />
-              <Pressable
-                onPress={sendMessage}
-                style={[
-                  chatStyles.sendBtn,
-                  (!input.trim() || isLoading) && chatStyles.sendBtnDisabled,
-                ]}
-                disabled={!input.trim() || isLoading}
-              >
-                <View style={chatStyles.sendArrow} />
-              </Pressable>
-            </View>
-          </KeyboardAvoidingView>
+          <View style={styles.navRight} />
         </View>
-      </Modal>
-    </SafeScreen>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.messageList}
+          contentContainerStyle={[styles.messageListContent, !hasStartedChat && styles.messageListFlex]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => { if (hasStartedChat) scrollRef.current?.scrollToEnd({ animated: true }); }}
+        >
+          {!hasStartedChat ? (
+            <Animated.View entering={FadeIn.duration(350)} style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>See if it's right for you</Text>
+              <View style={styles.actionGrid}>
+                {actionCards.map((card, i) => (
+                  <ActionCard key={card.label} icon={card.icon} label={card.label} onPress={() => sendMessage(card.prompt)} delay={i * 55} />
+                ))}
+              </View>
+              <Text style={styles.orPickPrompt}>or pick a prompt</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chipsContent}>
+                {quickPromptsRow1.map((p) => (
+                  <Pressable key={p} style={({ pressed }) => [styles.promptChip, pressed && styles.promptChipPressed]} onPress={() => sendMessage(p)}>
+                    <Text style={styles.promptChipText}>{p}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.chipsRow, { marginTop: 8 }]} contentContainerStyle={styles.chipsContent}>
+                {quickPromptsRow2.map((p) => (
+                  <Pressable key={p} style={({ pressed }) => [styles.promptChip, pressed && styles.promptChipPressed]} onPress={() => sendMessage(p)}>
+                    <Text style={styles.promptChipText}>{p}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          ) : (
+            <>
+              {messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)}
+              {isTyping && (
+                <Animated.View entering={FadeIn.duration(200)} style={[styles.bubbleRow, styles.bubbleRowAI]}>
+                  <View style={styles.aiBadge}><CoachBadgeIcon size={14} /></View>
+                  <TypingIndicator />
+                </Animated.View>
+              )}
+            </>
+          )}
+        </ScrollView>
+        <View style={styles.inputBarWrapper}>
+          <View style={styles.inputBar}>
+            <Pressable style={styles.plusBtn} hitSlop={8}><PlusIcon /></Pressable>
+            <TextInput
+              ref={inputRef}
+              style={styles.textInput}
+              placeholder="Type your message"
+              placeholderTextColor="rgba(255,255,255,0.28)"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={1000}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+            />
+            <Pressable style={[styles.sendBtn, canSend && styles.sendBtnActive]} onPress={handleSend} disabled={!canSend}>
+              {isTyping ? <ActivityIndicator size="small" color="rgba(255,255,255,0.45)" /> : <SendIcon active={canSend} />}
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  gearButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  gearDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.textSecondary,
-  },
-
-  heroCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 28,
-    overflow: 'hidden',
-  },
-  heroAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  heroIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
-  },
-  chatBubbleIcon: {
-    width: 20,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.white,
-  },
-  chatBubbleTail: {
-    position: 'absolute',
-    bottom: -4,
-    left: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 2,
-    backgroundColor: Colors.white,
-    transform: [{ rotate: '45deg' }],
-  },
-  heroText: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-    marginLeft: 14,
-  },
-  chevron: {
-    fontSize: 22,
-    color: Colors.textSecondary,
-    fontWeight: '400',
-  },
-
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 14,
-  },
-
-  categoryList: {
-    gap: 10,
-  },
-  categoryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    height: 72,
-    paddingHorizontal: 12,
-  },
-  categoryCardLocked: {
-    opacity: 0.4,
-  },
-  categoryIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryInitial: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: 0.5,
-  },
-  categoryName: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-    marginLeft: 14,
-  },
-  categoryNameLocked: {
-    color: Colors.textSecondary,
-  },
-  lockBadge: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  lockText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-});
-
-const chatStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  header: {
-    paddingTop: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    paddingBottom: 14,
-  },
-  handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.border,
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  closeBtn: {
-    position: 'absolute',
-    right: 20,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-  },
-  body: {
-    flex: 1,
-  },
-  messageList: {
-    flex: 1,
-  },
-  messageListContent: {
-    padding: 20,
-    gap: 12,
-    paddingBottom: 8,
-  },
-  bubble: {
-    maxWidth: '80%',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  aiBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceElevated,
-  },
-  userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: Colors.primary,
-  },
-  bubbleText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: Colors.textPrimary,
-  },
-  userText: {
-    color: Colors.white,
-  },
-  typingRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.textSecondary,
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    minHeight: 48,
-    maxHeight: 120,
-    paddingHorizontal: 18,
-    paddingTop: 13,
-    paddingBottom: 13,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-  sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 3,
-  },
-  sendBtnDisabled: {
-    opacity: 0.4,
-  },
-  sendArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: Colors.white,
-    marginTop: -2,
-  },
+  safe: { flex: 1, backgroundColor: '#0a0a0a' },
+  flex: { flex: 1 },
+  navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.08)' },
+  backBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  navCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  navIconBg: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
+  navTitle: { fontSize: 17, fontWeight: '600', color: '#ffffff', letterSpacing: -0.3 },
+  navRight: { width: 36 },
+  messageList: { flex: 1 },
+  messageListContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  messageListFlex: { flexGrow: 1 },
+  emptyState: { flex: 1 },
+  emptyTitle: { fontSize: 14, fontWeight: '400', color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 18, letterSpacing: 0.1 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 26 },
+  actionCardWrapper: { width: (SCREEN_WIDTH - 32 - 10) / 2 },
+  actionCard: { backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', paddingVertical: 22, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', minHeight: 118, position: 'relative' },
+  actionCardPressed: { backgroundColor: 'rgba(255,255,255,0.13)' },
+  bracket: { position: 'absolute', width: 13, height: 13, borderColor: 'rgba(255,255,255,0.28)' },
+  bracketTL: { top: 9, left: 9, borderTopWidth: 1.5, borderLeftWidth: 1.5, borderTopLeftRadius: 3 },
+  bracketTR: { top: 9, right: 9, borderTopWidth: 1.5, borderRightWidth: 1.5, borderTopRightRadius: 3 },
+  bracketBL: { bottom: 9, left: 9, borderBottomWidth: 1.5, borderLeftWidth: 1.5, borderBottomLeftRadius: 3 },
+  bracketBR: { bottom: 9, right: 9, borderBottomWidth: 1.5, borderRightWidth: 1.5, borderBottomRightRadius: 3 },
+  actionCardIcon: { marginBottom: 10 },
+  actionCardLabel: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.80)', textAlign: 'center', letterSpacing: -0.1 },
+  orPickPrompt: { fontSize: 13, fontWeight: '400', color: 'rgba(255,255,255,0.28)', textAlign: 'center', marginBottom: 12, letterSpacing: 0.1 },
+  chipsRow: { flexGrow: 0 },
+  chipsContent: { gap: 8, paddingRight: 4 },
+  promptChip: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 100, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.14)', paddingVertical: 9, paddingHorizontal: 15, maxWidth: 200 },
+  promptChipPressed: { backgroundColor: 'rgba(255,255,255,0.15)' },
+  promptChipText: { fontSize: 13, fontWeight: '400', color: 'rgba(255,255,255,0.72)', lineHeight: 17 },
+  bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 12, gap: 8 },
+  bubbleRowUser: { justifyContent: 'flex-end' },
+  bubbleRowAI: { justifyContent: 'flex-start' },
+  aiBadge: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2 },
+  bubble: { maxWidth: SCREEN_WIDTH * 0.72, borderRadius: 18, paddingVertical: 11, paddingHorizontal: 15 },
+  bubbleUser: { backgroundColor: '#2563eb', borderBottomRightRadius: 5 },
+  bubbleAI: { backgroundColor: 'rgba(255,255,255,0.09)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', borderBottomLeftRadius: 5 },
+  bubbleText: { fontSize: 15, lineHeight: 22, fontWeight: '400' },
+  bubbleTextUser: { color: '#ffffff' },
+  bubbleTextAI: { color: 'rgba(255,255,255,0.88)' },
+  typingBubble: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.09)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 18, borderBottomLeftRadius: 5, paddingVertical: 14, paddingHorizontal: 18 },
+  typingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.55)' },
+  inputBarWrapper: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 26 : 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.07)', backgroundColor: '#0a0a0a' },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', paddingLeft: 6, paddingRight: 6, paddingVertical: 6, gap: 4 },
+  plusBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.07)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  textInput: { flex: 1, fontSize: 15, fontWeight: '400', color: '#ffffff', paddingHorizontal: 8, paddingVertical: 8, maxHeight: 120, lineHeight: 20 },
+  sendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  sendBtnActive: { backgroundColor: '#2563eb', shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.55, shadowRadius: 8, elevation: 4 },
 });

@@ -28,10 +28,10 @@ export default function QuizAgeScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={2} total={8} />
+        <ProgressBar current={2} total={6} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 2 OF 8</Text>
+      <Text style={styles.stepLabel}>STEP 2 OF 6</Text>
       <Text style={styles.headline}>{'When were\nyou born?'}</Text>
       <Text style={styles.subtext}>
         We use this to calibrate your personalised glow-up plan.
@@ -54,7 +54,7 @@ export default function QuizAgeScreen() {
           onPress={async () => {
             const age = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
             await setUserAge(age);
-            router.push('/(onboarding)/quiz-height');
+            router.push('/(onboarding)/quiz-glow');
           }}
         />
       </View>

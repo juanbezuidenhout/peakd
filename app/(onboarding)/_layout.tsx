@@ -9,6 +9,7 @@ export default function OnboardingLayout() {
         gestureEnabled: false,
       }}
     >
+      <Stack.Screen name="index" options={{ animation: "none" }} />
       <Stack.Screen name="cinematic" options={{ animation: "fade" }} />
     </Stack>
   );

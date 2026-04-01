@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { hasCompletedPurchase } from '@/lib/storage';
+import { hasCompletedPurchase, setItem, KEYS, setCompletedPurchase } from '@/lib/storage';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   FadeIn,
@@ -152,6 +152,41 @@ export default function ScanScreen() {
     });
   }, [imageUri, sideImageUri, router]);
 
+  const devSkipToResults = useCallback(async () => {
+    const mockResult = {
+      glowScore: 6.8,
+      featureScores: {
+        skinQuality: { score: 7.2, summary: 'Clear complexion with good texture' },
+        facialStructure: { score: 6.5, summary: 'Well-defined jawline' },
+        eyes: { score: 7.8, summary: 'Expressive and well-proportioned' },
+        nose: { score: 6.0, summary: 'Good proportion to face' },
+        lipsAndMouth: { score: 6.5, summary: 'Balanced lip shape' },
+        eyebrows: { score: 7.0, summary: 'Natural arch suits face' },
+        hair: { score: 6.8, summary: 'Healthy with good volume' },
+        overallHarmony: { score: 7.0, summary: 'Features complement each other well' },
+      },
+      archetype: { name: 'The Classic', description: 'Timeless proportions with a strong foundation. Your features have natural balance that lends itself to refined enhancement.' },
+      topStrength: { feature: 'Eyes', insight: 'Your eyes are your standout feature — expressive and well-framed.' },
+      topOpportunity: { feature: 'Skin Quality', insight: 'A consistent skincare routine could elevate your overall score significantly.' },
+      recommendations: [],
+      personalNote: 'You have a solid foundation to build on.',
+      uniqueDetail: 'Your facial symmetry is notably above average.',
+      first_observation: 'Strong brow-to-jaw ratio with natural symmetry.',
+      eyes_insight: 'Well-proportioned and expressive',
+      skin_insight: 'Room for improvement with targeted routine',
+      structure_insight: 'Good definition in the jaw area',
+      strongest_feature: 'Eyes',
+      strongest_feature_insight: 'Naturally expressive with balanced spacing.',
+    };
+    await setItem(KEYS.SCAN_RESULT, mockResult);
+    router.push('/results');
+  }, [router]);
+
+  const devSkipToHome = useCallback(async () => {
+    await setCompletedPurchase();
+    router.replace('/(tabs)/home');
+  }, [router]);
+
   return (
     <SafeScreen>
       <View style={styles.header}>
@@ -285,6 +320,20 @@ export default function ScanScreen() {
       )}
 
       <Toast message={toastMessage} visible={toastVisible} />
+
+      {__DEV__ && captureStep === 'front' && (
+        <View style={devStyles.container}>
+          <Text style={devStyles.label}>DEV ONLY</Text>
+          <View style={devStyles.row}>
+            <Pressable style={devStyles.btn} onPress={devSkipToResults}>
+              <Text style={devStyles.btnText}>Results &rarr; Paywall</Text>
+            </Pressable>
+            <Pressable style={devStyles.btn} onPress={devSkipToHome}>
+              <Text style={devStyles.btnText}>Skip to Home</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </SafeScreen>
   );
 }
@@ -471,5 +520,39 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
+  },
+});
+
+const devStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 4,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#F97316',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  btn: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  btnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#EA580C',
   },
 });

@@ -155,10 +155,10 @@ export default function QuizAestheticScreen() {
       </View>
 
       <View style={styles.progressWrap}>
-        <ProgressBar current={6} total={8} />
+        <ProgressBar current={4} total={6} />
       </View>
 
-      <Text style={styles.stepLabel}>STEP 6 OF 8</Text>
+      <Text style={styles.stepLabel}>STEP 4 OF 6</Text>
       <Text style={styles.headline}>{"Who's your\ndream aesthetic?"}</Text>
       <Text style={styles.subtext}>Your starting point, not a limit.</Text>
 
@@ -197,7 +197,7 @@ export default function QuizAestheticScreen() {
           disabled={!selectedAesthetic}
           onPress={async () => {
             await setUserAesthetic(selectedAesthetic);
-            router.push('/(onboarding)/commitment');
+            router.push('/(onboarding)/testimonials');
           }}
         />
       </View>

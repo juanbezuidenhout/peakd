@@ -21,6 +21,7 @@ import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path } from 'react-native-svg';
 
 interface SettingsItem {
   id: string;
@@ -133,9 +134,23 @@ export default function ExtrasScreen() {
 
   return (
     <SafeScreen>
-      {/* Header */}
+      {/* Header with close button */}
       <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M6 6L18 18M18 6L6 18"
+              stroke={Colors.textSecondary}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
       </Animated.View>
 
       {/* Bottom sheet card */}
@@ -199,6 +214,9 @@ export default function ExtrasScreen() {
 
 const styles = StyleSheet.create({
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 16,
     marginBottom: 20,
   },
@@ -206,6 +224,21 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: Colors.textPrimary,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   sheet: {

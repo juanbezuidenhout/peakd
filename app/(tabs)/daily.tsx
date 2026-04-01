@@ -9,6 +9,7 @@ import {
   Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Svg, { Path, Line } from 'react-native-svg';
 import Animated, {
   FadeInUp,
   FadeInDown,
@@ -141,6 +142,17 @@ function ConfettiParticle({ x, color, delay }: Omit<Particle, 'id'>) {
         style,
       ]}
     />
+  );
+}
+
+// ─── Close Icon ───
+
+function CloseIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Line x1="6" y1="6" x2="18" y2="18" stroke="rgba(0,0,0,0.5)" strokeWidth={2} strokeLinecap="round" />
+      <Line x1="18" y1="6" x2="6" y2="18" stroke="rgba(0,0,0,0.5)" strokeWidth={2} strokeLinecap="round" />
+    </Svg>
   );
 }
 
@@ -396,8 +408,17 @@ export default function DailyScreen() {
           entering={FadeInUp.duration(500)}
           style={styles.headerRow}
         >
-          <Text style={styles.headerTitle}>Today's Plan</Text>
-          <Text style={styles.headerDate}>{formattedDate}</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Today's Plan</Text>
+            <Text style={styles.headerDate}>{formattedDate}</Text>
+          </View>
+          <Pressable
+            style={styles.closeBtn}
+            hitSlop={12}
+            onPress={() => router.back()}
+          >
+            <CloseIcon />
+          </Pressable>
         </Animated.View>
 
         {/* Streak row */}
@@ -580,17 +601,32 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
+    alignItems: 'flex-start',
     marginTop: 16,
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: Colors.textPrimary,
+    marginBottom: 4,
   },
   headerDate: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
   streakRow: {
     flexDirection: 'row',

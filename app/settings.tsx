@@ -12,11 +12,10 @@ import Animated, {
   FadeInUp,
   FadeInDown,
   FadeOutDown,
-  SlideInDown,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
 import { useRouter } from 'expo-router';
@@ -125,24 +124,25 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
-      {/* Header */}
-      <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backChevron}>{'\u2039'}</Text>
+    <View style={{ flex: 1, backgroundColor: Colors.surface }}>
+      {/* Header with drag handle and close button */}
+      <View style={styles.headerRow}>
+        <View style={styles.handle} />
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M6 6L18 18M18 6L6 18"
+              stroke={Colors.textSecondary}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          </Svg>
         </Pressable>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </Animated.View>
-
-      {/* Bottom sheet card */}
-      <Animated.View
-        entering={SlideInDown.delay(150).duration(500).springify().damping(18)}
-        style={styles.sheet}
-      >
-        {/* Drag handle */}
-        <View style={styles.handleRow}>
-          <View style={styles.handle} />
-        </View>
+      </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -184,44 +184,40 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
         </ScrollView>
-      </Animated.View>
-
       {/* Toast overlay */}
       <Toast message={toastMessage} visible={toastVisible} />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  backChevron: {
-    fontSize: 28,
-    color: Colors.textPrimary,
-    paddingRight: 12,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  sheet: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-  },
-  handleRow: {
-    alignItems: 'center',
+    justifyContent: 'center',
     paddingTop: 12,
     paddingBottom: 8,
+    paddingHorizontal: 16,
+    position: 'relative',
+  },
+  closeBtn: {
+    position: 'absolute',
+    right: 16,
+    top: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   handle: {
     width: 36,

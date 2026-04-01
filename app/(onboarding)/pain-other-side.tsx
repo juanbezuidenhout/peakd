@@ -235,7 +235,7 @@ export default function PainOtherSideScreen() {
             style={styles.ctaButton}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/(onboarding)/pain-attention');
+              router.push('/(onboarding)/pain-typewriter');
             }}
           >
             <Text style={styles.ctaLabel}>Next</Text>

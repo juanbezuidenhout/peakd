@@ -101,7 +101,7 @@ export default function HeroScreen() {
         </View>
         <View>
           <ReAnimated.View entering={FadeInUp.delay(600).duration(500)}>
-            <PrimaryButton label="Get Started →" onPress={() => router.push('/(onboarding)/pain-dating')} />
+            <PrimaryButton label="Get Started →" onPress={() => router.push('/(onboarding)/cinematic')} />
           </ReAnimated.View>
           <ReAnimated.View entering={FadeInUp.delay(750).duration(500)}>
             <Text style={styles.socialProof}>50,000+ women already glowing up</Text>

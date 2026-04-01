@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
-import { getItem, KEYS } from '@/lib/storage';
+import { getItem, hasCompletedPurchase, KEYS } from '@/lib/storage';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -138,6 +138,7 @@ export default function ResultsScreen() {
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [displayScore, setDisplayScore] = useState('0.0');
+  const [hasPaid, setHasPaid] = useState(false);
 
   const progress = useSharedValue(0);
   const scoreScale = useSharedValue(1);
@@ -153,8 +154,12 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     (async () => {
-      const scanResult = await getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT);
+      const [scanResult, paid] = await Promise.all([
+        getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT),
+        hasCompletedPurchase(),
+      ]);
       if (scanResult) setResult(scanResult);
+      setHasPaid(paid);
       setLoading(false);
     })();
   }, []);
@@ -478,20 +483,32 @@ export default function ResultsScreen() {
         </View>
 
         {/* ── CTA ─────────────────────────────────────────────────── */}
-        <Animated.View
-          entering={FadeInUp.delay(2100).duration(400).springify()}
-          style={styles.ctaSection}
-        >
-          <Text style={styles.ctaHeading}>See exactly how to improve</Text>
-          <Text style={styles.ctaSubtext}>
-            Your step by step plan is ready. Tailored to your face, your features,
-            your goals.
-          </Text>
-          <PrimaryButton
-            label="Show me my plan"
-            onPress={() => router.push('/paywall')}
-          />
-        </Animated.View>
+        {hasPaid ? (
+          <Animated.View
+            entering={FadeInUp.delay(2100).duration(400).springify()}
+            style={styles.ctaSection}
+          >
+            <PrimaryButton
+              label="Done"
+              onPress={() => router.back()}
+            />
+          </Animated.View>
+        ) : (
+          <Animated.View
+            entering={FadeInUp.delay(2100).duration(400).springify()}
+            style={styles.ctaSection}
+          >
+            <Text style={styles.ctaHeading}>See exactly how to improve</Text>
+            <Text style={styles.ctaSubtext}>
+              Your step by step plan is ready. Tailored to your face, your features,
+              your goals.
+            </Text>
+            <PrimaryButton
+              label="Show me my plan"
+              onPress={() => router.push('/paywall')}
+            />
+          </Animated.View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
