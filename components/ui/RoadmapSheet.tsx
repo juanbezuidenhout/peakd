@@ -244,7 +244,7 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
   const isClinical = useMemo(() => {
     if (!glowLevel) return false;
     const level = glowLevel.toLowerCase();
-    return level.includes('hardmaxxing') || level.includes('experimental');
+    return level.includes('hardmaxxing') || level.includes('hard-maxxing') || level.includes('experimental');
   }, [glowLevel]);
 
   const getLowestScoreFeatures = useCallback((scores: FeatureScores): string[] => {
@@ -263,47 +263,31 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
       ];
     }
 
-    const { recommendations, featureScores } = scanResult;
-    const lowestFeatures = getLowestScoreFeatures(featureScores);
+    const { recommendations } = scanResult;
 
-    // Filter clinical recommendations
+    // Separate out clinical recs entirely
     const nonClinicalRecs = recommendations.filter(
-      (r) => r.category !== 'hard-maxxing' && r.category !== 'experimental'
+      (r) => r.category !== 'hard-maxxing' && r.category !== 'hardmaxxing' && r.category !== 'experimental'
     );
 
-    // Phase 1: Natural + Soft-maxxing
-    const phase1Recs = nonClinicalRecs.filter(
-      (r) => r.category === 'natural' || r.category === 'soft-maxxing'
-    );
-
-    // Phase 2: Remaining soft-maxxing, prioritized by lowest scores
-    const phase2Recs = nonClinicalRecs
-      .filter((r) => r.category === 'soft-maxxing' && !phase1Recs.includes(r))
-      .sort((a, b) => {
-        const aIsLow = lowestFeatures.some((f) => a.feature.toLowerCase().includes(f.toLowerCase()));
-        const bIsLow = lowestFeatures.some((f) => b.feature.toLowerCase().includes(f.toLowerCase()));
-        return aIsLow === bIsLow ? 0 : aIsLow ? -1 : 1;
-      });
-
-    // Phase 3: Everything else (remaining)
-    const usedInPhase1 = new Set(phase1Recs.map((r) => r.title));
-    const usedInPhase2 = new Set(phase2Recs.map((r) => r.title));
-    const phase3Recs = nonClinicalRecs.filter(
-      (r) => !usedInPhase1.has(r.title) && !usedInPhase2.has(r.title)
-    );
+    // Distribute evenly across 3 phases
+    const chunkSize = Math.ceil(nonClinicalRecs.length / 3);
+    const phase1Recs = nonClinicalRecs.slice(0, chunkSize);
+    const phase2Recs = nonClinicalRecs.slice(chunkSize, chunkSize * 2);
+    const phase3Recs = nonClinicalRecs.slice(chunkSize * 2);
 
     return [
       { phase: 1, title: 'Phase 1: Foundation', subtitle: 'Days 1-30', recommendations: phase1Recs },
       { phase: 2, title: 'Phase 2: Targeted Correction', subtitle: 'Days 31-60', recommendations: phase2Recs },
       { phase: 3, title: 'Phase 3: Advanced & Maintenance', subtitle: 'Days 61-90', recommendations: phase3Recs },
     ];
-  }, [scanResult, getLowestScoreFeatures]);
+  }, [scanResult]);
 
   const clinicalPhases = useMemo((): ClinicalPhase[] => {
     if (!isClinical || !scanResult?.recommendations) return [];
 
     const clinicalRecs = scanResult.recommendations.filter(
-      (r) => r.category === 'hard-maxxing' || r.category === 'experimental'
+      (r) => r.category === 'hard-maxxing' || r.category === 'hardmaxxing' || r.category === 'experimental'
     );
 
     if (clinicalRecs.length === 0) return [];
@@ -322,7 +306,7 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
     if (!scanResult?.recommendations) return [];
     return [...new Set(
       scanResult.recommendations
-        .filter((r) => r.category === 'hard-maxxing' || r.category === 'experimental')
+        .filter((r) => r.category === 'hard-maxxing' || r.category === 'hardmaxxing' || r.category === 'experimental')
         .map((r) => r.feature)
     )];
   }, [scanResult]);
