@@ -213,14 +213,15 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+    <>
+      <SafeAreaView style={styles.safe}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
 
-        {/* ── Header ───────────────────────────────────────── */}
+          {/* ── Header ───────────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(0).duration(400)} style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.eyebrow}>{greeting}</Text>
@@ -263,13 +264,13 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* ── AI Coach Card ─────────────────────────────────── */}
+        {/* ── AI Skin Care Coach Card ─────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.glassCard}>
           <View style={styles.coachHeader}>
             <LinearGradient colors={['#1d3fa8', '#3b82f6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.coachIconBg}>
               <CoachIcon />
             </LinearGradient>
-            <Text style={styles.coachTitle}>AI Coach</Text>
+            <Text style={styles.coachTitle}>AI Skin Care Coach</Text>
           </View>
           <Pressable style={styles.coachInput} onPress={() => router.push('/coach')}>
             <Text style={styles.coachPlaceholder}>Ask anything about your results...</Text>
@@ -295,9 +296,9 @@ export default function HomeScreen() {
                 <View style={styles.dayBadge}>
                   <Text style={styles.dayBadgeText}>Day {planDay}</Text>
                 </View>
-                <View style={styles.viewRoadmapPill}>
+                <Pressable onPress={() => setShowRoadmapModal(true)} hitSlop={8} style={styles.viewRoadmapPill}>
                   <Text style={styles.viewRoadmapText}>View roadmap</Text>
-                </View>
+                </Pressable>
               </View>
             </View>
             <Text style={styles.roadmapSubtitle}>Your personalised transformation plan</Text>
@@ -403,11 +404,12 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
 
       {/* Roadmap Modal */}
       <RoadmapSheet visible={showRoadmapModal} onClose={() => setShowRoadmapModal(false)} />
-    </SafeAreaView>
+    </>
   );
 }
 
@@ -455,7 +457,7 @@ const styles = StyleSheet.create({
   // ── Glass Card (shared base) ──────────────────────────────
   glassCard: { backgroundColor: 'rgba(255,255,255,0.72)', borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 24, elevation: 2 },
 
-  // ── AI Coach ──────────────────────────────────────────────
+  // ── AI Skin Care Coach ──────────────────────────────────────────────
   coachHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   coachIconBg: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 3 },
   coachTitle: { fontSize: 16, fontWeight: '600', color: '#0a0a0a', letterSpacing: -0.2 },

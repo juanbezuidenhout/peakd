@@ -1,6 +1,8 @@
-import { View, Pressable, Modal, StyleSheet } from "react-native";
+import { View, Pressable, Modal, StyleSheet, Dimensions } from "react-native";
 import Animated, { SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { Colors } from "@/constants/colors";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface BottomSheetProps {
   visible: boolean;
@@ -44,6 +46,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 40,
     paddingTop: 16,
+    maxHeight: SCREEN_HEIGHT * 0.85,
   },
   handle: {
     width: 40,

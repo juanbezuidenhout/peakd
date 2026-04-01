@@ -209,7 +209,7 @@ function ActionCard({ icon, label, onPress, delay }: ActionCardProps) {
 function buildSystemPrompt(ctx: UserContext): string {
   const r = ctx.scanResult;
   const lines: string[] = [
-    `You are the Peakd AI Coach — a world-class, empathetic personal beauty and wellness coach embedded inside the Peakd app.`,
+    `You are the Peakd AI Skin Care Coach — a world-class, empathetic personal beauty and wellness coach embedded inside the Peakd app.`,
     ``,
     `Your role is to help users understand their facial analysis results, improve their appearance, build confidence, and develop sustainable routines. You are warm, direct, science-backed, and never generic. Every response should feel personally tailored to this specific user.`,
     ``,
@@ -358,7 +358,7 @@ export default function CoachScreen() {
           <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}><BackIcon /></Pressable>
           <View style={styles.navCenter}>
             <View style={styles.navIconBg}><CoachBadgeIcon size={16} /></View>
-            <Text style={styles.navTitle}>AI Coach</Text>
+            <Text style={styles.navTitle}>AI Skin Care Coach</Text>
           </View>
           <View style={styles.navRight} />
         </View>

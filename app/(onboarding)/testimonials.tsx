@@ -32,7 +32,7 @@ const TESTIMONIALS = [
     initial: 'J',
     avatarBg: '#F59E0B',
     title: 'The glow-up is real',
-    body: '3 months in and I look like a completely different person. Not in a fake way — in a \'I finally unlocked my potential\' way. The AI coaching is actually smart.',
+    body: '3 months in and I look like a completely different person. Not in a fake way — in a \'I finally unlocked my potential\' way. The AI skin care coaching is actually smart.',
   },
 ];
 

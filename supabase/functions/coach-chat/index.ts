@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-    let enhancedSystemPrompt = systemPrompt ?? "You are the Peakd AI Coach, a premium skincare expert.";
+    let enhancedSystemPrompt = systemPrompt ?? "You are the Peakd AI Skin Care Coach, a premium skincare expert.";
 
     if (openaiKey && supabaseUrl && supabaseServiceRoleKey && messages.length > 0) {
       const lastUserMessage = messages.filter((m: { role: string }) => m.role === "user").pop();
