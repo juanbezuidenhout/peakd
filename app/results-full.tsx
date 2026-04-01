@@ -202,7 +202,7 @@ export default function ResultsFullScreen() {
           </Text>
         </Animated.View>
 
-        {result.recommendations.map((rec, i) => {
+        {result.recommendations.slice(0, 5).map((rec, i) => {
           const idx = sectionIndex++;
           return (
             <Animated.View
