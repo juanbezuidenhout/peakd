@@ -357,6 +357,7 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
           </View>
         ) : (
           <ScrollView
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
@@ -412,7 +413,6 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    maxHeight: '85%',
   },
   header: {
     flexDirection: 'row',
