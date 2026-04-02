@@ -18,7 +18,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -60,14 +59,6 @@ interface UserContext {
   height: string | null;
   weight: string | null;
   scanResult: FaceAnalysisResult | null;
-}
-
-function BackIcon( ) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18l-6-6 6-6" stroke="rgba(255,255,255,0.85)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
 }
 
 function PlusIcon() {
@@ -263,7 +254,6 @@ function buildSystemPrompt(ctx: UserContext): string {
 }
 
 export default function CoachScreen() {
-  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
 
@@ -355,7 +345,7 @@ export default function CoachScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
         <View style={styles.navBar}>
-          <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={12}><BackIcon /></Pressable>
+          <View style={styles.navLeft} />
           <View style={styles.navCenter}>
             <View style={styles.navIconBg}><CoachBadgeIcon size={16} /></View>
             <Text style={styles.navTitle}>AI Skin Care Coach</Text>
@@ -436,7 +426,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0a0a0a' },
   flex: { flex: 1 },
   navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.08)' },
-  backBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  navLeft: { width: 36 },
   navCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   navIconBg: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
   navTitle: { fontSize: 17, fontWeight: '600', color: '#ffffff', letterSpacing: -0.3 },
@@ -475,7 +465,7 @@ const styles = StyleSheet.create({
   bubbleTextAI: { color: 'rgba(255,255,255,0.88)' },
   typingBubble: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.09)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 18, borderBottomLeftRadius: 5, paddingVertical: 14, paddingHorizontal: 18 },
   typingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.55)' },
-  inputBarWrapper: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 26 : 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.07)', backgroundColor: '#0a0a0a' },
+  inputBarWrapper: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 90, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.07)', backgroundColor: '#0a0a0a' },
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', paddingLeft: 6, paddingRight: 6, paddingVertical: 6, gap: 4 },
   plusBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.07)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   textInput: { flex: 1, fontSize: 15, fontWeight: '400', color: '#ffffff', paddingHorizontal: 8, paddingVertical: 8, maxHeight: 120, lineHeight: 20 },

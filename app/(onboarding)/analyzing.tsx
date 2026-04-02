@@ -21,6 +21,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { analyzeFaceWithRetry, FaceAnalysisResult } from '@/lib/anthropic';
 import { consumePendingBase64, getPendingImageUri, getPendingSideImageUri, getPendingSideBase64 } from '@/lib/scan-data';
 import { setItem, getItem, KEYS } from '@/lib/storage';
+import { handleScanCompletion, PENDING_REFERRER_KEY } from '@/lib/referral';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -246,6 +247,14 @@ export default function AnalyzingScreen() {
         await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
         if (response.scanId) await setItem('scan_id', response.scanId);
         await setItem(KEYS.SCAN_IMAGE_URI, uri);
+
+        // Check for pending referral and trigger scan completion
+        const pendingReferrerId = await getItem<string>(PENDING_REFERRER_KEY);
+        if (pendingReferrerId) {
+          // TODO: Replace local incrementReferralCount() with a Supabase RPC call once authentication is implemented in Session 18.
+          await handleScanCompletion(pendingReferrerId);
+          await setItem(PENDING_REFERRER_KEY, null);
+        }
 
         apiResultRef.current = {
           analysis: response.analysis,

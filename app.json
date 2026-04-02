@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.peakd.app"
+      "bundleIdentifier": "com.peakdapp.ios"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.peakd.app"
+      "package": "com.peakdapp.ios"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -45,7 +45,9 @@
           "photosPermission": "Allow Peakd to access your photos for selfie upload."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-web-browser",
+      "@invertase/react-native-apple-authentication"
     ]
   }
 }

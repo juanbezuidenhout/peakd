@@ -4,9 +4,11 @@ const KEYS = {
   ONBOARDING_COMPLETE: "peakd_onboarding_complete",
   USER_GOAL: "peakd_user_goal",
   REFERRAL_CODE: "peakd_referral_code",
+  REFERRAL_COUNT: "peakd_referral_count",
   SCAN_HISTORY: "peakd_scan_history",
   SCAN_RESULT: "scan_result",
   SCAN_IMAGE_URI: "peakd_scan_image_uri",
+  LAST_SCAN_DATE: "peakd_last_scan_date",
   AUTH_TOKEN: "peakd_auth_token",
   DAILY_STREAK: "peakd_daily_streak",
   IS_PRO: "peakd_is_pro",
@@ -69,6 +71,24 @@ export async function getReferralCode(): Promise<string | null> {
   return getItem<string>(KEYS.REFERRAL_CODE);
 }
 
+// --- Referral Tracking ---
+
+export async function getReferralCount(): Promise<number> {
+  return (await getItem<number>(KEYS.REFERRAL_COUNT)) ?? 0;
+}
+
+export async function incrementReferralCount(): Promise<number> {
+  const currentCount = await getReferralCount();
+  const newCount = currentCount + 1;
+  await setItem(KEYS.REFERRAL_COUNT, newCount);
+  return newCount;
+}
+
+export async function checkReferralReward(): Promise<boolean> {
+  const count = await getReferralCount();
+  return count >= 3;
+}
+
 // --- Quiz profile data ---
 
 export async function getUserName(): Promise<string | null> {
@@ -117,6 +137,74 @@ export async function getUserAesthetic(): Promise<string | null> {
 
 export async function setUserAesthetic(aesthetic: string): Promise<void> {
   await setItem(KEYS.USER_AESTHETIC, aesthetic);
+}
+
+// --- Scan Retake Cooldown ---
+
+const COOLDOWN_DAYS = 7;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export async function getLastScanDate(): Promise<Date | null> {
+  const dateStr = await getItem<string>(KEYS.LAST_SCAN_DATE);
+  return dateStr ? new Date(dateStr) : null;
+}
+
+export async function setLastScanDate(date: Date = new Date()): Promise<void> {
+  await setItem(KEYS.LAST_SCAN_DATE, date.toISOString());
+}
+
+export interface ScanCooldownStatus {
+  canRetake: boolean;
+  daysRemaining: number;
+  hoursRemaining: number;
+  nextAvailableDate: Date;
+  daysSinceLastScan: number | null;
+}
+
+export async function getScanCooldownStatus(): Promise<ScanCooldownStatus> {
+  const lastScan = await getLastScanDate();
+  const now = new Date();
+
+  if (!lastScan) {
+    // No previous scan - allow immediately, next available is 7 days from now
+    const nextAvailable = new Date(now.getTime() + COOLDOWN_DAYS * MS_PER_DAY);
+    return {
+      canRetake: true,
+      daysRemaining: 0,
+      hoursRemaining: 0,
+      nextAvailableDate: nextAvailable,
+      daysSinceLastScan: null,
+    };
+  }
+
+  const diffMs = now.getTime() - lastScan.getTime();
+  const daysSince = Math.floor(diffMs / MS_PER_DAY);
+  const canRetake = daysSince >= COOLDOWN_DAYS;
+
+  if (canRetake) {
+    const nextAvailable = new Date(now.getTime() + COOLDOWN_DAYS * MS_PER_DAY);
+    return {
+      canRetake: true,
+      daysRemaining: 0,
+      hoursRemaining: 0,
+      nextAvailableDate: nextAvailable,
+      daysSinceLastScan: daysSince,
+    };
+  }
+
+  // Calculate remaining time
+  const remainingMs = (COOLDOWN_DAYS * MS_PER_DAY) - diffMs;
+  const daysRemaining = Math.ceil(remainingMs / MS_PER_DAY);
+  const hoursRemaining = Math.ceil(remainingMs / (60 * 60 * 1000)) % 24;
+  const nextAvailable = new Date(lastScan.getTime() + COOLDOWN_DAYS * MS_PER_DAY);
+
+  return {
+    canRetake: false,
+    daysRemaining,
+    hoursRemaining,
+    nextAvailableDate: nextAvailable,
+    daysSinceLastScan: daysSince,
+  };
 }
 
 // --- Daily Tasks ---

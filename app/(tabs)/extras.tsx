@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
@@ -85,6 +86,7 @@ export default function ExtrasScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            await supabase.auth.signOut();
             await AsyncStorage.clear();
             router.replace('/(onboarding)');
           },
@@ -138,15 +140,15 @@ export default function ExtrasScreen() {
       <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/home')}
           hitSlop={12}
           style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
         >
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
             <Path
               d="M6 6L18 18M18 6L6 18"
-              stroke={Colors.textSecondary}
-              strokeWidth={2.5}
+              stroke={Colors.textPrimary}
+              strokeWidth={3}
               strokeLinecap="round"
             />
           </Svg>
@@ -219,6 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 16,
     marginBottom: 20,
+    zIndex: 10,
   },
   headerTitle: {
     fontSize: 22,
@@ -226,9 +229,9 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.surfaceElevated,
     borderWidth: 1.5,
     borderColor: Colors.border,
@@ -236,9 +239,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
   },
 
   sheet: {

@@ -5,8 +5,11 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isOnboardingComplete, hasCompletedPurchase } from "@/lib/storage";
+import { setPendingReferrer, extractReferrerFromUrl } from "@/lib/referral";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Linking from "expo-linking";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,16 +19,52 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const router = useRouter();
 
+  // Handle deep links for referral tracking
+  useEffect(() => {
+    // Check for initial URL (app opened from deep link)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        const referrerId = extractReferrerFromUrl(url);
+        if (referrerId) {
+          setPendingReferrer(referrerId);
+        }
+      }
+    });
+
+    // Listen for incoming links while app is running
+    const subscription = Linking.addEventListener("url", (event) => {
+      const referrerId = extractReferrerFromUrl(event.url);
+      if (referrerId) {
+        setPendingReferrer(referrerId);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   useEffect(() => {
     (async () => {
+      // Check for existing Supabase session first
+      const { data: { session } } = await supabase.auth.getSession();
+
       const paid = await hasCompletedPurchase();
       const onboarded = await isOnboardingComplete();
+
       setReady(true);
-      if (paid) {
+
+      if (session) {
+        // If user has a valid session, go to home regardless of other flags
+        router.replace("/(tabs)/home");
+      } else if (paid) {
+        // No session but has completed purchase
         router.replace("/(tabs)/home");
       } else if (onboarded) {
+        // No session, not paid, but onboarding complete
         router.replace("/(tabs)/scan");
       }
+      // Otherwise, stay in onboarding (no navigation)
     })();
   }, []);
 

@@ -9,13 +9,16 @@ import {
   Alert,
   ActivityIndicator,
   Keyboard,
+  Share,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle as SvgCircle, Path, Rect, Polygon } from 'react-native-svg';
-import { getUserName, getItem, setItem, KEYS } from '@/lib/storage';
+import { getUserName, getItem, setItem, KEYS, getScanCooldownStatus, type ScanCooldownStatus } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import type { FaceAnalysisResult } from '@/lib/anthropic';
 import { RoadmapSheet } from '@/components/ui/RoadmapSheet';
@@ -101,6 +104,48 @@ function PaperPlaneIcon() {
   );
 }
 
+function UsersIcon() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#2563eb" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <SvgCircle cx={9} cy={7} r={4} stroke="#2563eb" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M23 21v-2a4 4 0 00-3-3.87" stroke="#2563eb" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <SvgCircle cx={19} cy={7} r={4} stroke="#2563eb" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function GiftIcon() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Rect x={3} y={8} width={18} height={4} rx={1} stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 8v13" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7.5 8a4 4 0 010-4h.01" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M16.5 8a4 4 0 000-4h-.01" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function ClockIcon({ color = '#2563eb' }: { color?: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <SvgCircle cx={12} cy={12} r={9} stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M12 7v5l3 3" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <SvgCircle cx={12} cy={12} r={10} stroke="rgba(37,99,235,0.6)" strokeWidth={1.5} />
+      <Path d="M12 16v-4" stroke="rgba(37,99,235,0.6)" strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M12 8h.01" stroke="rgba(37,99,235,0.6)" strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 // ─── Score Ring ───────────────────────────────────────────────────────────────
 
 function GlowScoreRing({ score }: { score: number | null | undefined }) {
@@ -141,6 +186,96 @@ function SubScoreRow({ label, value, fill }: { label: string; value: string; fil
   );
 }
 
+// ─── Scan Retake Card with Cooldown ───────────────────────────────────────────
+
+function ScanRetakeCard({ status, onPress }: { status: ScanCooldownStatus | null; onPress: () => void }) {
+  const isAvailable = status?.canRetake ?? true;
+  const daysRemaining = status?.daysRemaining ?? 0;
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  if (!isAvailable && status) {
+    return (
+      <View style={[styles.toolCard, styles.toolCardHorizontal, styles.toolCardDisabled]}>
+        <View style={[styles.toolIconSquare, styles.toolIconSquareMuted]}>
+          <ClockIcon color="rgba(120,120,120,0.5)" />
+        </View>
+        <View style={styles.scanRetakeContent}>
+          <Text style={[styles.toolName, styles.toolNameMuted]}>New scan</Text>
+          <View style={styles.cooldownRow}>
+            <Text style={styles.cooldownText}>
+              {daysRemaining === 1 ? '1 day' : `${daysRemaining} days`} remaining
+            </Text>
+            <View style={styles.cooldownBadge}>
+              <Text style={styles.cooldownBadgeText}>Available {formatDate(status.nextAvailableDate)}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Pressable style={[styles.toolCard, styles.toolCardHorizontal]} onPress={onPress}>
+      <View style={[styles.toolIconSquare, { marginBottom: 0 }]}>
+        <CameraIcon />
+      </View>
+      <View>
+        <Text style={styles.toolName}>New scan</Text>
+        <Text style={styles.toolSub}>Retake available</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// ─── Referral Banner Component ───────────────────────────────────────────────
+
+function ReferralBanner() {
+  const referralsJoined = 0;
+  const totalReferrals = 3;
+  const progressPercent = (referralsJoined / totalReferrals) * 100;
+
+  const handleInvite = async () => {
+    try {
+      await Share.share({
+        message: 'Join me on Peakd! 🎁\n\nGet your first facial analysis free.\n\nDownload the app and start your glow journey.',
+        title: 'Invite friends to Peakd',
+      });
+    } catch {
+      // Silently handle error - user cancelled or share failed
+    }
+  };
+
+  return (
+    <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.referralBanner}>
+      <View style={styles.referralContent}>
+        <View style={styles.referralLeft}>
+          <View style={styles.referralIconBg}>
+            <UsersIcon />
+          </View>
+          <View style={styles.referralTextBlock}>
+            <Text style={styles.referralTitle}>Invite 3 friends, get your next month free</Text>
+            <View style={styles.progressRow}>
+              <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: `${progressPercent}%` as any }]} />
+              </View>
+              <Text style={styles.progressText}>{referralsJoined}/{totalReferrals} Joined</Text>
+            </View>
+          </View>
+        </View>
+        <Pressable onPress={handleInvite} style={({ pressed }) => [styles.inviteBtn, pressed && styles.inviteBtnPressed]}>
+          <LinearGradient colors={['#1d3fa8', '#3b82f6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inviteBtnGradient}>
+            <GiftIcon />
+            <Text style={styles.inviteBtnText}>Invite</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
+    </Animated.View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
@@ -158,14 +293,19 @@ export default function HomeScreen() {
   // Roadmap modal state
   const [showRoadmapModal, setShowRoadmapModal] = useState(false);
 
+  // Scan cooldown state
+  const [cooldownStatus, setCooldownStatus] = useState<ScanCooldownStatus | null>(null);
+
   useEffect(() => {
     (async () => {
-      const [name, result] = await Promise.all([
+      const [name, result, cooldown] = await Promise.all([
         getUserName(),
         getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT),
+        getScanCooldownStatus(),
       ]);
       setFirstName(name || 'You');
       if (result) setScanResult(result);
+      setCooldownStatus(cooldown);
 
       let startStr = await getItem<string>(PLAN_START_KEY);
       if (!startStr) {
@@ -215,11 +355,16 @@ export default function HomeScreen() {
   return (
     <>
       <SafeAreaView style={styles.safe}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoiding}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
         >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
 
           {/* ── Header ───────────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(0).duration(400)} style={styles.header}>
@@ -326,14 +471,19 @@ export default function HomeScreen() {
               <View style={styles.toolProgressSeg} />
             </View>
           </Pressable>
-          <Pressable style={[styles.toolCard, styles.toolCardHorizontal]} onPress={() => router.push('/(tabs)/scan')}>
-            <View style={[styles.toolIconSquare, { marginBottom: 0 }]}><CameraIcon /></View>
-            <View>
-              <Text style={styles.toolName}>New scan</Text>
-              <Text style={styles.toolSub}>Retake</Text>
-            </View>
-          </Pressable>
+          <ScanRetakeCard status={cooldownStatus} onPress={() => router.push('/(tabs)/scan')} />
         </Animated.View>
+
+        {/* ── Scan Retake Info Notice ───────────────────────── */}
+        <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.scanInfoNotice}>
+          <InfoIcon />
+          <Text style={styles.scanInfoText}>
+            Face scans can be retaken once every 7 days. This helps track meaningful progress over time.
+          </Text>
+        </Animated.View>
+
+        {/* ── Referral Banner ───────────────────────────────── */}
+        <ReferralBanner />
 
         {/* ── Insight of the Day ────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(500).duration(400)} style={[styles.glassCard, styles.insightCard]}>
@@ -405,6 +555,7 @@ export default function HomeScreen() {
         </Animated.View>
 
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       {/* Roadmap Modal */}
@@ -418,13 +569,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
 
   safe: { flex: 1, backgroundColor: '#f2f3f7' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  keyboardAvoiding: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 120 },
 
   // ── Header ────────────────────────────────────────────────
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 24, marginBottom: 22 },
   headerLeft: { flex: 1, paddingRight: 12 },
-  eyebrow: { fontSize: 12, fontWeight: '400', color: 'rgba(0,0,0,0.38)', letterSpacing: 0.1, marginBottom: 2 },
-  greetingName: { fontSize: 28, fontWeight: '700', color: '#0a0a0a', letterSpacing: -0.6, lineHeight: 32 },
+  eyebrow: { fontSize: 18, fontWeight: '400', color: 'rgba(0,0,0,0.38)', letterSpacing: 0.1, marginBottom: 2 },
+  greetingName: { fontSize: 36, fontWeight: '700', color: '#0a0a0a', letterSpacing: -0.6, lineHeight: 42 },
   archetypePill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 8, backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 100, borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', paddingVertical: 4, paddingLeft: 8, paddingRight: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
   archetypeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2563eb', marginRight: 6 },
   archetypeText: { fontSize: 12, fontWeight: '500', color: 'rgba(0,0,0,0.55)', letterSpacing: 0.1 },
@@ -516,4 +668,34 @@ const styles = StyleSheet.create({
   featureSendBtnText: { fontSize: 13, fontWeight: '600', color: '#fff', letterSpacing: -0.1 },
   featureSentConfirm: { backgroundColor: 'rgba(37,99,235,0.08)', borderRadius: 100, borderWidth: 1, borderColor: 'rgba(37,99,235,0.15)', paddingVertical: 10, paddingHorizontal: 18 },
   featureSentText: { fontSize: 13, fontWeight: '500', color: '#2563eb' },
+
+  // ── Scan Retake Card ─────────────────────────────────────
+  toolCardDisabled: { backgroundColor: 'rgba(240,240,240,0.6)', borderColor: 'rgba(0,0,0,0.03)' },
+  toolIconSquareMuted: { backgroundColor: 'rgba(0,0,0,0.03)', borderColor: 'rgba(0,0,0,0.06)' },
+  toolNameMuted: { color: 'rgba(0,0,0,0.35)' },
+  scanRetakeContent: { flex: 1 },
+  cooldownRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  cooldownText: { fontSize: 11, fontWeight: '500', color: 'rgba(0,0,0,0.35)' },
+  cooldownBadge: { backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 100, paddingVertical: 3, paddingHorizontal: 8 },
+  cooldownBadgeText: { fontSize: 10, fontWeight: '500', color: 'rgba(0,0,0,0.45)' },
+
+  // ── Scan Info Notice ─────────────────────────────────────
+  scanInfoNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12, marginTop: -6, paddingHorizontal: 4 },
+  scanInfoText: { flex: 1, fontSize: 11, fontWeight: '400', color: 'rgba(37,99,235,0.65)', lineHeight: 16 },
+
+  // ── Referral Banner ────────────────────────────────────────
+  referralBanner: { backgroundColor: 'rgba(255,255,255,0.72)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 14, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 2 },
+  referralContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  referralLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  referralIconBg: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(37,99,235,0.1)', borderWidth: 1, borderColor: 'rgba(37,99,235,0.15)', alignItems: 'center', justifyContent: 'center' },
+  referralTextBlock: { flex: 1 },
+  referralTitle: { fontSize: 13, fontWeight: '600', color: '#0a0a0a', letterSpacing: -0.2, marginBottom: 6 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  progressBarBg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.08)', overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#3b82f6', borderRadius: 2 },
+  progressText: { fontSize: 11, fontWeight: '500', color: 'rgba(0,0,0,0.45)', width: 52, textAlign: 'right' },
+  inviteBtn: { borderRadius: 12, overflow: 'hidden' },
+  inviteBtnPressed: { opacity: 0.92 },
+  inviteBtnGradient: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 9, paddingHorizontal: 14, shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 2 },
+  inviteBtnText: { fontSize: 12, fontWeight: '600', color: '#fff', letterSpacing: -0.1 },
 });

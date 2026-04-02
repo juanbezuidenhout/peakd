@@ -441,7 +441,7 @@ function Screen3({
 }: {
   onPurchase: () => void;
 }) {
-  const [pricingMode, setPricingMode] = useState<'onetime' | 'monthly'>('onetime');
+  const [pricingMode, setPricingMode] = useState<'onetime' | 'weekly'>('onetime');
 
   const TOGGLE_WIDTH = SCREEN_WIDTH - 40;
   const PILL_WIDTH = (TOGGLE_WIDTH - 6) / 2;
@@ -457,9 +457,9 @@ function Screen3({
     opacity: cardOpacity.value,
   }));
 
-  const switchMode = (mode: 'onetime' | 'monthly') => {
+  const switchMode = (mode: 'onetime' | 'weekly') => {
     if (mode === pricingMode) return;
-    pillTranslateX.value = withSpring(mode === 'monthly' ? PILL_WIDTH : 0, {
+    pillTranslateX.value = withSpring(mode === 'weekly' ? PILL_WIDTH : 0, {
       damping: 20,
       stiffness: 250,
     });
@@ -532,8 +532,8 @@ function Screen3({
             <Text style={{ fontSize: 8, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.5 }}>BEST VALUE</Text>
           </View>
         </Pressable>
-        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('monthly')}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: !isOneTime ? '#1A1A2E' : '#8B9BB5' }}>Monthly</Text>
+        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('weekly')}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: !isOneTime ? '#1A1A2E' : '#8B9BB5' }}>Weekly</Text>
         </Pressable>
       </View>
 
@@ -546,19 +546,16 @@ function Screen3({
           <Text style={{ fontSize: 13, color: C.textSecondary, marginBottom: 16 }}>
             {isOneTime
               ? 'Your complete personalised roadmap, built from your scan.'
-              : 'Unlimited scans, new plans, and progress tracking.'}
+              : 'Unlimited scans, new plans, and AI skin care coach.'}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
             <Text style={{ fontSize: 32, fontWeight: '700', color: C.navy }}>
-              {isOneTime ? '$24.99' : '$9.99'}
+              {isOneTime ? '$24.99' : '$4.99'}
             </Text>
             <Text style={{ fontSize: 13, color: C.textMuted, marginLeft: 6 }}>
-              {isOneTime ? 'one-time payment' : 'per month'}
+              {isOneTime ? 'one-time payment' : 'per week'}
             </Text>
           </View>
-          {!isOneTime && (
-            <Text style={{ fontSize: 11, color: '#8B9BB5', marginTop: 4 }}>$29.97 over 3 months</Text>
-          )}
         </Animated.View>
       </View>
 
@@ -566,13 +563,13 @@ function Screen3({
       <View style={{ marginTop: 20 }}>
         <Pressable style={s.ctaBtn} onPress={onPurchase}>
           {/* TODO: 'peakd_plan_onetime_3499' (one-time) / 'peakd_membership_monthly_999' (monthly) */}
-          <Text style={s.ctaBtnText}>
-            {isOneTime ? 'Start My Plan' : 'Start Free Trial'}
-          </Text>
+          <Text style={s.ctaBtnText}>Start My Plan</Text>
         </Pressable>
-        <Text style={{ fontSize: 10, color: '#8B9BB5', textAlign: 'center', marginTop: 10 }}>
-          Cancel anytime. Billed through Apple.
-        </Text>
+        {!isOneTime && (
+          <Text style={{ fontSize: 10, color: '#8B9BB5', textAlign: 'center', marginTop: 10 }}>
+            Cancel anytime. Billed through Apple.
+          </Text>
+        )}
       </View>
 
       {/* Footer */}
@@ -654,11 +651,9 @@ export default function PaywallScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Nav: Back + Dots (NO Skip) */}
+      {/* Nav: Dots only (NO Back, NO Skip) */}
       <View style={[s.nav, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, step === 1 && { opacity: 0 }]}>
-          <IconChevronLeft />
-        </Pressable>
+        <View style={{ width: 36 }} />
         <Dots current={step - 1} />
         <View style={{ width: 36 }} />
       </View>

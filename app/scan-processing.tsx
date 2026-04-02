@@ -13,7 +13,8 @@ import { ErrorCard } from '@/components/ui/ErrorCard';
 import { Colors } from '@/constants/colors';
 import { analyzeFaceWithRetry, FaceAnalysisResult, ProgressStage } from '@/lib/anthropic';
 import { getPendingImageUri, getPendingSideImageUri } from '@/lib/scan-data';
-import { setItem, getItem, KEYS, getUserName } from '@/lib/storage';
+import { setItem, getItem, KEYS, getUserName, setLastScanDate } from '@/lib/storage';
+import { handleScanCompletion, PENDING_REFERRER_KEY } from '@/lib/referral';
 
 const ANALYSIS_STEPS = [
   'Mapping facial geometry...',
@@ -151,6 +152,18 @@ export default function ScanProcessingScreen() {
       await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
       if (response.scanId) await setItem('scan_id', response.scanId);
       if (uri) await setItem(KEYS.SCAN_IMAGE_URI, uri);
+
+      // Record scan date for 7-day cooldown
+      await setLastScanDate();
+
+      // Check for pending referral and trigger scan completion
+      const pendingReferrerId = await getItem<string>(PENDING_REFERRER_KEY);
+      if (pendingReferrerId) {
+        // TODO: Replace local incrementReferralCount() with a Supabase RPC call once authentication is implemented in Session 18.
+        await handleScanCompletion(pendingReferrerId);
+        await setItem(PENDING_REFERRER_KEY, null);
+      }
+
       setComplete(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Analysis failed';
