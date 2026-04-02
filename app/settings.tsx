@@ -18,6 +18,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
+import { requestNativeReview } from '@/lib/review';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -59,8 +60,10 @@ export default function SettingsScreen() {
     showToast('Copied!');
   };
 
-  const handleRateUs = () => {
-    Linking.openURL('https://apps.apple.com');
+  const handleRateUs = async () => {
+    // Trigger the native in-app review prompt (SKStoreReviewController on iOS,
+    // ReviewManager on Android).  Falls back silently if unavailable.
+    await requestNativeReview(true);
   };
 
   const handleContactSupport = () => {

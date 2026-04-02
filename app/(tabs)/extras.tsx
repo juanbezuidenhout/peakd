@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
+import { requestNativeReview } from '@/lib/review';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
@@ -62,9 +63,10 @@ export default function ExtrasScreen() {
     showToast('Copied!');
   };
 
-  const handleRateUs = () => {
-    // Placeholder — replace with actual App Store / Play Store URL
-    Linking.openURL('https://apps.apple.com');
+  const handleRateUs = async () => {
+    // Trigger the native in-app review prompt (SKStoreReviewController on iOS,
+    // ReviewManager on Android).  Falls back silently if unavailable.
+    await requestNativeReview(true);
   };
 
   const handleContactSupport = () => {
