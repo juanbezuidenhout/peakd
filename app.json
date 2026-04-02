@@ -47,7 +47,7 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-web-browser",
-      "@invertase/react-native-apple-authentication"
+      "expo-apple-authentication"
     ]
   }
 }

@@ -24,7 +24,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Colors } from "@/constants/colors";
 import { completeOnboarding } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
-import * as AppleAuthentication from "@invertase/react-native-apple-authentication";
+import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import "react-native-get-random-values";
@@ -114,32 +114,33 @@ export default function AuthScreen() {
   const handleApple = async () => {
     setLoadingApple(true);
     try {
-      const appleCredential = await AppleAuthentication.performRequest({
-        requestedOperation: AppleAuthentication.Operation.LOGIN,
+      const result = await AppleAuthentication.signInAsync({
         requestedScopes: [
-          AppleAuthentication.Scope.FULL_NAME,
-          AppleAuthentication.Scope.EMAIL,
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
 
-      if (!appleCredential.identityToken) {
+      const identityToken = result.identityToken;
+
+      if (!identityToken) {
         throw new Error("No identity token received from Apple");
       }
 
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
-        token: appleCredential.identityToken,
+        token: identityToken,
       });
 
       if (error) throw error;
 
       // Update user profile with full name if available (only on first sign in)
       if (
-        appleCredential.fullName &&
-        (appleCredential.fullName.givenName || appleCredential.fullName.familyName)
+        result.fullName &&
+        (result.fullName.givenName || result.fullName.familyName)
       ) {
-        const fullName = `${appleCredential.fullName.givenName || ""} ${
-          appleCredential.fullName.familyName || ""
+        const fullName = `${result.fullName.givenName || ""} ${
+          result.fullName.familyName || ""
         }`.trim();
 
         if (fullName) {
@@ -152,7 +153,7 @@ export default function AuthScreen() {
       await completeOnboarding();
       router.push("/(tabs)/home");
     } catch (error: unknown) {
-      if ((error as { code?: string })?.code !== "1001") {
+      if ((error as { code?: string })?.code !== "ERR_REQUEST_CANCELED") {
         Alert.alert(
           "Sign In Error",
           error instanceof Error ? error.message : "An error occurred during Apple sign in"

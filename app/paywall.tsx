@@ -642,7 +642,7 @@ export default function PaywallScreen() {
     // Show the native App Store / Play Store rating prompt immediately
     // after a confirmed purchase — the highest-intent moment in the app.
     await requestNativeReview();
-    router.replace('/(tabs)/home');
+    router.replace('/(onboarding)/auth');
   };
 
   const rating = result?.glowScore ?? 0;
