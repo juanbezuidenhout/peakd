@@ -24,12 +24,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { completeOnboarding } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import Svg, { Path } from "react-native-svg";
 import "react-native-get-random-values";
-
-WebBrowser.maybeCompleteAuthSession();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -190,32 +187,29 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
 
+  useEffect(() => {
+    GoogleSignin.configure({
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    });
+  }, []);
+
   const handleGoogle = async () => {
     setLoadingGoogle(true);
     try {
-      const redirectUrl = Linking.createURL("/(tabs)/home");
-      const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-      const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const { idToken } = await GoogleSignin.getTokens();
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            client_id: iosClientId || webClientId,
-          },
-        },
+        token: idToken,
       });
 
       if (error) throw error;
 
-      if (data.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-        if (result.type === "success") {
-          await completeOnboarding();
-          router.push("/(tabs)/home");
-        }
-      }
+      await completeOnboarding();
+      router.push("/(tabs)/home");
     } catch (error: unknown) {
       Alert.alert(
         "Sign In Error",
