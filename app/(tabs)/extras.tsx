@@ -19,11 +19,8 @@ import * as Haptics from 'expo-haptics';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
-<<<<<<< HEAD
 import { supabase } from '@/lib/supabase';
-=======
 import { requestNativeReview } from '@/lib/review';
->>>>>>> 56434aff9851df0550a98bb039cae6becf9ca9b2
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';

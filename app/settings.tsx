@@ -21,6 +21,7 @@ import { getReferralCode } from '@/lib/storage';
 import { requestNativeReview } from '@/lib/review';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 
 interface SettingsItem {
   id: string;
@@ -84,6 +85,7 @@ export default function SettingsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            await supabase.auth.signOut();
             await AsyncStorage.clear();
             router.replace('/(onboarding)');
           },
