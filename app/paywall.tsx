@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Path, Rect, Line } from 'react-native-svg';
 import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
+import { requestNativeReview } from '@/lib/review';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -627,6 +628,9 @@ export default function PaywallScreen() {
     //   const purchaserInfo = await Purchases.purchasePackage(selectedPackage);
     //   if (purchaserInfo.customerInfo.entitlements.active["pro"]) {
     //     await setCompletedPurchase();
+    //     // Show the native App Store / Play Store rating prompt immediately
+    //     // after a confirmed purchase — the highest-intent moment in the app.
+    //     await requestNativeReview();
     //     router.replace('/(tabs)/home');
     //   }
     // } catch (e) {
@@ -635,6 +639,9 @@ export default function PaywallScreen() {
     //
     // For now (testing), set it immediately:
     await setCompletedPurchase();
+    // Show the native App Store / Play Store rating prompt immediately
+    // after a confirmed purchase — the highest-intent moment in the app.
+    await requestNativeReview();
     router.replace('/(tabs)/home');
   };
 

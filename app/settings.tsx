@@ -16,10 +16,9 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { SafeScreen } from '@/components/layout/SafeScreen';
 import { Colors } from '@/constants/colors';
 import { getReferralCode } from '@/lib/storage';
-import { supabase } from '@/lib/supabase';
+import { requestNativeReview } from '@/lib/review';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -61,8 +60,10 @@ export default function SettingsScreen() {
     showToast('Copied!');
   };
 
-  const handleRateUs = () => {
-    Linking.openURL('https://apps.apple.com');
+  const handleRateUs = async () => {
+    // Trigger the native in-app review prompt (SKStoreReviewController on iOS,
+    // ReviewManager on Android).  Falls back silently if unavailable.
+    await requestNativeReview(true);
   };
 
   const handleContactSupport = () => {
@@ -83,7 +84,6 @@ export default function SettingsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await supabase.auth.signOut();
             await AsyncStorage.clear();
             router.replace('/(onboarding)');
           },
@@ -127,12 +127,12 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeScreen style={{ backgroundColor: Colors.surface }}>
-      {/* Header with title and close button */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
+    <View style={{ flex: 1, backgroundColor: Colors.surface }}>
+      {/* Header with drag handle and close button */}
+      <View style={styles.headerRow}>
+        <View style={styles.handle} />
         <Pressable
-          onPress={() => router.replace('/(tabs)/home')}
+          onPress={() => router.back()}
           hitSlop={12}
           style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
         >
@@ -147,71 +147,66 @@ export default function SettingsScreen() {
         </Pressable>
       </View>
 
-      {/* Drag handle below header */}
-      <View style={styles.handleRow}>
-        <View style={styles.handle} />
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-      >
-        {items.map((item, index) => (
-          <Animated.View
-            key={item.id}
-            entering={FadeInUp.delay(250 + index * 60).duration(400)}
-          >
-            <Pressable
-              onPress={item.action}
-              style={({ pressed }) => [
-                styles.row,
-                index < items.length - 1 && styles.rowBorder,
-                pressed && styles.rowPressed,
-              ]}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        >
+          {items.map((item, index) => (
+            <Animated.View
+              key={item.id}
+              entering={FadeInUp.delay(250 + index * 60).duration(400)}
             >
-              <Text
-                style={[
-                  styles.rowTitle,
-                  item.destructive && styles.rowTitleDestructive,
+              <Pressable
+                onPress={item.action}
+                style={({ pressed }) => [
+                  styles.row,
+                  index < items.length - 1 && styles.rowBorder,
+                  pressed && styles.rowPressed,
                 ]}
               >
-                {item.title}
-              </Text>
-            </Pressable>
-          </Animated.View>
-        ))}
+                <Text
+                  style={[
+                    styles.rowTitle,
+                    item.destructive && styles.rowTitleDestructive,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </Pressable>
+            </Animated.View>
+          ))}
 
-        {/* Footer links */}
-        <View style={styles.footer}>
-          <Pressable onPress={() => Linking.openURL('https://peakd.app/privacy')}>
-            <Text style={styles.footerLink}>Privacy</Text>
-          </Pressable>
-          <Text style={styles.footerDot}>·</Text>
-          <Pressable onPress={() => Linking.openURL('https://peakd.app/terms')}>
-            <Text style={styles.footerLink}>Terms</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+          {/* Footer links */}
+          <View style={styles.footer}>
+            <Pressable onPress={() => Linking.openURL('https://peakd.app/privacy')}>
+              <Text style={styles.footerLink}>Privacy</Text>
+            </Pressable>
+            <Text style={styles.footerDot}>·</Text>
+            <Pressable onPress={() => Linking.openURL('https://peakd.app/terms')}>
+              <Text style={styles.footerLink}>Terms</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       {/* Toast overlay */}
       <Toast message={toastMessage} visible={toastVisible} />
-    </SafeScreen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.textPrimary,
+    justifyContent: 'center',
+    paddingTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    position: 'relative',
   },
   closeBtn: {
+    position: 'absolute',
+    right: 16,
+    top: 12,
     width: 36,
     height: 36,
     borderRadius: 12,
@@ -220,16 +215,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 8,
   },
   handle: {
     width: 36,
