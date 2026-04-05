@@ -19,6 +19,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 import { Colors } from '@/constants/colors';
+import { LEGAL_URLS } from '@/constants/links';
 import { getReferralCode } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { requestNativeReview } from '@/lib/review';
@@ -29,7 +30,6 @@ import Svg, { Path } from 'react-native-svg';
 interface SettingsItem {
   id: string;
   title: string;
-  emoji: string;
   destructive?: boolean;
   action: () => void;
 }
@@ -135,38 +135,12 @@ export default function ExtrasScreen() {
   };
 
   const items: SettingsItem[] = [
-    { id: 'rate', title: 'Rate us', emoji: '⭐', action: handleRateUs },
-    {
-      id: 'referral',
-      title: 'Copy my referral code',
-      emoji: '#',
-      action: handleCopyReferral,
-    },
-    {
-      id: 'retake',
-      title: 'Retake my scan',
-      emoji: '💄',
-      action: handleRetakeScan,
-    },
-    {
-      id: 'support',
-      title: 'Contact support',
-      emoji: '✉️',
-      action: handleContactSupport,
-    },
-    {
-      id: 'learn',
-      title: 'Learn more',
-      emoji: '📋',
-      action: handleLearnMore,
-    },
-    {
-      id: 'delete',
-      title: 'Delete my account',
-      emoji: '❌',
-      destructive: true,
-      action: handleDeleteAccount,
-    },
+    { id: 'rate', title: 'Rate us', action: handleRateUs },
+    { id: 'referral', title: 'Copy my referral code', action: handleCopyReferral },
+    { id: 'retake', title: 'Retake my scan', action: handleRetakeScan },
+    { id: 'support', title: 'Contact support', action: handleContactSupport },
+    { id: 'learn', title: 'Learn more', action: handleLearnMore },
+    { id: 'delete', title: 'Delete my account', destructive: true, action: handleDeleteAccount },
   ];
 
   return (
@@ -219,7 +193,6 @@ export default function ExtrasScreen() {
                   item.destructive && deleting && { opacity: 0.5 },
                 ]}
               >
-                <Text style={styles.rowEmoji}>{item.emoji}</Text>
                 <Text
                   style={[
                     styles.rowTitle,
@@ -237,11 +210,11 @@ export default function ExtrasScreen() {
 
           {/* Footer links */}
           <View style={styles.footer}>
-            <Pressable onPress={() => Linking.openURL('https://peakd.app/privacy')}>
+            <Pressable onPress={() => Linking.openURL(LEGAL_URLS.privacy)}>
               <Text style={styles.footerLink}>Privacy</Text>
             </Pressable>
             <Text style={styles.footerDot}>·</Text>
-            <Pressable onPress={() => Linking.openURL('https://peakd.app/terms')}>
+            <Pressable onPress={() => Linking.openURL(LEGAL_URLS.terms)}>
               <Text style={styles.footerLink}>Terms</Text>
             </Pressable>
           </View>
@@ -319,11 +292,6 @@ const styles = StyleSheet.create({
   },
   rowPressed: {
     opacity: 0.6,
-  },
-  rowEmoji: {
-    fontSize: 20,
-    width: 36,
-    textAlign: 'center',
   },
   rowTitle: {
     flex: 1,
