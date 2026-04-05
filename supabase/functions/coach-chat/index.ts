@@ -1,13 +1,68 @@
 import { createClient } from "npm:@supabase/supabase-js";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "capacitor://com.peakdapp.ios",
+  "http://localhost",
+];
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get("origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.some((o) => origin.startsWith(o));
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status: number,
+  headers: Record<string, string>,
+) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...headers, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: cors });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405, cors);
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.error("Missing required environment variables");
+    return jsonResponse({ error: "Service temporarily unavailable." }, 503, cors);
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+  // ── Auth verification ──────────────────────────────────────────────────
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return jsonResponse({ error: "Missing or invalid authorization." }, 401, cors);
+  }
+
+  const token = authHeader.slice(7);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    console.error("Auth verification failed:", authError?.message);
+    return jsonResponse({ error: "Invalid or expired session." }, 401, cors);
   }
 
   try {
@@ -15,8 +70,6 @@ Deno.serve(async (req) => {
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
     const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     let enhancedSystemPrompt = systemPrompt ?? "You are the Peakd AI Skin Care Coach, a premium skincare expert.";
 
@@ -39,7 +92,6 @@ Deno.serve(async (req) => {
           const embedding = embeddingData?.data?.[0]?.embedding;
 
           if (embedding) {
-            const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
             const { data: matches } = await supabase.rpc("match_skincare_knowledge", {
               query_embedding: embedding,
               match_count: 3,
@@ -119,14 +171,13 @@ Deno.serve(async (req) => {
       throw new Error("No AI key configured");
     }
 
-    return new Response(JSON.stringify({ content }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ content }, 200, cors);
   } catch (e) {
-    console.error(e);
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("Coach chat error:", e);
+    return jsonResponse(
+      { error: "An unexpected error occurred. Please try again." },
+      500,
+      cors,
+    );
   }
 });

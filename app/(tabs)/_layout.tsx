@@ -11,6 +11,11 @@ export default function TabsLayout() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const isTabScreen =
+    pathname === '/home' ||
+    pathname.includes('/coach') ||
+    pathname.includes('/roadmap');
+
   const activeTab = pathname.includes('/coach')
     ? 'coach'
     : pathname.includes('/roadmap')
@@ -42,7 +47,9 @@ export default function TabsLayout() {
         <Tabs.Screen name="daily" options={{ href: null }} />
         <Tabs.Screen name="extras" options={{ href: null }} />
       </Tabs>
-      <LiquidGlassTabBar activeTab={activeTab} onTabPress={handleTabPress} dark={isDark} />
+      {isTabScreen && (
+        <LiquidGlassTabBar activeTab={activeTab} onTabPress={handleTabPress} dark={isDark} />
+      )}
     </View>
   );
 }

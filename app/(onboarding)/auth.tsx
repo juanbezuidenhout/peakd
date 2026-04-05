@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
   Dimensions,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, {
@@ -23,6 +24,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { completeOnboarding } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
+import { identifyRevenueCatUser } from "@/lib/purchases";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import Svg, { Path } from "react-native-svg";
@@ -197,16 +199,20 @@ export default function AuthScreen() {
   const handleGoogle = async () => {
     setLoadingGoogle(true);
     try {
-      await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const { idToken } = await GoogleSignin.getTokens();
+      if (!idToken) throw new Error('No ID token received from Google');
 
-      const { error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: idToken,
       });
 
       if (error) throw error;
+
+      if (data.session) {
+        await identifyRevenueCatUser(data.session.user.id);
+      }
 
       await completeOnboarding();
       router.push("/(tabs)/home");
@@ -257,6 +263,10 @@ export default function AuthScreen() {
             data: { full_name: fullName },
           });
         }
+      }
+
+      if (data.session) {
+        await identifyRevenueCatUser(data.session.user.id);
       }
 
       await completeOnboarding();

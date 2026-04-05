@@ -149,8 +149,9 @@ export default function ScanScreen() {
     setCaptureStep('front');
   }, []);
 
-  const handleAnalyze = useCallback(() => {
+  const handleAnalyze = useCallback(async () => {
     if (!imageUri || !sideImageUri) return;
+
     setPendingImageUri(imageUri);
     setPendingSideImageUri(sideImageUri);
     router.push({

@@ -6,6 +6,7 @@
  
 import { Platform } from 'react-native';
 import { getItem, KEYS } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
  
 // ── Types ──────────────────────────────────────────────────────────────────
  
@@ -148,15 +149,21 @@ export async function analyzeFace(
 
   onProgress?.('uploading');
   const userContext = await loadUserContext();
- 
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    apikey: SUPABASE_ANON_KEY!,
+  };
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+
   onProgress?.('analyzing');
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      apikey: SUPABASE_ANON_KEY,
-    },
+    headers,
     body: JSON.stringify({
       imageBase64: base64,
       mediaType: 'image/jpeg',

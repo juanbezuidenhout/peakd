@@ -39,11 +39,12 @@ import {
   KEYS,
 } from '@/lib/storage';
 import type { FaceAnalysisResult } from '@/lib/anthropic';
+import { supabase } from '@/lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://dowdouiybyxrwtoysbne.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvd2RvdWl5Ynl4cnd0b3lzYm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MjEyOTcsImV4cCI6MjA5MDE5NzI5N30.2Tb0FsUOPGq9JHo0Uze7oI6E78mCeUEkNpuBttkqFMI';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const COACH_EDGE_URL = `${SUPABASE_URL}/functions/v1/coach-chat`;
 
 interface Message {
@@ -292,7 +293,7 @@ export default function CoachScreen() {
     { icon: <SkinIcon />, label: 'Analyse my skin', prompt: 'Give me a deep analysis of my skin quality score and exactly what I should do to improve it.' },
     { icon: <FaceFormIcon />, label: 'Face structure', prompt: 'Explain my facial structure score and what it means for my overall attractiveness and presence.' },
     { icon: <EyesIcon />, label: 'Eye area tips', prompt: 'What can I do to improve the appearance of my eye area based on my specific scores and analysis?' },
-    { icon: <RoutineIcon />, label: 'Build my routine', prompt: 'Create a personalised daily routine to help me improve my Glow Score over the next 30 days. Be specific.' },
+    { icon: <RoutineIcon />, label: 'Build my routine', prompt: 'Create a personalised daily routine to help me improve my Glow Score over the next 90 days. Be specific.' },
   ];
 
   const sendMessage = useCallback(async (text: string) => {
@@ -309,26 +310,16 @@ export default function CoachScreen() {
       const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
       const systemPrompt = buildSystemPrompt(userCtx);
       let aiContent: string;
-      try {
-        const res = await fetch(COACH_EDGE_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
-          body: JSON.stringify({ systemPrompt, messages: history }),
-        });
-        if (!res.ok) throw new Error(`${res.status}`);
-        const data = await res.json();
-        aiContent = data?.reply ?? data?.content ?? data?.message ?? "I'm having trouble connecting right now.";
-      } catch {
-        const openaiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
-        if (!openaiKey) throw new Error('No AI backend available');
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: systemPrompt }, ...history], max_tokens: 600, temperature: 0.75 } ),
-        });
-        const data = await res.json();
-        aiContent = data?.choices?.[0]?.message?.content ?? "I'm having trouble connecting right now.";
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not signed in');
+      const res = await fetch(COACH_EDGE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ systemPrompt, messages: history }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      aiContent = data?.reply ?? data?.content ?? data?.message ?? "I'm having trouble connecting right now.";
       setMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: 'assistant', content: aiContent, timestamp: new Date() }]);
     } catch {
       setMessages((prev) => [...prev, { id: `${Date.now()}-err`, role: 'assistant', content: "I couldn't connect right now. Check your connection and try again.", timestamp: new Date() }]);

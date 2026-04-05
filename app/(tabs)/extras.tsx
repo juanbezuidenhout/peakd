@@ -7,6 +7,7 @@ import {
   Alert,
   Linking,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   FadeInUp,
@@ -78,6 +79,8 @@ export default function ExtrasScreen() {
     Linking.openURL('https://peakd.app');
   };
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -88,9 +91,39 @@ export default function ExtrasScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await supabase.auth.signOut();
-            await AsyncStorage.clear();
-            router.replace('/(onboarding)');
+            setDeleting(true);
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session?.access_token) {
+                Alert.alert('Error', 'You must be signed in to delete your account.');
+                return;
+              }
+
+              const res = await fetch(
+                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                    apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+                  },
+                },
+              );
+
+              if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || 'Deletion failed');
+              }
+
+              await supabase.auth.signOut();
+              await AsyncStorage.clear();
+              router.replace('/(onboarding)');
+            } catch (e: any) {
+              Alert.alert('Error', e.message ?? 'Could not delete account. Please try again.');
+            } finally {
+              setDeleting(false);
+            }
           },
         },
       ],
@@ -178,10 +211,12 @@ export default function ExtrasScreen() {
             >
               <Pressable
                 onPress={item.action}
+                disabled={item.destructive && deleting}
                 style={({ pressed }) => [
                   styles.row,
                   index < items.length - 1 && styles.rowBorder,
                   pressed && styles.rowPressed,
+                  item.destructive && deleting && { opacity: 0.5 },
                 ]}
               >
                 <Text style={styles.rowEmoji}>{item.emoji}</Text>
@@ -193,6 +228,9 @@ export default function ExtrasScreen() {
                 >
                   {item.title}
                 </Text>
+                {item.destructive && deleting && (
+                  <ActivityIndicator size="small" color={Colors.error} />
+                )}
               </Pressable>
             </Animated.View>
           ))}

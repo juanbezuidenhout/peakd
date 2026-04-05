@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isOnboardingComplete, hasCompletedPurchase } from "@/lib/storage";
 import { setPendingReferrer, extractReferrerFromUrl } from "@/lib/referral";
 import { supabase } from "@/lib/supabase";
+import { configureRevenueCat, identifyRevenueCatUser } from "@/lib/purchases";
 import { useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as Linking from "expo-linking";
@@ -18,6 +19,10 @@ LogBox.ignoreAllLogs();
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    configureRevenueCat();
+  }, []);
 
   // Handle deep links for referral tracking
   useEffect(() => {
@@ -55,7 +60,7 @@ export default function RootLayout() {
       setReady(true);
 
       if (session) {
-        // If user has a valid session, go to home regardless of other flags
+        await identifyRevenueCatUser(session.user.id);
         router.replace("/(tabs)/home");
       } else if (paid) {
         // No session but has completed purchase

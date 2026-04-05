@@ -7,6 +7,7 @@ import {
   Alert,
   Linking,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   FadeInUp,
@@ -17,11 +18,13 @@ import Svg, { Path } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/colors';
+import { LEGAL_URLS } from '@/constants/links';
 import { getReferralCode } from '@/lib/storage';
 import { requestNativeReview } from '@/lib/review';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
+import { resetRevenueCatUser } from '@/lib/purchases';
 
 interface SettingsItem {
   id: string;
@@ -75,6 +78,8 @@ export default function SettingsScreen() {
     Linking.openURL('https://peakd.app');
   };
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -85,9 +90,41 @@ export default function SettingsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await supabase.auth.signOut();
-            await AsyncStorage.clear();
-            router.replace('/(onboarding)');
+            setDeleting(true);
+            try {
+              const { data: { session }, error: refreshError } =
+                await supabase.auth.refreshSession();
+              if (refreshError || !session?.access_token) {
+                Alert.alert('Error', 'You must be signed in to delete your account.');
+                return;
+              }
+
+              const res = await fetch(
+                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                    apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+                  },
+                },
+              );
+
+              if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || body.message || 'Deletion failed');
+              }
+
+              await resetRevenueCatUser();
+              await supabase.auth.signOut();
+              await AsyncStorage.clear();
+              router.replace('/(onboarding)');
+            } catch (e: any) {
+              Alert.alert('Error', e.message ?? 'Could not delete account. Please try again.');
+            } finally {
+              setDeleting(false);
+            }
           },
         },
       ],
@@ -160,10 +197,12 @@ export default function SettingsScreen() {
             >
               <Pressable
                 onPress={item.action}
+                disabled={item.destructive && deleting}
                 style={({ pressed }) => [
                   styles.row,
                   index < items.length - 1 && styles.rowBorder,
                   pressed && styles.rowPressed,
+                  item.destructive && deleting && { opacity: 0.5 },
                 ]}
               >
                 <Text
@@ -174,18 +213,21 @@ export default function SettingsScreen() {
                 >
                   {item.title}
                 </Text>
+                {item.destructive && deleting && (
+                  <ActivityIndicator size="small" color={Colors.error} />
+                )}
               </Pressable>
             </Animated.View>
           ))}
 
           {/* Footer links */}
           <View style={styles.footer}>
-            <Pressable onPress={() => Linking.openURL('https://peakd.app/privacy')}>
-              <Text style={styles.footerLink}>Privacy</Text>
+            <Pressable onPress={() => Linking.openURL(LEGAL_URLS.privacy)}>
+              <Text style={styles.footerLink}>Privacy Policy</Text>
             </Pressable>
             <Text style={styles.footerDot}>·</Text>
-            <Pressable onPress={() => Linking.openURL('https://peakd.app/terms')}>
-              <Text style={styles.footerLink}>Terms</Text>
+            <Pressable onPress={() => Linking.openURL(LEGAL_URLS.terms)}>
+              <Text style={styles.footerLink}>Terms & Conditions</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -267,6 +309,7 @@ const styles = StyleSheet.create({
   footerLink: {
     fontSize: 12,
     color: Colors.textMuted,
+    textDecorationLine: 'underline' as const,
   },
   footerDot: {
     fontSize: 12,

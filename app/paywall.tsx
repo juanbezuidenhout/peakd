@@ -6,7 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  Alert,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
+import type { PurchasesPackage } from 'react-native-purchases';
 import Animated, {
   SlideInRight,
   SlideOutLeft,
@@ -23,7 +27,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Path, Rect, Line } from 'react-native-svg';
 import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
+import { LEGAL_URLS } from '@/constants/links';
 import { requestNativeReview } from '@/lib/review';
+import { getPaywallPackages, purchasePackage, restorePurchases } from '@/lib/purchases';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -438,11 +444,21 @@ function Screen2({
 // ══════════════════════════════════════════════════════════════════════════
 
 function Screen3({
+  weeklyPackage,
+  lifetimePackage,
+  packagesLoaded,
   onPurchase,
+  onRestore,
+  purchasing,
 }: {
-  onPurchase: () => void;
+  weeklyPackage: PurchasesPackage | null;
+  lifetimePackage: PurchasesPackage | null;
+  packagesLoaded: boolean;
+  onPurchase: (pkg: PurchasesPackage) => void;
+  onRestore: () => void;
+  purchasing: boolean;
 }) {
-  const [pricingMode, setPricingMode] = useState<'onetime' | 'weekly'>('onetime');
+  const [pricingMode, setPricingMode] = useState<'lifetime' | 'weekly'>('lifetime');
 
   const TOGGLE_WIDTH = SCREEN_WIDTH - 40;
   const PILL_WIDTH = (TOGGLE_WIDTH - 6) / 2;
@@ -458,7 +474,7 @@ function Screen3({
     opacity: cardOpacity.value,
   }));
 
-  const switchMode = (mode: 'onetime' | 'weekly') => {
+  const switchMode = (mode: 'lifetime' | 'weekly') => {
     if (mode === pricingMode) return;
     pillTranslateX.value = withSpring(mode === 'weekly' ? PILL_WIDTH : 0, {
       damping: 20,
@@ -471,7 +487,8 @@ function Screen3({
     setTimeout(() => setPricingMode(mode), 150);
   };
 
-  const isOneTime = pricingMode === 'onetime';
+  const isLifetime = pricingMode === 'lifetime';
+  const selectedPkg = isLifetime ? lifetimePackage : weeklyPackage;
 
   const SHARED_FEATURES = [
     'Full 12-point facial analysis',
@@ -527,14 +544,14 @@ function Screen3({
           shadowOffset: { width: 0, height: 2 },
           elevation: 2,
         }, pillAnimStyle]} />
-        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }} onPress={() => switchMode('onetime')}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: isOneTime ? '#1A1A2E' : '#8B9BB5' }}>One-Time</Text>
+        <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }} onPress={() => switchMode('lifetime')}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: isLifetime ? '#1A1A2E' : '#8B9BB5' }}>Lifetime</Text>
           <View style={{ backgroundColor: '#1A6FE0', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 }}>
             <Text style={{ fontSize: 8, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.5 }}>BEST VALUE</Text>
           </View>
         </Pressable>
         <Pressable style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} onPress={() => switchMode('weekly')}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: !isOneTime ? '#1A1A2E' : '#8B9BB5' }}>Weekly</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: !isLifetime ? '#1A1A2E' : '#8B9BB5' }}>Weekly</Text>
         </Pressable>
       </View>
 
@@ -542,39 +559,71 @@ function Screen3({
       <View style={[s.planCard, s.planCardActive, { flexDirection: 'column', alignItems: 'stretch' }]}>
         <Animated.View style={cardContentAnimStyle}>
           <Text style={{ fontSize: 17, fontWeight: '700', color: C.navy, marginBottom: 4 }}>
-            {isOneTime ? '90-Day Transformation Plan' : 'Peakd Membership'}
+            {isLifetime ? '90-Day Transformation Plan' : 'Peakd Membership'}
           </Text>
           <Text style={{ fontSize: 13, color: C.textSecondary, marginBottom: 16 }}>
-            {isOneTime
+            {isLifetime
               ? 'Your complete personalised roadmap, built from your scan.'
               : 'Unlimited scans, new plans, and AI skin care coach.'}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Text style={{ fontSize: 32, fontWeight: '700', color: C.navy }}>
-              {isOneTime ? '$24.99' : '$4.99'}
-            </Text>
-            <Text style={{ fontSize: 13, color: C.textMuted, marginLeft: 6 }}>
-              {isOneTime ? 'one-time payment' : 'per week'}
-            </Text>
+            {!packagesLoaded ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', height: 40, gap: 8 }}>
+                <ActivityIndicator size="small" color={C.blue} />
+                <Text style={{ fontSize: 14, color: C.textMuted }}>Loading price…</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: C.navy }}>
+                  {selectedPkg?.product.priceString ?? (isLifetime ? '$24.99' : '$4.99')}
+                </Text>
+                <Text style={{ fontSize: 13, color: C.textMuted, marginLeft: 6 }}>
+                  {isLifetime ? 'one-time payment' : 'per week'}
+                </Text>
+              </>
+            )}
           </View>
         </Animated.View>
       </View>
 
+      {/* Disclaimer */}
+      <Text style={{ fontSize: 11, color: '#8B9BB5', textAlign: 'center', marginTop: 16, lineHeight: 16 }}>
+        Peakd Pro is required to access your detailed 90-day action plan.
+      </Text>
+
       {/* CTA */}
-      <View style={{ marginTop: 20 }}>
-        <Pressable style={s.ctaBtn} onPress={onPurchase}>
-          {/* TODO: 'peakd_plan_onetime_3499' (one-time) / 'peakd_membership_monthly_999' (monthly) */}
-          <Text style={s.ctaBtnText}>Start My Plan</Text>
+      <View style={{ marginTop: 12 }}>
+        <Pressable
+          style={[s.ctaBtn, { backgroundColor: C.success, shadowColor: C.success }, purchasing && { opacity: 0.6 }]}
+          onPress={() => {
+            if (!selectedPkg) {
+              Alert.alert('Unable to connect to the App Store. Please check your connection and try again.');
+              return;
+            }
+            onPurchase(selectedPkg);
+          }}
+          disabled={purchasing}
+        >
+          {purchasing ? (
+            <ActivityIndicator color={C.white} />
+          ) : (
+            <Text style={s.ctaBtnText}>Start My Plan</Text>
+          )}
         </Pressable>
-        {!isOneTime && (
+        {!isLifetime && (
           <Text style={{ fontSize: 10, color: '#8B9BB5', textAlign: 'center', marginTop: 10 }}>
             Cancel anytime. Billed through Apple.
           </Text>
         )}
       </View>
 
+      {/* Restore */}
+      <Pressable onPress={onRestore} disabled={purchasing} style={{ alignItems: 'center', marginTop: 14 }}>
+        <Text style={{ fontSize: 13, fontWeight: '500', color: C.textMuted }}>Restore Purchases</Text>
+      </Pressable>
+
       {/* Footer */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14 }}>
         <IconShield />
         <Text style={{ fontSize: 11, color: C.textMuted }}>Secure payment</Text>
       </View>
@@ -582,6 +631,17 @@ function Screen3({
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12 }}>
         {[1, 2, 3, 4, 5].map((i) => <IconStarFilled key={i} />)}
         <Text style={{ fontSize: 12, color: C.textSecondary, marginLeft: 4 }}>Loved by 10,000+ users</Text>
+      </View>
+
+      {/* Legal links */}
+      <View style={s.legalRow}>
+        <Pressable onPress={() => Linking.openURL(LEGAL_URLS.privacy)}>
+          <Text style={s.legalLink}>Privacy Policy</Text>
+        </Pressable>
+        <Text style={s.legalDot}>·</Text>
+        <Pressable onPress={() => Linking.openURL(LEGAL_URLS.terms)}>
+          <Text style={s.legalLink}>Terms & Conditions</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -597,15 +657,23 @@ export default function PaywallScreen() {
   const [step, setStep] = useState(1);
   const [userName, setUserName] = useState('');
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
+  const [weeklyPkg, setWeeklyPkg] = useState<PurchasesPackage | null>(null);
+  const [lifetimePkg, setLifetimePkg] = useState<PurchasesPackage | null>(null);
+  const [packagesLoaded, setPackagesLoaded] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [name, scan] = await Promise.all([
+      const [name, scan, packages] = await Promise.all([
         getItem<string>(KEYS.USER_NAME),
         getItem<FaceAnalysisResult>(KEYS.SCAN_RESULT),
+        getPaywallPackages(),
       ]);
       setUserName(name ?? '');
       if (scan) setResult(scan);
+      setWeeklyPkg(packages.weekly);
+      setLifetimePkg(packages.lifetime);
+      setPackagesLoaded(true);
     })();
   }, []);
 
@@ -619,30 +687,34 @@ export default function PaywallScreen() {
     setStep((s) => s + 1);
   };
 
-  const purchase = async () => {
+  const purchase = async (pkg: PurchasesPackage) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // TODO: Wire RevenueCat here. Call setCompletedPurchase() ONLY after
-    // RevenueCat confirms a successful transaction. Example:
-    //
-    // try {
-    //   const purchaserInfo = await Purchases.purchasePackage(selectedPackage);
-    //   if (purchaserInfo.customerInfo.entitlements.active["pro"]) {
-    //     await setCompletedPurchase();
-    //     // Show the native App Store / Play Store rating prompt immediately
-    //     // after a confirmed purchase — the highest-intent moment in the app.
-    //     await requestNativeReview();
-    //     router.replace('/(tabs)/home');
-    //   }
-    // } catch (e) {
-    //   // Handle error, do NOT set purchase flag
-    // }
-    //
-    // For now (testing), set it immediately:
-    await setCompletedPurchase();
-    // Show the native App Store / Play Store rating prompt immediately
-    // after a confirmed purchase — the highest-intent moment in the app.
-    await requestNativeReview();
-    router.replace('/(onboarding)/auth');
+    setPurchasing(true);
+    try {
+      const success = await purchasePackage(pkg);
+      if (success) {
+        await setCompletedPurchase();
+        await requestNativeReview();
+        router.replace('/(tabs)/home');
+      }
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setPurchasing(true);
+    try {
+      const success = await restorePurchases();
+      if (success) {
+        await setCompletedPurchase();
+        router.replace('/(tabs)/home');
+      } else {
+        Alert.alert('No Purchases Found', "We couldn't find any previous purchases to restore.");
+      }
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const rating = result?.glowScore ?? 0;
@@ -658,11 +730,19 @@ export default function PaywallScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Nav: Dots only (NO Back, NO Skip) */}
       <View style={[s.nav, { paddingTop: insets.top + 8 }]}>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 50 }} />
         <Dots current={step - 1} />
-        <View style={{ width: 36 }} />
+        <Pressable
+          style={{ minWidth: 50, alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 6 }}
+          onPress={async () => {
+            if (__DEV__) await setCompletedPurchase();
+            router.back();
+          }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Text style={{ fontSize: 12, fontWeight: '400', color: '#B0B8C9' }}>Not now</Text>
+        </Pressable>
       </View>
 
       {/* Step content */}
@@ -679,7 +759,14 @@ export default function PaywallScreen() {
         )}
         {step === 3 && (
           <Animated.View key="s3" entering={SlideInRight.duration(300)} exiting={SlideOutLeft.duration(300)} style={{ flex: 1 }}>
-            <Screen3 onPurchase={purchase} />
+            <Screen3
+              weeklyPackage={weeklyPkg}
+              lifetimePackage={lifetimePkg}
+              packagesLoaded={packagesLoaded}
+              onPurchase={purchase}
+              onRestore={handleRestore}
+              purchasing={purchasing}
+            />
           </Animated.View>
         )}
       </View>
@@ -931,5 +1018,22 @@ const s = StyleSheet.create({
     color: C.textMuted,
     textAlign: 'center',
     marginTop: 10,
+  },
+
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 6,
+  },
+  legalLink: {
+    fontSize: 11,
+    color: C.textMuted,
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    fontSize: 11,
+    color: C.textMuted,
   },
 });
