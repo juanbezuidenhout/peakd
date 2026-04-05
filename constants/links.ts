@@ -1,4 +1,4 @@
 export const LEGAL_URLS = {
-  privacy: 'https://peakdapp.com/privacy',
-  terms: 'https://peakdapp.com/terms',
+  privacy: 'https://www.peakdapp.com/privacy',
+  terms: 'https://www.peakdapp.com/terms',
 } as const;
