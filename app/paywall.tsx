@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
+  TextInput,
+  Keyboard,
 } from 'react-native';
 import type { PurchasesPackage } from 'react-native-purchases';
 import Animated, {
@@ -30,7 +32,8 @@ import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
 import { setRejectedMainPaywall } from '@/lib/storage';
 import { LEGAL_URLS } from '@/constants/links';
 import { requestNativeReview } from '@/lib/review';
-import { getPaywallPackages, purchasePackage, restorePurchases } from '@/lib/purchases';
+import { getPaywallPackages, purchasePackage, restorePurchases, getPromoPackage } from '@/lib/purchases';
+import { validateAndRedeemInviteCode } from '@/lib/inviteCodes';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -424,6 +427,80 @@ function Screen2({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// INVITE CODE REDEMPTION BLOCK
+// ══════════════════════════════════════════════════════════════════════════
+
+function InviteCodeRedemption({ onRedeemCode }: { onRedeemCode: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [code, setCode] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleApply = async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    Keyboard.dismiss();
+    setValidating(true);
+    setError(null);
+    const result = await validateAndRedeemInviteCode(trimmed);
+    setValidating(false);
+    if (result.valid) {
+      onRedeemCode();
+    } else {
+      setError(result.error ?? 'Invalid code.');
+    }
+  };
+
+  return (
+    <View style={s.inviteRedemptionWrapper}>
+      <Pressable
+        onPress={() => { setExpanded((v) => !v); setError(null); }}
+        style={s.inviteRedemptionToggle}
+        hitSlop={8}
+      >
+        <Text style={s.inviteRedemptionToggleText}>
+          {expanded ? 'Hide invite code' : 'Have an invite code?'}
+        </Text>
+      </Pressable>
+
+      {expanded && (
+        <View style={s.inviteRedemptionBody}>
+          <View style={s.inviteRedemptionRow}>
+            <TextInput
+              style={[s.inviteRedemptionInput, error ? s.inviteRedemptionInputError : null]}
+              placeholder="Enter code (e.g. PK4X2A)"
+              placeholderTextColor={C.textMuted}
+              value={code}
+              onChangeText={(t) => { setCode(t.toUpperCase()); setError(null); }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={6}
+              editable={!validating}
+            />
+            <Pressable
+              onPress={handleApply}
+              disabled={validating || code.trim().length === 0}
+              style={[s.inviteRedemptionApplyBtn, (validating || code.trim().length === 0) && { opacity: 0.5 }]}
+            >
+              {validating ? (
+                <ActivityIndicator size="small" color={C.white} />
+              ) : (
+                <Text style={s.inviteRedemptionApplyText}>Apply</Text>
+              )}
+            </Pressable>
+          </View>
+          {error ? (
+            <Text style={s.inviteRedemptionError}>{error}</Text>
+          ) : (
+            <Text style={s.inviteRedemptionHint}>Valid codes unlock 40% off your plan</Text>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // SCREEN 3 — Pricing
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -434,6 +511,7 @@ function Screen3({
   onPurchase,
   onRestore,
   purchasing,
+  onRedeemCode,
 }: {
   weeklyPackage: PurchasesPackage | null;
   lifetimePackage: PurchasesPackage | null;
@@ -441,6 +519,7 @@ function Screen3({
   onPurchase: (pkg: PurchasesPackage) => void;
   onRestore: () => void;
   purchasing: boolean;
+  onRedeemCode: () => void;
 }) {
   const [pricingMode, setPricingMode] = useState<'lifetime' | 'weekly'>('lifetime');
 
@@ -606,6 +685,9 @@ function Screen3({
         <Text style={{ fontSize: 13, fontWeight: '500', color: C.textMuted }}>Restore Purchases</Text>
       </Pressable>
 
+      {/* Invite Code Redemption */}
+      <InviteCodeRedemption onRedeemCode={onRedeemCode} />
+
       {/* Footer */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14 }}>
         <IconShield />
@@ -681,6 +763,12 @@ export default function PaywallScreen() {
     }
   };
 
+  const handleRedeemCode = async () => {
+    // Valid invite code — route to the promo screen ($14.99 = 40% off $24.99)
+    await setRejectedMainPaywall();
+    router.replace('/promo');
+  };
+
   const handleRestore = async () => {
     setPurchasing(true);
     try {
@@ -746,6 +834,7 @@ export default function PaywallScreen() {
               onPurchase={purchase}
               onRestore={handleRestore}
               purchasing={purchasing}
+              onRedeemCode={handleRedeemCode}
             />
           </Animated.View>
         )}
@@ -1015,5 +1104,77 @@ const s = StyleSheet.create({
   legalDot: {
     fontSize: 11,
     color: C.textMuted,
+  },
+
+  // ── Invite Code Redemption ─────────────────────────────
+  inviteRedemptionWrapper: {
+    marginTop: 18,
+    marginBottom: 4,
+    alignItems: 'center',
+  },
+  inviteRedemptionToggle: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  inviteRedemptionToggleText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: C.textMuted,
+    textDecorationLine: 'underline',
+  },
+  inviteRedemptionBody: {
+    width: '100%',
+    marginTop: 10,
+    backgroundColor: 'rgba(74,144,217,0.04)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(74,144,217,0.12)',
+    padding: 12,
+  },
+  inviteRedemptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inviteRedemptionInput: {
+    flex: 1,
+    height: 42,
+    backgroundColor: C.white,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.navy,
+    letterSpacing: 2,
+  },
+  inviteRedemptionInputError: {
+    borderColor: '#FF6B6B',
+  },
+  inviteRedemptionApplyBtn: {
+    height: 42,
+    paddingHorizontal: 18,
+    backgroundColor: C.navy,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteRedemptionApplyText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.white,
+  },
+  inviteRedemptionHint: {
+    fontSize: 11,
+    color: C.textMuted,
+    marginTop: 7,
+    textAlign: 'center',
+  },
+  inviteRedemptionError: {
+    fontSize: 11,
+    color: '#FF6B6B',
+    marginTop: 7,
+    textAlign: 'center',
   },
 });

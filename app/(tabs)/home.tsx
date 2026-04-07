@@ -12,6 +12,7 @@ import {
   Share,
   KeyboardAvoidingView,
   Platform,
+  Clipboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { getUserName, getItem, setItem, KEYS, getScanCooldownStatus, type ScanCo
 import { supabase } from '@/lib/supabase';
 import type { FaceAnalysisResult } from '@/lib/anthropic';
 import { RoadmapSheet } from '@/components/ui/RoadmapSheet';
+import { getOrCreateInviteCode } from '@/lib/inviteCodes';
 
 const PLAN_START_KEY = 'peakd_plan_start_date';
 
@@ -115,14 +117,21 @@ function UsersIcon() {
   );
 }
 
-function GiftIcon() {
+function ShareIcon() {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Rect x={3} y={8} width={18} height={4} rx={1} stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M12 8v13" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M7.5 8a4 4 0 010-4h.01" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M16.5 8a4 4 0 000-4h-.01" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M16 6l-4-4-4 4" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 2v13" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+      <Rect x={9} y={9} width={13} height={13} rx={2} stroke="rgba(37,99,235,0.6)" strokeWidth={1.6} />
+      <Path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="rgba(37,99,235,0.6)" strokeWidth={1.6} strokeLinecap="round" />
     </Svg>
   );
 }
@@ -230,48 +239,104 @@ function ScanRetakeCard({ status, onPress }: { status: ScanCooldownStatus | null
   );
 }
 
-// ─── Referral Banner Component ───────────────────────────────────────────────
+// ─── Invite Code Block ────────────────────────────────────────────────────────
 
-function ReferralBanner() {
-  const referralsJoined = 0;
-  const totalReferrals = 3;
-  const progressPercent = (referralsJoined / totalReferrals) * 100;
+function InviteCodeBlock() {
+  const [code, setCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
-  const handleInvite = async () => {
+  useEffect(() => {
+    (async () => {
+      const inviteCode = await getOrCreateInviteCode();
+      setCode(inviteCode);
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleCopy = () => {
+    if (!code) return;
+    Clipboard.setString(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSendInvite = async () => {
+    if (!code || sharing) return;
+    setSharing(true);
     try {
       await Share.share({
-        message: 'Join me on Peakd! 🎁\n\nGet your first facial analysis free.\n\nDownload the app and start your glow journey.',
-        title: 'Invite friends to Peakd',
+        message: `Use my invite code ${code} on Peakd to get 40% off your plan.\n\nDownload Peakd — Become a 10 and start your transformation.`,
+        title: 'Join me on Peakd',
       });
     } catch {
-      // Silently handle error - user cancelled or share failed
+      // User dismissed share sheet — no action needed
+    } finally {
+      setSharing(false);
     }
   };
 
   return (
-    <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.referralBanner}>
-      <View style={styles.referralContent}>
-        <View style={styles.referralLeft}>
-          <View style={styles.referralIconBg}>
-            <UsersIcon />
-          </View>
-          <View style={styles.referralTextBlock}>
-            <Text style={styles.referralTitle}>Invite 3 friends, get your next month free</Text>
-            <View style={styles.progressRow}>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${progressPercent}%` as any }]} />
-              </View>
-              <Text style={styles.progressText}>{referralsJoined}/{totalReferrals} Joined</Text>
-            </View>
-          </View>
+    <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.inviteCard}>
+      {/* Header row */}
+      <View style={styles.inviteHeader}>
+        <View style={styles.inviteIconBg}>
+          <UsersIcon />
         </View>
-        <Pressable onPress={handleInvite} style={({ pressed }) => [styles.inviteBtn, pressed && styles.inviteBtnPressed]}>
-          <LinearGradient colors={['#1d3fa8', '#3b82f6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inviteBtnGradient}>
-            <GiftIcon />
-            <Text style={styles.inviteBtnText}>Invite</Text>
-          </LinearGradient>
-        </Pressable>
+        <View style={styles.inviteHeaderText}>
+          <Text style={styles.inviteTitle}>Invite a friend</Text>
+          <Text style={styles.inviteSubtitle}>They get 40% off — you spread the word</Text>
+        </View>
       </View>
+
+      {/* Code display */}
+      <View style={styles.inviteCodeRow}>
+        {loading ? (
+          <ActivityIndicator size="small" color="#2563eb" style={{ marginVertical: 6 }} />
+        ) : code ? (
+          <>
+            <View style={styles.inviteCodeBox}>
+              <Text style={styles.inviteCodeText}>{code}</Text>
+            </View>
+            <Pressable onPress={handleCopy} style={styles.inviteCopyBtn} hitSlop={8}>
+              {copied ? (
+                <Text style={styles.inviteCopiedText}>Copied</Text>
+              ) : (
+                <>
+                  <CopyIcon />
+                  <Text style={styles.inviteCopyText}>Copy</Text>
+                </>
+              )}
+            </Pressable>
+          </>
+        ) : (
+          <Text style={styles.inviteErrorText}>Sign in to generate your code</Text>
+        )}
+      </View>
+
+      {/* Send Invite button */}
+      <Pressable
+        onPress={handleSendInvite}
+        disabled={!code || sharing}
+        style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
+      >
+        <LinearGradient
+          colors={!code ? ['#b0bec5', '#b0bec5'] : ['#1d3fa8', '#3b82f6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.inviteSendBtn}
+        >
+          {sharing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <ShareIcon />
+              <Text style={styles.inviteSendBtnText}>Send Invite</Text>
+            </>
+          )}
+        </LinearGradient>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -482,8 +547,8 @@ export default function HomeScreen() {
           </Text>
         </Animated.View>
 
-        {/* ── Referral Banner ───────────────────────────────── */}
-        <ReferralBanner />
+        {/* ── Invite Code Block ─────────────────────────────── */}
+        <InviteCodeBlock />
 
         {/* ── Insight of the Day ────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(500).duration(400)} style={[styles.glassCard, styles.insightCard]}>
@@ -526,7 +591,7 @@ export default function HomeScreen() {
           <View style={styles.featureSendRow}>
             {sent ? (
               <View style={styles.featureSentConfirm}>
-                <Text style={styles.featureSentText}>✓ Request sent — thank you!</Text>
+                <Text style={styles.featureSentText}>Request sent — thank you!</Text>
               </View>
             ) : (
               <Pressable
@@ -683,19 +748,79 @@ const styles = StyleSheet.create({
   scanInfoNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12, marginTop: -6, paddingHorizontal: 4 },
   scanInfoText: { flex: 1, fontSize: 11, fontWeight: '400', color: 'rgba(37,99,235,0.65)', lineHeight: 16 },
 
-  // ── Referral Banner ────────────────────────────────────────
-  referralBanner: { backgroundColor: 'rgba(255,255,255,0.72)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 14, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 2 },
-  referralContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  referralLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  referralIconBg: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(37,99,235,0.1)', borderWidth: 1, borderColor: 'rgba(37,99,235,0.15)', alignItems: 'center', justifyContent: 'center' },
-  referralTextBlock: { flex: 1 },
-  referralTitle: { fontSize: 13, fontWeight: '600', color: '#0a0a0a', letterSpacing: -0.2, marginBottom: 6 },
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressBarBg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.08)', overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: '#3b82f6', borderRadius: 2 },
-  progressText: { fontSize: 11, fontWeight: '500', color: 'rgba(0,0,0,0.45)', width: 52, textAlign: 'right' },
-  inviteBtn: { borderRadius: 12, overflow: 'hidden' },
-  inviteBtnPressed: { opacity: 0.92 },
-  inviteBtnGradient: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 9, paddingHorizontal: 14, shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 2 },
-  inviteBtnText: { fontSize: 12, fontWeight: '600', color: '#fff', letterSpacing: -0.1 },
+  // ── Invite Code Block ─────────────────────────────────────
+  inviteCard: {
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+    padding: 18,
+    marginBottom: 12,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.07,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  inviteHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  inviteIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(37,99,235,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,235,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteHeaderText: { flex: 1 },
+  inviteTitle: { fontSize: 16, fontWeight: '600', color: '#0a0a0a', letterSpacing: -0.2 },
+  inviteSubtitle: { fontSize: 12, fontWeight: '400', color: 'rgba(0,0,0,0.38)', marginTop: 2 },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(37,99,235,0.05)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,235,0.12)',
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  inviteCodeBox: { flex: 1 },
+  inviteCodeText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1d3fa8',
+    letterSpacing: 4,
+  },
+  inviteCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(37,99,235,0.08)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,235,0.15)',
+  },
+  inviteCopyText: { fontSize: 12, fontWeight: '500', color: 'rgba(37,99,235,0.7)' },
+  inviteCopiedText: { fontSize: 12, fontWeight: '600', color: '#2563eb' },
+  inviteErrorText: { fontSize: 13, color: 'rgba(0,0,0,0.35)' },
+  inviteSendBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 13,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  inviteSendBtnText: { fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: -0.1 },
 });
