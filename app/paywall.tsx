@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Path, Rect, Line } from 'react-native-svg';
 import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
+import { setRejectedMainPaywall } from '@/lib/storage';
 import { LEGAL_URLS } from '@/constants/links';
 import { requestNativeReview } from '@/lib/review';
 import { getPaywallPackages, purchasePackage, restorePurchases } from '@/lib/purchases';
@@ -177,14 +178,6 @@ function IconShield() {
     <Svg width={13} height={13} viewBox="0 0 16 16" fill="none">
       <Path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 6.5 3-1 5.5-3 5.5-6.5V4L8 1.5z" stroke={C.textMuted} strokeWidth={1.2} fill="rgba(156,163,175,0.08)" />
       <Path d="M6 8.2L7.3 9.5 10 6.5" stroke={C.textMuted} strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function IconStarFilled() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 16 16" fill="none">
-      <Path d="M8 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L8 11.8 3.8 14l.8-4.7L1.2 6l4.7-.7z" fill="#FFB800" />
     </Svg>
   );
 }
@@ -628,11 +621,6 @@ function Screen3({
         <Text style={{ fontSize: 11, color: C.textMuted }}>Secure payment</Text>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12 }}>
-        {[1, 2, 3, 4, 5].map((i) => <IconStarFilled key={i} />)}
-        <Text style={{ fontSize: 12, color: C.textSecondary, marginLeft: 4 }}>Loved by 10,000+ users</Text>
-      </View>
-
       {/* Legal links */}
       <View style={s.legalRow}>
         <Pressable onPress={() => Linking.openURL(LEGAL_URLS.privacy)}>
@@ -737,7 +725,8 @@ export default function PaywallScreen() {
           style={{ minWidth: 50, alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 6 }}
           onPress={async () => {
             if (__DEV__) await setCompletedPurchase();
-            router.back();
+            await setRejectedMainPaywall();
+            router.replace('/promo');
           }}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
