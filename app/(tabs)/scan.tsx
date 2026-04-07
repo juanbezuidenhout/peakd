@@ -19,6 +19,7 @@ import {
   setPendingSideImageUri,
   setPendingSideBase64,
 } from '@/lib/scan-data';
+import { requestNativeReview } from '@/lib/review';
 
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   if (!visible) return null;
@@ -154,6 +155,13 @@ export default function ScanScreen() {
 
     setPendingImageUri(imageUri);
     setPendingSideImageUri(sideImageUri);
+
+    // Fire the native iOS review prompt at the moment of peak anticipation —
+    // just after the user commits to the scan, before the loading screen appears.
+    // The once-per-install guard inside requestNativeReview ensures this never
+    // shows more than once. It is non-blocking so navigation proceeds regardless.
+    requestNativeReview();
+
     router.push({
       pathname: '/(onboarding)/analyzing',
       params: { imageUri },
