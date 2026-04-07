@@ -18,10 +18,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.peakdapp.ios",
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default",
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -30,12 +27,6 @@
               "com.googleusercontent.apps.780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg"
             ]
           },
-          {
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg"
-            ]
-          }
-        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -85,6 +76,14 @@
               "icon": "gift"
             }
           ]
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "privacyManifestAggregationEnabled": true
+          }
         }
       ]
     ],
