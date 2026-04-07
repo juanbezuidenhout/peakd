@@ -33,7 +33,7 @@ import { setRejectedMainPaywall } from '@/lib/storage';
 import { LEGAL_URLS } from '@/constants/links';
 import { requestNativeReview } from '@/lib/review';
 import { getPaywallPackages, purchasePackage, restorePurchases, getPromoPackage } from '@/lib/purchases';
-import { validateAndRedeemInviteCode } from '@/lib/inviteCodes';
+import { validateAndRedeemInviteCode, type InviteGrantType } from '@/lib/inviteCodes';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -430,7 +430,7 @@ function Screen2({
 // INVITE CODE REDEMPTION BLOCK
 // ══════════════════════════════════════════════════════════════════════════
 
-function InviteCodeRedemption({ onRedeemCode }: { onRedeemCode: () => void }) {
+function InviteCodeRedemption({ onRedeemCode }: { onRedeemCode: (grantType: InviteGrantType) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [code, setCode] = useState('');
   const [validating, setValidating] = useState(false);
@@ -445,7 +445,7 @@ function InviteCodeRedemption({ onRedeemCode }: { onRedeemCode: () => void }) {
     const result = await validateAndRedeemInviteCode(trimmed);
     setValidating(false);
     if (result.valid) {
-      onRedeemCode();
+      onRedeemCode(result.grantType ?? 'discount');
     } else {
       setError(result.error ?? 'Invalid code.');
     }
@@ -492,7 +492,7 @@ function InviteCodeRedemption({ onRedeemCode }: { onRedeemCode: () => void }) {
           {error ? (
             <Text style={s.inviteRedemptionError}>{error}</Text>
           ) : (
-            <Text style={s.inviteRedemptionHint}>Valid codes unlock 40% off your plan</Text>
+            <Text style={s.inviteRedemptionHint}>Valid codes unlock exclusive access</Text>
           )}
         </View>
       )}
@@ -519,7 +519,7 @@ function Screen3({
   onPurchase: (pkg: PurchasesPackage) => void;
   onRestore: () => void;
   purchasing: boolean;
-  onRedeemCode: () => void;
+  onRedeemCode: (grantType: InviteGrantType) => void;
 }) {
   const [pricingMode, setPricingMode] = useState<'lifetime' | 'weekly'>('lifetime');
 
@@ -763,10 +763,15 @@ export default function PaywallScreen() {
     }
   };
 
-  const handleRedeemCode = async () => {
-    // Valid invite code — route to the promo screen ($14.99 = 40% off $24.99)
-    await setRejectedMainPaywall();
-    router.replace('/promo');
+  const handleRedeemCode = async (grantType: InviteGrantType) => {
+    if (grantType === 'free_access') {
+      await setCompletedPurchase();
+      await setRejectedMainPaywall();
+      router.replace('/(tabs)/home');
+    } else {
+      await setRejectedMainPaywall();
+      router.replace('/promo');
+    }
   };
 
   const handleRestore = async () => {
@@ -800,17 +805,21 @@ export default function PaywallScreen() {
       <View style={[s.nav, { paddingTop: insets.top + 8 }]}>
         <View style={{ width: 50 }} />
         <Dots current={step - 1} />
-        <Pressable
-          style={{ minWidth: 50, alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 6 }}
-          onPress={async () => {
-            if (__DEV__) await setCompletedPurchase();
-            await setRejectedMainPaywall();
-            router.replace('/promo');
-          }}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Text style={{ fontSize: 12, fontWeight: '400', color: '#B0B8C9' }}>Not now</Text>
-        </Pressable>
+        {step === 3 ? (
+          <Pressable
+            style={{ minWidth: 50, alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 6 }}
+            onPress={async () => {
+              if (__DEV__) await setCompletedPurchase();
+              await setRejectedMainPaywall();
+              router.replace('/promo');
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '400', color: '#B0B8C9' }}>Not now</Text>
+          </Pressable>
+        ) : (
+          <View style={{ minWidth: 50 }} />
+        )}
       </View>
 
       {/* Step content */}

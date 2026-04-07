@@ -83,13 +83,20 @@ export async function getOrCreateInviteCode(): Promise<string | null> {
   return newCode;
 }
 
+export type InviteGrantType = 'discount' | 'free_access';
+
 /**
  * Validates an invite code entered by a new user on the paywall.
  * Returns true if the code exists and has not exceeded max_uses.
  * Also increments times_used on success.
+ *
+ * `grantType` tells the caller what the code unlocks:
+ *   - 'discount'    → route to promo paywall (40 % off)
+ *   - 'free_access' → grant full access with no payment
  */
 export async function validateAndRedeemInviteCode(code: string): Promise<{
   valid: boolean;
+  grantType?: InviteGrantType;
   error?: string;
 }> {
   const normalised = code.trim().toUpperCase();
@@ -98,10 +105,9 @@ export async function validateAndRedeemInviteCode(code: string): Promise<{
     return { valid: false, error: 'Codes are 6 characters long.' };
   }
 
-  // Look up the code
   const { data, error } = await supabase
     .from('invite_codes')
-    .select('id, times_used, max_uses')
+    .select('id, times_used, max_uses, grant_type')
     .eq('code', normalised)
     .maybeSingle();
 
@@ -113,11 +119,12 @@ export async function validateAndRedeemInviteCode(code: string): Promise<{
     return { valid: false, error: 'This invite code has expired.' };
   }
 
-  // Increment times_used
   await supabase
     .from('invite_codes')
     .update({ times_used: data.times_used + 1 })
     .eq('id', data.id);
 
-  return { valid: true };
+  const grantType: InviteGrantType = data.grant_type === 'free_access' ? 'free_access' : 'discount';
+
+  return { valid: true, grantType };
 }
