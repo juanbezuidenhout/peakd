@@ -61,7 +61,7 @@ export default function HeroScreen() {
             <Circle cx={130} cy={130} r={110} stroke={Colors.primary} strokeWidth={8} fill="none" strokeDasharray="518 691" strokeDashoffset="173" strokeLinecap="round" transform="rotate(-90 130 130)" />
           </Svg>
           <View style={styles.countdownTextContainer}>
-            <Text style={styles.countdownNumber}>60</Text>
+            <Text style={styles.countdownNumber}>90</Text>
             <Text style={styles.countdownLabel}>DAYS UNTIL</Text>
             <Text style={styles.countdownAccent}>YOUR PEAK</Text>
           </View>
@@ -95,7 +95,7 @@ export default function HeroScreen() {
           </ReAnimated.View>
           <ReAnimated.View entering={FadeInUp.delay(450).duration(500)}>
             <Text style={styles.subtext}>
-              Your beauty archetype, glow score, and 60-day protocol. Built by AI in 60 seconds.
+              Your beauty archetype, glow score, and 90-day protocol. Built by AI in 60 seconds.
             </Text>
           </ReAnimated.View>
         </View>

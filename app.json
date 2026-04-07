@@ -4,7 +4,7 @@
     "slug": "peakd",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/peakd_icon_inverted_1024_final.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
     "scheme": "peakd",
@@ -14,10 +14,14 @@
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
+      "icon": "./assets/peakd_icon_inverted_1024_final.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.peakdapp.ios",
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": [
+          "Default",
+          "Default"
+        ]
       },
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -25,18 +29,28 @@
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg"
             ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg"
+            ]
           }
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "foregroundImage": "./assets/peakd_icon_inverted_1024_final.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.peakdapp.ios"
+      "package": "com.peakdapp.ios",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -60,7 +74,26 @@
       "@react-native-community/datetimepicker",
       "expo-web-browser",
       "expo-apple-authentication",
-      "@react-native-google-signin/google-signin"
-    ]
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-quick-actions",
+        {
+          "iosActions": [
+            {
+              "id": "promo",
+              "title": "Try Peakd Pro at a fraction of the cost",
+              "icon": "gift"
+            }
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aaed22f7-b5d1-43da-8655-bad9f1c0a746"
+      }
+    },
+    "owner": "juanbezzzzz"
   }
 }

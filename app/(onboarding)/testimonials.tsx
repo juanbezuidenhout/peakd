@@ -74,10 +74,8 @@ export default function TestimonialsScreen() {
             <Text style={styles.avatarSmallText}>{initial}</Text>
           </View>
         ))}
-        <Text style={styles.avatarCountText}>+50k women</Text>
+        <Text style={styles.avatarCountText}>+50,000 women</Text>
       </View>
-
-      <Text style={styles.subheadline}>Peakd is the #1 beauty intelligence app</Text>
 
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
         {TESTIMONIALS.map((t, index) => (
@@ -92,7 +90,6 @@ export default function TestimonialsScreen() {
               </View>
               <View style={styles.nameBlock}>
                 <Text style={styles.expertName}>{t.name}</Text>
-                <Text style={styles.handle}>{t.handle}</Text>
               </View>
             </View>
             <View style={styles.cardStarsRow}>
@@ -105,6 +102,10 @@ export default function TestimonialsScreen() {
           </Animated.View>
         ))}
       </ScrollView>
+
+      <Text style={styles.disclaimer}>
+        Individual results may vary. Peakd provides personalised guidance, not medical advice.
+      </Text>
 
       <View style={styles.bottom}>
         <PrimaryButton
@@ -184,13 +185,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginLeft: 8,
   },
-  subheadline: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: 8,
-    marginBottom: 24,
-  },
   scrollArea: {
     flex: 1,
   },
@@ -226,11 +220,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textPrimary,
   },
-  handle: {
-    fontSize: 12,
-    color: Colors.primary,
-    marginTop: 2,
-  },
   cardStarsRow: {
     flexDirection: 'row',
     marginTop: 8,
@@ -251,6 +240,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 20,
+  },
+  disclaimer: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    paddingTop: 12,
   },
   bottom: {
     paddingBottom: 24,

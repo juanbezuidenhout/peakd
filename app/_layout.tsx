@@ -11,6 +11,7 @@ import { configureRevenueCat, identifyRevenueCatUser } from "@/lib/purchases";
 import { useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as Linking from "expo-linking";
+import { useQuickActionRouting } from "expo-quick-actions/router";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,6 +20,8 @@ LogBox.ignoreAllLogs();
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const router = useRouter();
+
+  useQuickActionRouting();
 
   useEffect(() => {
     configureRevenueCat();
