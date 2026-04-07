@@ -19,6 +19,7 @@ const KEYS = {
   USER_WEIGHT: "peakd_user_weight",
   USER_GLOW_LEVEL: "peakd_user_glow_level",
   USER_AESTHETIC: "peakd_user_aesthetic",
+  HAS_REJECTED_MAIN_PAYWALL: "peakd_has_rejected_main_paywall",
 } as const;
 
 export async function getItem<T>(key: string): Promise<T | null> {
@@ -269,6 +270,14 @@ export async function hasCompletedPurchase(): Promise<boolean> {
 
 export async function setCompletedPurchase(): Promise<void> {
   await setItem(KEYS.HAS_COMPLETED_PURCHASE, true);
+}
+
+export async function hasRejectedMainPaywall(): Promise<boolean> {
+  return (await getItem<boolean>(KEYS.HAS_REJECTED_MAIN_PAYWALL)) ?? false;
+}
+
+export async function setRejectedMainPaywall(): Promise<void> {
+  await setItem(KEYS.HAS_REJECTED_MAIN_PAYWALL, true);
 }
 
 export { KEYS };
