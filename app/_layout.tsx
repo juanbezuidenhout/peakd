@@ -4,7 +4,7 @@ import { LogBox } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { isOnboardingComplete, hasCompletedPurchase } from "@/lib/storage";
+import { isOnboardingComplete, hasCompletedPurchase, getItem, KEYS } from "@/lib/storage";
 import { setPendingReferrer, extractReferrerFromUrl } from "@/lib/referral";
 import { supabase } from "@/lib/supabase";
 import { configureRevenueCat, identifyRevenueCatUser } from "@/lib/purchases";
@@ -66,8 +66,12 @@ export default function RootLayout() {
         // No session but has completed purchase
         router.replace("/(tabs)/home");
       } else if (onboarded) {
-        // No session, not paid, but onboarding complete
-        router.replace("/(tabs)/scan");
+        const hasScan = await getItem(KEYS.SCAN_RESULT);
+        if (hasScan) {
+          router.replace("/results");
+        } else {
+          router.replace("/(tabs)/scan");
+        }
       }
       // Otherwise, stay in onboarding (no navigation)
     })();
@@ -98,6 +102,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="paywall"
           options={{ animation: "slide_from_bottom", presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="promo"
+          options={{ animation: "slide_from_bottom", presentation: "modal", gestureEnabled: false }}
         />
         <Stack.Screen
           name="settings"
