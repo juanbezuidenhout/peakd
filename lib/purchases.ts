@@ -70,3 +70,14 @@ export async function restorePurchases(): Promise<boolean> {
     return false;
   }
 }
+
+export async function getPromoPackage(): Promise<PurchasesPackage | null> {
+  try {
+    const offerings = await Purchases.getOfferings();
+    const promoOffering = offerings.all['promo'];
+    if (!promoOffering) return null;
+    return promoOffering.lifetime ?? null;
+  } catch {
+    return null;
+  }
+}
