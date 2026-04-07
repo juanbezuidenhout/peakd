@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { ScreenLoader } from '@/components/ui/WaveformLoader';
 import { getItem, hasCompletedPurchase, KEYS } from '@/lib/storage';
+import { hasRejectedMainPaywall } from '@/lib/storage';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -139,6 +140,7 @@ export default function ResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [displayScore, setDisplayScore] = useState('0.0');
   const [hasPaid, setHasPaid] = useState(false);
+  const [rejectedMain, setRejectedMain] = useState(false);
 
   const progress = useSharedValue(0);
   const scoreScale = useSharedValue(1);
@@ -160,6 +162,8 @@ export default function ResultsScreen() {
       ]);
       if (scanResult) setResult(scanResult);
       setHasPaid(paid);
+      const rejected = await hasRejectedMainPaywall();
+      setRejectedMain(rejected);
       setLoading(false);
     })();
   }, []);
@@ -505,7 +509,7 @@ export default function ResultsScreen() {
             </Text>
             <PrimaryButton
               label="Show me my plan"
-              onPress={() => router.push('/paywall')}
+              onPress={() => router.push(rejectedMain ? '/promo' : '/paywall')}
             />
           </Animated.View>
         )}
