@@ -117,15 +117,6 @@ function IconStar() {
   );
 }
 
-function IconCamera() {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
-      <Rect x={1.5} y={4.5} width={13} height={9} rx={2} stroke={C.blue} strokeWidth={1.3} fill="rgba(74,144,217,0.1)" />
-      <Path d="M5.5 4.5L6.5 2.5h3l1 2" stroke={C.blue} strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" />
-      <Circle cx={8} cy={9} r={2.2} stroke={C.blue} strokeWidth={1.3} />
-    </Svg>
-  );
-}
 
 function IconCheckCircle() {
   return (
@@ -190,8 +181,8 @@ function IconArrowRight() {
   );
 }
 
-const CATEGORY_ICONS = [IconDroplet, IconDiamond, IconStar, IconCamera, IconCheckCircle, IconDroplet, IconDiamond, IconStar];
-const PHASE_ICONS = [IconDroplet, IconDiamond, IconStar, IconCamera];
+const CATEGORY_ICONS = [IconDroplet, IconDiamond, IconStar, IconTrendUp, IconCheckCircle, IconDroplet, IconDiamond, IconStar];
+const PHASE_ICONS = [IconDroplet, IconDiamond, IconStar, IconTrendUp];
 
 const CATEGORY_KEYS: (keyof FeatureScores)[] = [
   'skinQuality', 'facialStructure', 'eyes', 'nose', 'lipsAndMouth', 'eyebrows', 'hair', 'overallHarmony',
