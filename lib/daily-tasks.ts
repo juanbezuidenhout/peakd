@@ -53,7 +53,7 @@ function getLowestScoringFeature(scores: FeatureScores): { key: string; name: st
   let lowestKey = 'skinQuality';
   let lowestScore = 10;
 
-  for (const [key, value] of Object.entries(scores)) {
+  for (const [key, value] of Object.entries(scores ?? {})) {
     if (value.score < lowestScore) {
       lowestScore = value.score;
       lowestKey = key;

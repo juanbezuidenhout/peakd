@@ -117,7 +117,8 @@ function getScoreDotColor(score: number): string {
   return BENTO.amber;
 }
 
-function getTop3Features(featureScores: FeatureScores) {
+function getTop3Features(featureScores: FeatureScores | null | undefined) {
+  if (!featureScores || typeof featureScores !== 'object') return [];
   return (Object.entries(featureScores) as [string, { score: number; summary: string }][])
     .sort((a, b) => b[1].score - a[1].score)
     .slice(0, 3)

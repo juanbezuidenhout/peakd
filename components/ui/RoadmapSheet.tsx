@@ -247,7 +247,8 @@ export function RoadmapSheet({ visible, onClose }: RoadmapSheetProps) {
     return level.includes('hardmaxxing') || level.includes('hard-maxxing') || level.includes('experimental');
   }, [glowLevel]);
 
-  const getLowestScoreFeatures = useCallback((scores: FeatureScores): string[] => {
+  const getLowestScoreFeatures = useCallback((scores: FeatureScores | null | undefined): string[] => {
+    if (!scores || typeof scores !== 'object') return [];
     const entries = Object.entries(scores)
       .map(([key, value]) => ({ key, score: value.score }))
       .sort((a, b) => a.score - b.score);
