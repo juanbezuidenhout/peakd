@@ -15,7 +15,7 @@ import {
   Platform,
   ActivityIndicator,
   Keyboard,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -41,7 +41,6 @@ import {
 import type { FaceAnalysisResult } from '@/lib/anthropic';
 import { supabase } from '@/lib/supabase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -183,9 +182,9 @@ interface ActionCardProps {
   delay: number;
 }
 
-function ActionCard({ icon, label, onPress, delay }: ActionCardProps) {
+function ActionCard({ icon, label, onPress, delay, cardWidth }: ActionCardProps & { cardWidth?: number }) {
   return (
-    <Animated.View entering={FadeInDown.delay(delay).duration(320)} style={styles.actionCardWrapper}>
+    <Animated.View entering={FadeInDown.delay(delay).duration(320)} style={[styles.actionCardWrapper, cardWidth != null && { width: cardWidth }]}>
       <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]} onPress={onPress}>
         <View style={[styles.bracket, styles.bracketTL]} />
         <View style={[styles.bracket, styles.bracketTR]} />
@@ -255,6 +254,7 @@ function buildSystemPrompt(ctx: UserContext): string {
 }
 
 export default function CoachScreen() {
+  const { width: screenWidth } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
 
@@ -356,7 +356,7 @@ export default function CoachScreen() {
               <Text style={styles.emptyTitle}>See if it's right for you</Text>
               <View style={styles.actionGrid}>
                 {actionCards.map((card, i) => (
-                  <ActionCard key={card.label} icon={card.icon} label={card.label} onPress={() => sendMessage(card.prompt)} delay={i * 55} />
+                  <ActionCard key={card.label} icon={card.icon} label={card.label} onPress={() => sendMessage(card.prompt)} delay={i * 55} cardWidth={(screenWidth - 32 - 10) / 2} />
                 ))}
               </View>
               <Text style={styles.orPickPrompt}>or pick a prompt</Text>
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1 },
   emptyTitle: { fontSize: 14, fontWeight: '400', color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 18, letterSpacing: 0.1 },
   actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 26 },
-  actionCardWrapper: { width: (SCREEN_WIDTH - 32 - 10) / 2 },
+  actionCardWrapper: {},
   actionCard: { backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', paddingVertical: 22, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', minHeight: 118, position: 'relative' },
   actionCardPressed: { backgroundColor: 'rgba(255,255,255,0.13)' },
   bracket: { position: 'absolute', width: 13, height: 13, borderColor: 'rgba(255,255,255,0.28)' },
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   bubbleRowUser: { justifyContent: 'flex-end' },
   bubbleRowAI: { justifyContent: 'flex-start' },
   aiBadge: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2 },
-  bubble: { maxWidth: SCREEN_WIDTH * 0.72, borderRadius: 18, paddingVertical: 11, paddingHorizontal: 15 },
+  bubble: { maxWidth: '72%', borderRadius: 18, paddingVertical: 11, paddingHorizontal: 15 },
   bubbleUser: { backgroundColor: '#2563eb', borderBottomRightRadius: 5 },
   bubbleAI: { backgroundColor: 'rgba(255,255,255,0.09)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)', borderBottomLeftRadius: 5 },
   bubbleText: { fontSize: 15, lineHeight: 22, fontWeight: '400' },

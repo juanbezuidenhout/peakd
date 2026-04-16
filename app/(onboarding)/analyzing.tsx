@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Text, View, Dimensions, Alert } from 'react-native';
+import { StyleSheet, Text, View, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -20,10 +20,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { analyzeFaceWithRetry, FaceAnalysisResult } from '@/lib/anthropic';
 import { consumePendingBase64, getPendingImageUri, getPendingSideImageUri, getPendingSideBase64 } from '@/lib/scan-data';
-import { setItem, getItem, KEYS } from '@/lib/storage';
+import { setItem, getItem, KEYS, setLastScanDate } from '@/lib/storage';
 import { handleScanCompletion, PENDING_REFERRER_KEY } from '@/lib/referral';
-
-const screenHeight = Dimensions.get('window').height;
 
 const CATEGORIES = ['Eyes', 'Skin', 'Structure', 'Symmetry', 'Jawline', 'Archetype'];
 
@@ -141,6 +139,7 @@ function AnalysisCard({
 
 export default function AnalyzingScreen() {
   const router = useRouter();
+  const { height: screenHeight } = useWindowDimensions();
   const [unlockedCount, setUnlockedCount] = useState(0);
   const apiResultRef = useRef<{
     analysis: FaceAnalysisResult;
@@ -247,6 +246,7 @@ export default function AnalyzingScreen() {
         await setItem<FaceAnalysisResult>(KEYS.SCAN_RESULT, response.analysis);
         if (response.scanId) await setItem('scan_id', response.scanId);
         await setItem(KEYS.SCAN_IMAGE_URI, uri);
+        await setLastScanDate();
 
         // Check for pending referral and trigger scan completion
         const pendingReferrerId = await getItem<string>(PENDING_REFERRER_KEY);
@@ -307,11 +307,27 @@ export default function AnalyzingScreen() {
       );
     }, 1600));
 
-    // Navigate to results (data already persisted to storage)
-    timers.push(setTimeout(() => router.replace('/results'), 1800));
+    timers.push(setTimeout(() => {
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        router.replace('/results');
+      }
+    }, 1800));
 
     return () => timers.forEach(clearTimeout);
   }, [apiDone, unlockedCount, flashProgress, explosionScale, router]);
+
+  // ── Safety fallback: ensure navigation even if animations stall on iPad
+  const navigatedRef = useRef(false);
+  useEffect(() => {
+    const fallback = setTimeout(() => {
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        router.replace('/results');
+      }
+    }, 120000);
+    return () => clearTimeout(fallback);
+  }, [router]);
 
   // ── Animated flash style for root container ────────────────────────────
   const flashStyle = useAnimatedStyle(() => ({
@@ -327,7 +343,7 @@ export default function AnalyzingScreen() {
   return (
     <AnimatedSafeAreaView style={[styles.container, flashStyle]}>
       {/* ── Zone 1: Header ─────────────────────────────────────────────── */}
-      <View style={styles.headerZone}>
+      <View style={[styles.headerZone, { height: screenHeight * 0.42 }]}>
         <Animated.View style={[styles.scanLine, scanLineStyle]} />
 
         <Animated.View style={circleRotationStyle}>
@@ -391,7 +407,6 @@ const styles = StyleSheet.create({
   },
   headerZone: {
     backgroundColor: '#0D1F3C',
-    height: screenHeight * 0.42,
     width: '100%',
     position: 'relative',
     overflow: 'hidden',

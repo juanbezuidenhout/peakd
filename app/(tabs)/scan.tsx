@@ -171,6 +171,9 @@ export default function ScanScreen() {
   return (
     <SafeScreen>
       <View style={styles.header}>
+        <Pressable onPress={() => router.replace('/(tabs)/home')} hitSlop={12}>
+          <Text style={{ fontSize: 28, color: Colors.navy }}>‹</Text>
+        </Pressable>
         <Text style={styles.headerTitle}>Scan</Text>
         {hasPaid && (
           <Pressable

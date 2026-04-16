@@ -1,5 +1,6 @@
 import Purchases, { LOG_LEVEL, PurchasesPackage } from 'react-native-purchases';
 import { Platform } from 'react-native';
+import { isReviewerAccount } from './supabase';
 
 const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY!;
 const ENTITLEMENT_ID = 'pro';
@@ -27,6 +28,7 @@ export async function resetRevenueCatUser(): Promise<void> {
 }
 
 export async function hasPremiumAccess(): Promise<boolean> {
+  if (await isReviewerAccount()) return true;
   try {
     const info = await Purchases.getCustomerInfo();
     return typeof info.entitlements.active[ENTITLEMENT_ID] !== 'undefined';

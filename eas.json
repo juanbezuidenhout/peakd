@@ -12,7 +12,14 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://dowdouiybyxrwtoysbne.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvd2RvdWl5Ynl4cnd0b3lzYm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MjEyOTcsImV4cCI6MjA5MDE5NzI5N30.2Tb0FsUOPGq9JHo0Uze7oI6E78mCeUEkNpuBttkqFMI",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "780637254342-odor9kp00cvd2gra5h3b43o3q2bssr5q.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY": "appl_MauyaBxSLHgHzDSjgElbjOeZDuw"
+      }
     }
   },
   "submit": {

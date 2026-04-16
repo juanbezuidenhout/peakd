@@ -89,6 +89,8 @@ export default function ScanProcessingScreen() {
     return () => clearInterval(interval);
   }, [complete, error]);
 
+  const navigatedRef = useRef(false);
+
   useEffect(() => {
     if (complete) {
       completeRef.current = true;
@@ -96,11 +98,25 @@ export default function ScanProcessingScreen() {
       setProgressPercent(100);
       barWidth.value = withTiming(100, { duration: 400 });
       const timeout = setTimeout(() => {
-        router.replace('/results');
+        if (!navigatedRef.current) {
+          navigatedRef.current = true;
+          router.replace('/results');
+        }
       }, 800);
       return () => clearTimeout(timeout);
     }
   }, [complete, router, barWidth]);
+
+  // Safety fallback: ensure navigation even if animations stall on iPad
+  useEffect(() => {
+    const fallback = setTimeout(() => {
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        router.replace('/results');
+      }
+    }, 120000);
+    return () => clearTimeout(fallback);
+  }, [router]);
 
   const runAnalysis = useCallback(async () => {
     setError(null);
@@ -168,7 +184,7 @@ export default function ScanProcessingScreen() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Analysis failed';
       console.error('[ScanProcessing] Error:', msg);
-      Alert.alert('Debug Error', msg);
+      Alert.alert('Error', msg);
       setError(msg);
     }
   }, [barWidth, paramImageUri]);

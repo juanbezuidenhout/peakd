@@ -12,3 +12,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+const REVIEWER_EMAIL = 'appreviewer@trypeakd.com';
+
+export async function isReviewerAccount(): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user?.email === REVIEWER_EMAIL;
+  } catch {
+    return false;
+  }
+}

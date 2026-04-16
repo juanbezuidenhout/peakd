@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar, Dimensions, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, StatusBar, Animated, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import ReAnimated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const BEFORE_IMAGE = require('../../assets/images/splash-before.jpg');
 const AFTER_IMAGE = require('../../assets/images/splash-after.jpg');
@@ -18,6 +16,7 @@ const FADE_DURATION = 400;
 
 export default function HeroScreen() {
   const router = useRouter();
+  const { height: screenHeight } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
 
@@ -45,7 +44,7 @@ export default function HeroScreen() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <View style={styles.topZone}>
+      <View style={[styles.topZone, { height: screenHeight * 0.52 }]}>
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[0] }]}>
           <Image source={BEFORE_IMAGE} style={styles.slideImage} resizeMode="cover" />
         </Animated.View>
@@ -114,7 +113,7 @@ export default function HeroScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  topZone: { width: '100%', height: SCREEN_HEIGHT * 0.58, overflow: 'hidden', backgroundColor: Colors.background },
+  topZone: { width: '100%', overflow: 'hidden', backgroundColor: Colors.background },
   slideImage: { width: '100%', height: '100%' },
   slideCenter: { justifyContent: 'center', alignItems: 'center' },
   topGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 },

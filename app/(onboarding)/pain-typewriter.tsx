@@ -78,7 +78,10 @@ export default function PainTypewriterScreen() {
           timeoutRef.current = setTimeout(() => {
             if (!mountedRef.current) return;
             if (isLast) {
-              router.push('/(onboarding)/quiz-name');
+              if (!navigatedRef.current) {
+                navigatedRef.current = true;
+                router.push('/(onboarding)/quiz-name');
+              }
             } else {
               playSentence(index + 1);
             }
@@ -98,13 +101,23 @@ export default function PainTypewriterScreen() {
     }, TYPING_SPEED_MS);
   }
 
+  const navigatedRef = useRef(false);
+
   useEffect(() => {
     mountedRef.current = true;
     playSentence(0);
 
+    const fallback = setTimeout(() => {
+      if (!navigatedRef.current && mountedRef.current) {
+        navigatedRef.current = true;
+        router.push('/(onboarding)/quiz-name');
+      }
+    }, 60000);
+
     return () => {
       mountedRef.current = false;
       clearTimers();
+      clearTimeout(fallback);
     };
   }, []);
 

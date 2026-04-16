@@ -7,7 +7,7 @@ import {
   TextInput,
   Alert,
   Platform,
-  Dimensions,
+  useWindowDimensions,
   Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -30,7 +30,6 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import Svg, { Path } from "react-native-svg";
 import "react-native-get-random-values";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // Google "G" logo SVG
 function GoogleLogo({ size = 20 }: { size?: number }) {
@@ -183,6 +182,7 @@ function WaveformLoader({ color = "#FFFFFF" }: { color?: string }) {
 
 export default function AuthScreen() {
   const router = useRouter();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [loadingApple, setLoadingApple] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
@@ -325,7 +325,7 @@ export default function AuthScreen() {
         <GlowOrb
           size={350}
           color="#7c3aed"
-          top={SCREEN_HEIGHT * 0.05}
+          top={screenHeight * 0.05}
           left={-100}
           opacity={0.25}
           delay={0}
@@ -333,15 +333,15 @@ export default function AuthScreen() {
         <GlowOrb
           size={280}
           color="#a855f7"
-          top={SCREEN_HEIGHT * 0.25}
-          left={SCREEN_WIDTH - 180}
+          top={screenHeight * 0.25}
+          left={screenWidth - 180}
           opacity={0.2}
           delay={500}
         />
         <GlowOrb
           size={200}
           color="#6366f1"
-          top={SCREEN_HEIGHT * 0.55}
+          top={screenHeight * 0.55}
           left={50}
           opacity={0.15}
           delay={1000}

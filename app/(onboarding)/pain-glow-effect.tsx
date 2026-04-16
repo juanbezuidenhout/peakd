@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import {
-  Dimensions,
   Pressable,
   StyleSheet,
   Text,
@@ -28,7 +27,6 @@ import Animated, {
 import { Colors } from '@/constants/colors';
 import { SafeScreen } from '@/components/layout/SafeScreen';
 
-const { width: SCREEN_W } = Dimensions.get('window');
 const ICON_SIZE = 38;
 
 function InstagramIcon({ size = ICON_SIZE, gradientId = 'igBg' }: { size?: number; gradientId?: string }) {

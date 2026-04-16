@@ -124,7 +124,7 @@ export default function PromoScreen() {
       const success = await purchasePackage(pkg);
       if (success) {
         await setCompletedPurchase();
-        router.replace('/(tabs)/home');
+        router.replace('/(onboarding)/auth');
       }
     } finally {
       setPurchasing(false);
@@ -137,7 +137,7 @@ export default function PromoScreen() {
       const success = await restorePurchases();
       if (success) {
         await setCompletedPurchase();
-        router.replace('/(tabs)/home');
+        router.replace('/(onboarding)/auth');
       } else {
         Alert.alert('No Purchases Found', "We couldn't find any previous purchases to restore.");
       }
@@ -165,7 +165,7 @@ export default function PromoScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={{ paddingTop: insets.top + 16 }} />
+      <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 20 }} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

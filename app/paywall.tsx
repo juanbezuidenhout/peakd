@@ -4,7 +4,7 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -32,11 +32,10 @@ import { getItem, KEYS, setCompletedPurchase } from '@/lib/storage';
 import { setRejectedMainPaywall } from '@/lib/storage';
 import { LEGAL_URLS } from '@/constants/links';
 import { requestNativeReview } from '@/lib/review';
-import { getPaywallPackages, purchasePackage, restorePurchases, getPromoPackage } from '@/lib/purchases';
+import { getPaywallPackages, purchasePackage, restorePurchases, getPromoPackage, hasPremiumAccess } from '@/lib/purchases';
 import { validateAndRedeemInviteCode, type InviteGrantType } from '@/lib/inviteCodes';
 import type { FaceAnalysisResult, FeatureScores } from '@/lib/anthropic';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ── Design tokens (light theme) ───────────────────────────────────────────
 const C = {
@@ -521,9 +520,10 @@ function Screen3({
   purchasing: boolean;
   onRedeemCode: (grantType: InviteGrantType) => void;
 }) {
+  const { width: screenWidth } = useWindowDimensions();
   const [pricingMode, setPricingMode] = useState<'lifetime' | 'weekly'>('lifetime');
 
-  const TOGGLE_WIDTH = SCREEN_WIDTH - 40;
+  const TOGGLE_WIDTH = screenWidth - 40;
   const PILL_WIDTH = (TOGGLE_WIDTH - 6) / 2;
 
   const pillTranslateX = useSharedValue(0);
@@ -738,6 +738,12 @@ export default function PaywallScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    hasPremiumAccess().then((premium) => {
+      if (premium) router.replace('/(tabs)/home');
+    });
+  }, []);
+
   const goBack = () => {
     if (step === 1) router.back();
     else { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep((s) => s - 1); }
@@ -756,7 +762,7 @@ export default function PaywallScreen() {
       if (success) {
         await setCompletedPurchase();
         await requestNativeReview();
-        router.replace('/(tabs)/home');
+        router.replace('/(onboarding)/auth');
       }
     } finally {
       setPurchasing(false);
@@ -767,7 +773,7 @@ export default function PaywallScreen() {
     if (grantType === 'free_access') {
       await setCompletedPurchase();
       await setRejectedMainPaywall();
-      router.replace('/(tabs)/home');
+      router.replace('/(onboarding)/auth');
     } else {
       await setRejectedMainPaywall();
       router.replace('/promo');
@@ -780,7 +786,7 @@ export default function PaywallScreen() {
       const success = await restorePurchases();
       if (success) {
         await setCompletedPurchase();
-        router.replace('/(tabs)/home');
+        router.replace('/(onboarding)/auth');
       } else {
         Alert.alert('No Purchases Found', "We couldn't find any previous purchases to restore.");
       }
@@ -809,7 +815,6 @@ export default function PaywallScreen() {
           <Pressable
             style={{ minWidth: 50, alignItems: 'flex-end', justifyContent: 'center', paddingVertical: 6 }}
             onPress={async () => {
-              if (__DEV__) await setCompletedPurchase();
               await setRejectedMainPaywall();
               router.replace('/promo');
             }}
@@ -848,6 +853,15 @@ export default function PaywallScreen() {
           </Animated.View>
         )}
       </View>
+
+      <Pressable
+        onPress={() => router.replace('/(onboarding)/auth')}
+        style={{ paddingVertical: 12, paddingBottom: insets.bottom + 12, alignItems: 'center' }}
+      >
+        <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+          Already have an account? <Text style={{ textDecorationLine: 'underline' }}>Sign in</Text>
+        </Text>
+      </Pressable>
     </View>
   );
 }

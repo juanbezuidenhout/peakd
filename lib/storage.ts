@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isReviewerAccount } from "./supabase";
 
 const KEYS = {
   ONBOARDING_COMPLETE: "peakd_onboarding_complete",
@@ -167,7 +168,20 @@ export async function getScanCooldownStatus(): Promise<ScanCooldownStatus> {
   const now = new Date();
 
   if (!lastScan) {
-    // No previous scan - allow immediately, next available is 7 days from now
+    const existingResult = await getItem<unknown>(KEYS.SCAN_RESULT);
+    if (existingResult) {
+      // Scan result exists but date was never recorded (legacy onboarding) — backfill now
+      await setLastScanDate(now);
+      const nextAvailable = new Date(now.getTime() + COOLDOWN_DAYS * MS_PER_DAY);
+      return {
+        canRetake: false,
+        daysRemaining: COOLDOWN_DAYS,
+        hoursRemaining: 0,
+        nextAvailableDate: nextAvailable,
+        daysSinceLastScan: 0,
+      };
+    }
+    // Truly no previous scan — allow immediately
     const nextAvailable = new Date(now.getTime() + COOLDOWN_DAYS * MS_PER_DAY);
     return {
       canRetake: true,
@@ -265,6 +279,7 @@ export async function getIsPro(): Promise<boolean> {
 }
 
 export async function hasCompletedPurchase(): Promise<boolean> {
+  if (await isReviewerAccount()) return true;
   return (await getItem<boolean>(KEYS.HAS_COMPLETED_PURCHASE)) ?? false;
 }
 

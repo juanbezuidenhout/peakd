@@ -1,8 +1,6 @@
-import { View, Pressable, Modal, StyleSheet, Dimensions } from "react-native";
+import { View, Pressable, Modal, StyleSheet, useWindowDimensions } from "react-native";
 import Animated, { SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { Colors } from "@/constants/colors";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface BottomSheetProps {
   visible: boolean;
@@ -11,6 +9,8 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+  const { height } = useWindowDimensions();
+
   if (!visible) return null;
 
   return (
@@ -20,7 +20,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         <Animated.View
           entering={SlideInDown.duration(300)}
           exiting={SlideOutDown.duration(200)}
-          style={styles.sheet}
+          style={[styles.sheet, { maxHeight: height * 0.85 }]}
         >
           <View style={styles.handle} />
           {children}
@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 40,
     paddingTop: 16,
-    height: SCREEN_HEIGHT * 0.85,
   },
   handle: {
     width: 40,

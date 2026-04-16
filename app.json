@@ -15,8 +15,9 @@
     },
     "ios": {
       "icon": "./assets/peakd_icon_inverted_1024_final.png",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.peakdapp.ios",
+      "buildNumber": "1",
       "entitlements": {
         "com.apple.developer.applesignin": ["Default"]
       },
@@ -26,7 +27,8 @@
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.780637254342-b3eoinu06jj6pkiqs50siijrfb68utvg"
             ]
-          },
+          }
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },

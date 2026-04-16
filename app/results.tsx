@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeInUp,
@@ -279,6 +279,9 @@ export default function ResultsScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: BENTO.bg }}>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No results found</Text>
+          <Pressable onPress={() => router.back()} style={{ marginTop: 20, paddingVertical: 12, paddingHorizontal: 24 }}>
+            <Text style={{ color: BENTO.accentBlue, fontSize: 15, fontWeight: '600' }}>Go Back</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );

@@ -239,6 +239,27 @@ function ScanRetakeCard({ status, onPress }: { status: ScanCooldownStatus | null
   );
 }
 
+// ─── Hand-Drawn Arrow (thin paintbrush style) ────────────────────────────────
+
+function HandDrawnArrow() {
+  return (
+    <Svg width={60} height={44} viewBox="0 0 60 44" fill="none">
+      <Path
+        d="M 46 4 C 42 12, 36 20, 26 30 C 22 34, 18 37, 14 40"
+        stroke="rgba(37,99,235,0.5)"
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Polygon
+        points="14,40 22,35 19,30"
+        fill="rgba(37,99,235,0.5)"
+      />
+    </Svg>
+  );
+}
+
 // ─── Invite Code Block ────────────────────────────────────────────────────────
 
 function InviteCodeBlock() {
@@ -286,6 +307,7 @@ function InviteCodeBlock() {
         </View>
         <View style={styles.inviteHeaderText}>
           <Text style={styles.inviteTitle}>Invite a friend</Text>
+          <Text style={styles.inviteCaption}>See who's hotter</Text>
           <Text style={styles.inviteSubtitle}>They get 40% off — you spread the word</Text>
         </View>
       </View>
@@ -539,6 +561,13 @@ export default function HomeScreen() {
           <ScanRetakeCard status={cooldownStatus} onPress={() => router.push('/(tabs)/scan')} />
         </Animated.View>
 
+        {/* ── Hand-Drawn Arrow (cooldown only) ──────────────── */}
+        {cooldownStatus && !cooldownStatus.canRetake && (
+          <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.handDrawnArrowWrap}>
+            <HandDrawnArrow />
+          </Animated.View>
+        )}
+
         {/* ── Scan Retake Info Notice ───────────────────────── */}
         <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.scanInfoNotice}>
           <InfoIcon />
@@ -735,7 +764,7 @@ const styles = StyleSheet.create({
   featureSentText: { fontSize: 13, fontWeight: '500', color: '#2563eb' },
 
   // ── Scan Retake Card ─────────────────────────────────────
-  toolCardDisabled: { backgroundColor: 'rgba(240,240,240,0.6)', borderColor: 'rgba(0,0,0,0.03)' },
+  toolCardDisabled: { backgroundColor: 'rgba(240,240,240,0.6)', borderColor: 'rgba(0,0,0,0.03)', opacity: 0.65 },
   toolIconSquareMuted: { backgroundColor: 'rgba(0,0,0,0.03)', borderColor: 'rgba(0,0,0,0.06)' },
   toolNameMuted: { color: 'rgba(0,0,0,0.35)' },
   scanRetakeContent: { flex: 1 },
@@ -743,6 +772,9 @@ const styles = StyleSheet.create({
   cooldownText: { fontSize: 11, fontWeight: '500', color: 'rgba(0,0,0,0.35)' },
   cooldownBadge: { backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 100, paddingVertical: 3, paddingHorizontal: 8 },
   cooldownBadgeText: { fontSize: 10, fontWeight: '500', color: 'rgba(0,0,0,0.45)' },
+
+  // ── Hand-Drawn Arrow ───────────────────────────────────────
+  handDrawnArrowWrap: { alignSelf: 'flex-end', marginRight: 16, marginTop: 0, marginBottom: 4 },
 
   // ── Scan Info Notice ─────────────────────────────────────
   scanInfoNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12, marginTop: -6, paddingHorizontal: 4 },
@@ -775,6 +807,7 @@ const styles = StyleSheet.create({
   },
   inviteHeaderText: { flex: 1 },
   inviteTitle: { fontSize: 16, fontWeight: '600', color: '#0a0a0a', letterSpacing: -0.2 },
+  inviteCaption: { fontSize: 13, fontWeight: '500', color: 'rgba(0,0,0,0.55)', marginTop: 1 },
   inviteSubtitle: { fontSize: 12, fontWeight: '400', color: 'rgba(0,0,0,0.38)', marginTop: 2 },
   inviteCodeRow: {
     flexDirection: 'row',
