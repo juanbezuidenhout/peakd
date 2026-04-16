@@ -147,7 +147,7 @@ export default function QuizAestheticScreen() {
   }, []);
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.backRow}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backChevron}>‹</Text>
@@ -297,7 +297,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   spacer: {
-    flex: 1,
+    flexGrow: 1,
+    minHeight: 16,
   },
   bottom: {
     paddingBottom: 24,

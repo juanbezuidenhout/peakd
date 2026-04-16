@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Text, View, Alert, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, Alert, ScrollView, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const MAX_HEADER_HEIGHT = 340;
+const MAX_CONTENT_WIDTH = 500;
 import { useRouter } from 'expo-router';
 import Animated, {
   SharedValue,
@@ -157,9 +160,11 @@ export default function AnalyzingScreen() {
   const dot2Opacity = useSharedValue(0.3);
   const dot3Opacity = useSharedValue(0.3);
 
+  const animHeaderHeight = Math.min(screenHeight * 0.42, MAX_HEADER_HEIGHT);
+
   useEffect(() => {
     scanLineY.value = withRepeat(
-      withTiming(screenHeight * 0.42, { duration: 2200 }),
+      withTiming(animHeaderHeight, { duration: 2200 }),
       -1,
       false,
     );
@@ -206,7 +211,7 @@ export default function AnalyzingScreen() {
   // ── Stop scan line & dots when analysis complete ────────────────────────
   useEffect(() => {
     if (unlockedCount >= 6 && apiDone) {
-      scanLineY.value = withTiming(screenHeight * 0.42, { duration: 300 });
+      scanLineY.value = withTiming(animHeaderHeight, { duration: 300 });
       dot1Opacity.value = withTiming(0, { duration: 200 });
       dot2Opacity.value = withTiming(0, { duration: 200 });
       dot3Opacity.value = withTiming(0, { duration: 200 });
@@ -339,59 +344,68 @@ export default function AnalyzingScreen() {
   }));
 
   const cyclingText = unlockedCount > 0 ? CYCLING_TEXTS[unlockedCount - 1] : '';
+  const headerHeight = Math.min(screenHeight * 0.42, MAX_HEADER_HEIGHT);
 
   return (
     <AnimatedSafeAreaView style={[styles.container, flashStyle]}>
-      {/* ── Zone 1: Header ─────────────────────────────────────────────── */}
-      <View style={[styles.headerZone, { height: screenHeight * 0.42 }]}>
-        <Animated.View style={[styles.scanLine, scanLineStyle]} />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentWrapper}>
+          {/* ── Zone 1: Header ─────────────────────────────────────────────── */}
+          <View style={[styles.headerZone, { height: headerHeight }]}>
+            <Animated.View style={[styles.scanLine, scanLineStyle]} />
 
-        <Animated.View style={circleRotationStyle}>
-          <Svg width={90} height={90}>
-            <Circle
-              cx={45}
-              cy={45}
-              r={38}
-              stroke="rgba(74,144,217,0.5)"
-              strokeWidth={1.5}
-              fill="none"
-              strokeDasharray="6 4"
-            />
-          </Svg>
-        </Animated.View>
+            <Animated.View style={circleRotationStyle}>
+              <Svg width={90} height={90}>
+                <Circle
+                  cx={45}
+                  cy={45}
+                  r={38}
+                  stroke="rgba(74,144,217,0.5)"
+                  strokeWidth={1.5}
+                  fill="none"
+                  strokeDasharray="6 4"
+                />
+              </Svg>
+            </Animated.View>
 
-        <View style={styles.dotsRow}>
-          <Animated.View style={[styles.dot, dot1Style]} />
-          <Animated.View style={[styles.dot, dot2Style]} />
-          <Animated.View style={[styles.dot, dot3Style]} />
+            <View style={styles.dotsRow}>
+              <Animated.View style={[styles.dot, dot1Style]} />
+              <Animated.View style={[styles.dot, dot2Style]} />
+              <Animated.View style={[styles.dot, dot3Style]} />
+            </View>
+
+            <View style={styles.cyclingTextContainer}>
+              {unlockedCount > 0 && (
+                <Animated.Text
+                  key={`subtitle-${unlockedCount}`}
+                  entering={FadeIn.duration(150)}
+                  exiting={FadeOut.duration(150)}
+                  style={styles.cyclingText}
+                >
+                  {cyclingText}
+                </Animated.Text>
+              )}
+            </View>
+          </View>
+
+          {/* ── Zone 2: Cards ──────────────────────────────────────────────── */}
+          <View style={styles.cardsZone}>
+            {CATEGORIES.map((cat, i) => (
+              <AnalysisCard
+                key={cat}
+                category={cat}
+                index={i}
+                unlocked={i < unlockedCount}
+                explosionScale={explosionScale}
+              />
+            ))}
+          </View>
         </View>
-
-        <View style={styles.cyclingTextContainer}>
-          {unlockedCount > 0 && (
-            <Animated.Text
-              key={`subtitle-${unlockedCount}`}
-              entering={FadeIn.duration(150)}
-              exiting={FadeOut.duration(150)}
-              style={styles.cyclingText}
-            >
-              {cyclingText}
-            </Animated.Text>
-          )}
-        </View>
-      </View>
-
-      {/* ── Zone 2: Cards ──────────────────────────────────────────────── */}
-      <View style={styles.cardsZone}>
-        {CATEGORIES.map((cat, i) => (
-          <AnalysisCard
-            key={cat}
-            category={cat}
-            index={i}
-            unlocked={i < unlockedCount}
-            explosionScale={explosionScale}
-          />
-        ))}
-      </View>
+      </ScrollView>
     </AnimatedSafeAreaView>
   );
 }
@@ -404,6 +418,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0D1F3C',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    maxWidth: MAX_CONTENT_WIDTH,
+    width: '100%',
+    alignSelf: 'center',
   },
   headerZone: {
     backgroundColor: '#0D1F3C',
@@ -450,11 +473,12 @@ const styles = StyleSheet.create({
   },
   cardsZone: {
     backgroundColor: '#F8FAFE',
-    flex: 1,
+    flexGrow: 1,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     marginTop: -28,
     paddingTop: 24,
+    paddingBottom: 24,
     paddingHorizontal: 16,
     justifyContent: 'center',
     gap: 10,

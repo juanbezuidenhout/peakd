@@ -12,7 +12,7 @@ export default function QuizNameScreen() {
   const [name, setName] = useState('');
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -108,7 +108,8 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   spacer: {
-    flex: 1,
+    flexGrow: 1,
+    minHeight: 16,
   },
   bottom: {
     paddingBottom: 24,

@@ -51,7 +51,7 @@ export default function ScanPromptScreen() {
   const router = useRouter();
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.backRow}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backChevron}>‹</Text>
@@ -120,9 +120,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    minHeight: 280,
   },
   centerColumn: {
     alignItems: "center",

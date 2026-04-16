@@ -169,7 +169,7 @@ export default function ScanScreen() {
   }, [imageUri, sideImageUri, router]);
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.header}>
         <Pressable onPress={() => router.replace('/(tabs)/home')} hitSlop={12}>
           <Text style={{ fontSize: 28, color: Colors.navy }}>‹</Text>
@@ -395,14 +395,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   previewArea: {
-    flex: 1,
+    flexGrow: 1,
     aspectRatio: 3 / 4,
+    maxHeight: 480,
     borderRadius: 24,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',
     alignSelf: 'center',
+    width: '100%',
   },
   emptyState: {
     flex: 1,
@@ -460,11 +462,12 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   photoRow: {
-    flex: 1,
+    flexGrow: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 16,
     alignItems: 'center',
+    minHeight: 200,
   },
   photoWrapper: {
     width: '45%',

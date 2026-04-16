@@ -20,7 +20,7 @@ export default function QuizAgeScreen() {
   const onChange = (selectedDate: Date) => setDate(selectedDate);
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.backRow}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backChevron}>‹</Text>
@@ -103,7 +103,8 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
   },
   spacer: {
-    flex: 1,
+    flexGrow: 1,
+    minHeight: 16,
   },
   bottom: {
     paddingBottom: 24,

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar, Animated, useWindowDimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, StatusBar, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import ReAnimated, { FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+
+const MAX_CONTENT_WIDTH = 500;
+const MAX_TOP_ZONE_HEIGHT = 420;
 
 const BEFORE_IMAGE = require('../../assets/images/splash-before.jpg');
 const AFTER_IMAGE = require('../../assets/images/splash-after.jpg');
@@ -41,78 +44,90 @@ export default function HeroScreen() {
   const darkBgOpacity = Animated.add(fadeAnims[0], fadeAnims[3]);
   const lightBgOpacity = Animated.add(fadeAnims[1], fadeAnims[2]);
 
+  const topZoneHeight = Math.min(screenHeight * 0.52, MAX_TOP_ZONE_HEIGHT);
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <View style={[styles.topZone, { height: screenHeight * 0.52 }]}>
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[0] }]}>
-          <Image source={BEFORE_IMAGE} style={styles.slideImage} resizeMode="cover" />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[1], backgroundColor: Colors.background }]}>
-          <Text style={styles.glowLabel}>YOUR GLOW SCORE</Text>
-          <Text style={styles.glowNumber}>6.2</Text>
-          <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
-          <Text style={styles.glowSub}>Enhancement zones identified</Text>
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[2], backgroundColor: Colors.background }]}>
-          <Svg width={260} height={260} viewBox="0 0 260 260">
-            <Circle cx={130} cy={130} r={110} stroke={Colors.border} strokeWidth={8} fill="none" />
-            <Circle cx={130} cy={130} r={110} stroke={Colors.primary} strokeWidth={8} fill="none" strokeDasharray="518 691" strokeDashoffset="173" strokeLinecap="round" transform="rotate(-90 130 130)" />
-          </Svg>
-          <View style={styles.countdownTextContainer}>
-            <Text style={styles.countdownNumber}>90</Text>
-            <Text style={styles.countdownLabel}>DAYS UNTIL</Text>
-            <Text style={styles.countdownAccent}>YOUR PEAK</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentWrapper}>
+          <View style={[styles.topZone, { height: topZoneHeight }]}>
+            <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[0] }]}>
+              <Image source={BEFORE_IMAGE} style={styles.slideImage} resizeMode="cover" />
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[1], backgroundColor: Colors.background }]}>
+              <Text style={styles.glowLabel}>YOUR GLOW SCORE</Text>
+              <Text style={styles.glowNumber}>6.2</Text>
+              <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
+              <Text style={styles.glowSub}>Enhancement zones identified</Text>
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.slideCenter, { opacity: fadeAnims[2], backgroundColor: Colors.background }]}>
+              <Svg width={260} height={260} viewBox="0 0 260 260">
+                <Circle cx={130} cy={130} r={110} stroke={Colors.border} strokeWidth={8} fill="none" />
+                <Circle cx={130} cy={130} r={110} stroke={Colors.primary} strokeWidth={8} fill="none" strokeDasharray="518 691" strokeDashoffset="173" strokeLinecap="round" transform="rotate(-90 130 130)" />
+              </Svg>
+              <View style={styles.countdownTextContainer}>
+                <Text style={styles.countdownNumber}>90</Text>
+                <Text style={styles.countdownLabel}>DAYS UNTIL</Text>
+                <Text style={styles.countdownAccent}>YOUR PEAK</Text>
+              </View>
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[3] }]}>
+              <Image source={AFTER_IMAGE} style={styles.slideImage} resizeMode="cover" />
+            </Animated.View>
+            <LinearGradient colors={['transparent', Colors.background]} style={styles.topGradient} />
+            <View style={styles.logoRow}>
+              <Animated.View style={[styles.logoInner, { opacity: lightBgOpacity }]}>
+                <Text style={styles.logoPeak}>peak</Text>
+                <Text style={styles.logoD}>d</Text>
+              </Animated.View>
+              <Animated.View style={[styles.logoInner, { position: 'absolute' }, { opacity: darkBgOpacity }]}>
+                <Text style={styles.logoPeakLight}>peak</Text>
+                <Text style={styles.logoD}>d</Text>
+              </Animated.View>
+            </View>
           </View>
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnims[3] }]}>
-          <Image source={AFTER_IMAGE} style={styles.slideImage} resizeMode="cover" />
-        </Animated.View>
-        <LinearGradient colors={['transparent', Colors.background]} style={styles.topGradient} />
-        <View style={styles.logoRow}>
-          <Animated.View style={[styles.logoInner, { opacity: lightBgOpacity }]}>
-            <Text style={styles.logoPeak}>peak</Text>
-            <Text style={styles.logoD}>d</Text>
-          </Animated.View>
-          <Animated.View style={[styles.logoInner, { position: 'absolute' }, { opacity: darkBgOpacity }]}>
-            <Text style={styles.logoPeakLight}>peak</Text>
-            <Text style={styles.logoD}>d</Text>
-          </Animated.View>
+          <View style={styles.bottom}>
+            <View>
+              <ReAnimated.View entering={FadeInUp.delay(150).duration(500)}>
+                <Text style={styles.label}>AI BEAUTY INTELLIGENCE</Text>
+              </ReAnimated.View>
+              <ReAnimated.View entering={FadeInUp.delay(300).duration(500)}>
+                <Text style={styles.headline}>
+                  {'Find Out How Much\n'}
+                  <Text style={styles.headlineAccent}>Hotter</Text>
+                  {' You\nCould Look'}
+                </Text>
+              </ReAnimated.View>
+              <ReAnimated.View entering={FadeInUp.delay(450).duration(500)}>
+                <Text style={styles.subtext}>
+                  Your beauty archetype, glow score, and 90-day protocol. Built by AI in 60 seconds.
+                </Text>
+              </ReAnimated.View>
+            </View>
+            <View>
+              <ReAnimated.View entering={FadeInUp.delay(600).duration(500)}>
+                <PrimaryButton label="Get Started →" onPress={() => router.push('/(onboarding)/cinematic')} />
+              </ReAnimated.View>
+              <ReAnimated.View entering={FadeInUp.delay(750).duration(500)}>
+                <Text style={styles.socialProof}>50,000+ women already glowing up</Text>
+              </ReAnimated.View>
+            </View>
+          </View>
         </View>
-      </View>
-      <View style={styles.bottom}>
-        <View>
-          <ReAnimated.View entering={FadeInUp.delay(150).duration(500)}>
-            <Text style={styles.label}>AI BEAUTY INTELLIGENCE</Text>
-          </ReAnimated.View>
-          <ReAnimated.View entering={FadeInUp.delay(300).duration(500)}>
-            <Text style={styles.headline}>
-              {'Find Out How Much\n'}
-              <Text style={styles.headlineAccent}>Hotter</Text>
-              {' You\nCould Look'}
-            </Text>
-          </ReAnimated.View>
-          <ReAnimated.View entering={FadeInUp.delay(450).duration(500)}>
-            <Text style={styles.subtext}>
-              Your beauty archetype, glow score, and 90-day protocol. Built by AI in 60 seconds.
-            </Text>
-          </ReAnimated.View>
-        </View>
-        <View>
-          <ReAnimated.View entering={FadeInUp.delay(600).duration(500)}>
-            <PrimaryButton label="Get Started →" onPress={() => router.push('/(onboarding)/cinematic')} />
-          </ReAnimated.View>
-          <ReAnimated.View entering={FadeInUp.delay(750).duration(500)}>
-            <Text style={styles.socialProof}>50,000+ women already glowing up</Text>
-          </ReAnimated.View>
-        </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+  scrollContent: { flexGrow: 1 },
+  contentWrapper: { flex: 1, maxWidth: MAX_CONTENT_WIDTH, width: '100%', alignSelf: 'center' },
   topZone: { width: '100%', overflow: 'hidden', backgroundColor: Colors.background },
   slideImage: { width: '100%', height: '100%' },
   slideCenter: { justifyContent: 'center', alignItems: 'center' },
@@ -132,7 +147,7 @@ const styles = StyleSheet.create({
   countdownNumber: { color: Colors.navy, fontSize: 64, fontWeight: '900', lineHeight: 64 },
   countdownLabel: { color: Colors.textSecondary, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
   countdownAccent: { color: Colors.primary, fontSize: 16, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
-  bottom: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
+  bottom: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
   label: { fontSize: 11, fontWeight: '700', letterSpacing: 2.5, color: Colors.primary, textTransform: 'uppercase', marginBottom: 10 },
   headline: { fontSize: 38, fontWeight: '900', color: Colors.navy, lineHeight: 44, letterSpacing: -0.5, marginBottom: 12 },
   headlineAccent: { fontSize: 38, fontWeight: '900', color: Colors.accent, lineHeight: 44, letterSpacing: -0.5 },

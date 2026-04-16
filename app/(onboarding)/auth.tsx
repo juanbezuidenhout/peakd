@@ -7,9 +7,13 @@ import {
   TextInput,
   Alert,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
   useWindowDimensions,
   Linking,
 } from "react-native";
+
+const MAX_CONTENT_WIDTH = 500;
 import { useRouter } from "expo-router";
 import Animated, {
   FadeInUp,
@@ -349,130 +353,142 @@ export default function AuthScreen() {
       </View>
 
       {/* Content */}
-      <View style={styles.content}>
-        {/* Header */}
-        <Animated.View
-          entering={FadeInUp.duration(600).delay(200)}
-          style={styles.header}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Save your progress.</Text>
-          <Text style={styles.subtitle}>
-            Create an account to keep your results and access Peakd across devices.
-          </Text>
-        </Animated.View>
-
-        {/* Buttons */}
-        <Animated.View
-          entering={FadeInUp.duration(500).delay(400)}
-          style={styles.buttonContainer}
-        >
-          {/* Apple Button */}
-          {Platform.OS === "ios" && (
-            <Pressable
-              onPress={handleApple}
-              disabled={isLoading}
-              style={({ pressed }) => [
-                styles.socialButton,
-                pressed && styles.buttonPressed,
-              ]}
+          <View style={styles.content}>
+            {/* Header */}
+            <Animated.View
+              entering={FadeInUp.duration(600).delay(200)}
+              style={styles.header}
             >
-              {loadingApple ? (
-                <WaveformLoader color="#FFFFFF" />
-              ) : (
-                <View style={styles.buttonInner}>
-                  <AppleLogo size={20} />
-                  <Text style={styles.buttonText}>Continue with Apple</Text>
-                </View>
+              <Text style={styles.title}>Save your progress.</Text>
+              <Text style={styles.subtitle}>
+                Create an account to keep your results and access Peakd across devices.
+              </Text>
+            </Animated.View>
+
+            {/* Buttons */}
+            <Animated.View
+              entering={FadeInUp.duration(500).delay(400)}
+              style={styles.buttonContainer}
+            >
+              {/* Apple Button */}
+              {Platform.OS === "ios" && (
+                <Pressable
+                  onPress={handleApple}
+                  disabled={isLoading}
+                  style={({ pressed }) => [
+                    styles.socialButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  {loadingApple ? (
+                    <WaveformLoader color="#FFFFFF" />
+                  ) : (
+                    <View style={styles.buttonInner}>
+                      <AppleLogo size={20} />
+                      <Text style={styles.buttonText}>Continue with Apple</Text>
+                    </View>
+                  )}
+                </Pressable>
               )}
-            </Pressable>
-          )}
 
-          {/* Google Button */}
-          <Pressable
-            onPress={handleGoogle}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              styles.socialButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            {loadingGoogle ? (
-              <WaveformLoader color="#FFFFFF" />
-            ) : (
-              <View style={styles.buttonInner}>
-                <GoogleLogo size={20} />
-                <Text style={styles.buttonText}>Continue with Google</Text>
-              </View>
-            )}
-          </Pressable>
-
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Email Section */}
-          {!emailSent ? (
-            <>
-              <TextInput
-                style={styles.emailInput}
-                placeholder="Enter your email"
-                placeholderTextColor="rgba(255,255,255,0.4)"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                editable={!isLoading}
-              />
-
+              {/* Google Button */}
               <Pressable
-                onPress={handleEmail}
-                disabled={isLoading || !email}
+                onPress={handleGoogle}
+                disabled={isLoading}
                 style={({ pressed }) => [
-                  styles.emailButton,
-                  (!email || isLoading) && styles.emailButtonDisabled,
+                  styles.socialButton,
                   pressed && styles.buttonPressed,
                 ]}
               >
-                {loadingEmail ? (
+                {loadingGoogle ? (
                   <WaveformLoader color="#FFFFFF" />
                 ) : (
                   <View style={styles.buttonInner}>
-                    <EnvelopeIcon size={20} />
-                    <Text style={styles.buttonText}>Continue with Email</Text>
+                    <GoogleLogo size={20} />
+                    <Text style={styles.buttonText}>Continue with Google</Text>
                   </View>
                 )}
               </Pressable>
-            </>
-          ) : (
-            <Animated.View
-              entering={FadeInUp.duration(300)}
-              style={styles.emailSentContainer}
-            >
-              <Text style={styles.emailSentTitle}>Check your email!</Text>
-              <Text style={styles.emailSentMessage}>
-                We sent a magic link to {email}. Tap the link to sign in.
-              </Text>
-              <Pressable
-                onPress={() => {
-                  setEmailSent(false);
-                  setEmail("");
-                }}
-                style={styles.backButton}
-              >
-                <Text style={styles.backButtonText}>Use a different email</Text>
+
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Email Section */}
+              {!emailSent ? (
+                <>
+                  <TextInput
+                    style={styles.emailInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="rgba(255,255,255,0.4)"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!isLoading}
+                  />
+
+                  <Pressable
+                    onPress={handleEmail}
+                    disabled={isLoading || !email}
+                    style={({ pressed }) => [
+                      styles.emailButton,
+                      (!email || isLoading) && styles.emailButtonDisabled,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    {loadingEmail ? (
+                      <WaveformLoader color="#FFFFFF" />
+                    ) : (
+                      <View style={styles.buttonInner}>
+                        <EnvelopeIcon size={20} />
+                        <Text style={styles.buttonText}>Continue with Email</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </>
+              ) : (
+                <Animated.View
+                  entering={FadeInUp.duration(300)}
+                  style={styles.emailSentContainer}
+                >
+                  <Text style={styles.emailSentTitle}>Check your email!</Text>
+                  <Text style={styles.emailSentMessage}>
+                    We sent a magic link to {email}. Tap the link to sign in.
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      setEmailSent(false);
+                      setEmail("");
+                    }}
+                    style={styles.backButton}
+                  >
+                    <Text style={styles.backButtonText}>Use a different email</Text>
+                  </Pressable>
+                </Animated.View>
+              )}
+
+              {/* Skip link */}
+              <Pressable onPress={handleSkip} style={styles.skipButton}>
+                <Text style={styles.skipText}>Skip for now</Text>
               </Pressable>
             </Animated.View>
-          )}
-
-          {/* Skip link */}
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip for now</Text>
-          </Pressable>
-        </Animated.View>
-      </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -491,12 +507,18 @@ const styles = StyleSheet.create({
     filter: "blur(80px)",
     // Note: blur effect via filter works on web; on native we'll use opacity for softness
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
     paddingTop: 60,
     paddingBottom: 40,
+    maxWidth: MAX_CONTENT_WIDTH,
+    width: "100%",
+    alignSelf: "center",
   },
   header: {
     alignItems: "center",

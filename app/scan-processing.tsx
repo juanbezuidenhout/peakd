@@ -272,6 +272,9 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
     paddingHorizontal: 40,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
   },
   motivationalText: {
     fontSize: 24,

@@ -194,7 +194,7 @@ export default function PainOtherSideScreen() {
   }));
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.container}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backChevron}>‹</Text>
@@ -219,7 +219,7 @@ export default function PainOtherSideScreen() {
           </View>
         </Animated.View>
 
-        <View style={{ flex: 1 }} />
+        <View style={{ flexGrow: 1, minHeight: 16 }} />
 
         <Animated.View style={[styles.infoCard, cardStyle]}>
           <Text style={styles.infoTitle}>Everyone Else</Text>

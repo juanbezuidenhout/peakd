@@ -122,15 +122,15 @@ export default function PainTypewriterScreen() {
   }, []);
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.container}>
-        <View style={{ flex: 9 }} />
+        <View style={{ flexGrow: 9 }} />
         <View style={styles.textArea}>
           <Animated.Text style={[styles.text, animatedTextStyle]}>
             {displayedText}
           </Animated.Text>
         </View>
-        <View style={{ flex: 11 }} />
+        <View style={{ flexGrow: 11 }} />
       </View>
     </SafeScreen>
   );

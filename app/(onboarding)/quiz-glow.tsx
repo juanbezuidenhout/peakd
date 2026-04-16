@@ -195,7 +195,7 @@ export default function QuizGlowScreen() {
   }, []);
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.backRow}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backChevron}>‹</Text>
@@ -371,7 +371,8 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   spacer: {
-    flex: 1,
+    flexGrow: 1,
+    minHeight: 16,
   },
   bottom: {
     paddingBottom: 24,

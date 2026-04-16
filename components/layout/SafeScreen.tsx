@@ -1,17 +1,35 @@
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, ScrollView, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
+
+const MAX_CONTENT_WIDTH = 500;
 
 interface SafeScreenProps {
   children: React.ReactNode;
   className?: string;
   style?: ViewStyle;
+  scrollable?: boolean;
 }
 
-export function SafeScreen({ children, className, style }: SafeScreenProps) {
+export function SafeScreen({ children, className, style, scrollable = false }: SafeScreenProps) {
+  const inner = (
+    <View style={styles.inner}>{children}</View>
+  );
+
   return (
     <SafeAreaView style={[styles.safe, style]} className={className}>
-      <View style={styles.inner}>{children}</View>
+      {scrollable ? (
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {inner}
+        </ScrollView>
+      ) : (
+        inner
+      )}
     </SafeAreaView>
   );
 }
@@ -26,5 +44,11 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     paddingHorizontal: 20,
+    maxWidth: MAX_CONTENT_WIDTH,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
 });

@@ -207,7 +207,7 @@ export default function PainGlowEffectScreen() {
   }));
 
   return (
-    <SafeScreen>
+    <SafeScreen scrollable>
       <View style={styles.container}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backChevron}>‹</Text>
@@ -230,7 +230,7 @@ export default function PainGlowEffectScreen() {
           ))}
         </Animated.View>
 
-        <View style={{ flex: 1 }} />
+        <View style={{ flexGrow: 1, minHeight: 16 }} />
 
         <Animated.View style={[styles.infoCard, cardStyle]}>
           <Text style={styles.infoTitle}>Her Reality</Text>
