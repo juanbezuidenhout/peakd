@@ -127,7 +127,7 @@ export default function HeroScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scrollContent: { flexGrow: 1 },
-  contentWrapper: { flex: 1, maxWidth: MAX_CONTENT_WIDTH, width: '100%', alignSelf: 'center' },
+  contentWrapper: { flexGrow: 1, maxWidth: MAX_CONTENT_WIDTH, width: '100%', alignSelf: 'center' },
   topZone: { width: '100%', overflow: 'hidden', backgroundColor: Colors.background },
   slideImage: { width: '100%', height: '100%' },
   slideCenter: { justifyContent: 'center', alignItems: 'center' },

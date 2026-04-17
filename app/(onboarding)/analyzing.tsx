@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   contentWrapper: {
-    flex: 1,
+    flexGrow: 1,
     maxWidth: MAX_CONTENT_WIDTH,
     width: '100%',
     alignSelf: 'center',

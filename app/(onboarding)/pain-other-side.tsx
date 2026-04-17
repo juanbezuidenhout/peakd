@@ -196,7 +196,11 @@ export default function PainOtherSideScreen() {
   return (
     <SafeScreen scrollable>
       <View style={styles.container}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+        >
           <Text style={styles.backChevron}>‹</Text>
         </Pressable>
 
@@ -219,7 +223,7 @@ export default function PainOtherSideScreen() {
           </View>
         </Animated.View>
 
-        <View style={{ flexGrow: 1, minHeight: 16 }} />
+        <View style={styles.spacer} />
 
         <Animated.View style={[styles.infoCard, cardStyle]}>
           <Text style={styles.infoTitle}>Everyone Else</Text>
@@ -248,11 +252,16 @@ export default function PainOtherSideScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '100%',
   },
   backBtn: {
     marginTop: 8,
     alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  spacer: {
+    height: 24,
   },
   backChevron: {
     fontSize: 32,

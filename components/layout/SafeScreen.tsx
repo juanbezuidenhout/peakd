@@ -12,23 +12,21 @@ interface SafeScreenProps {
 }
 
 export function SafeScreen({ children, className, style, scrollable = false }: SafeScreenProps) {
-  const inner = (
-    <View style={styles.inner}>{children}</View>
-  );
-
   return (
     <SafeAreaView style={[styles.safe, style]} className={className}>
       {scrollable ? (
         <ScrollView
+          style={styles.scrollFlex}
           contentContainerStyle={styles.scrollContent}
           bounces={false}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="always"
         >
-          {inner}
+          <View style={styles.innerScrollable}>{children}</View>
         </ScrollView>
       ) : (
-        inner
+        <View style={styles.inner}>{children}</View>
       )}
     </SafeAreaView>
   );
@@ -47,6 +45,17 @@ const styles = StyleSheet.create({
     maxWidth: MAX_CONTENT_WIDTH,
     width: '100%',
     alignSelf: 'center',
+  },
+  innerScrollable: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    maxWidth: MAX_CONTENT_WIDTH,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  scrollFlex: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
