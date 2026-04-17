@@ -23,7 +23,13 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6761548737",
+        "appleId": "juanbez313@icloud.com",
+        "appleTeamId": "ATC749MX5C"
+      }
+    }
   }
 }
  
